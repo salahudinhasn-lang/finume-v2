@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Users, DollarSign, Settings, LogOut, Menu, X, Bell, Search, Shield, Tag, HelpCircle, ChevronRight, Check } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, DollarSign, Settings, LogOut, Menu, X, Bell, Search, Shield, Tag, HelpCircle, ChevronRight } from 'lucide-react';
 import { Logo } from './Logo';
 
 interface LayoutProps {
@@ -10,15 +11,10 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, title }) => {
-  const { user, logout, language, setLanguage, t, notifications, markAsRead, markAllAsRead } = useAppContext();
+  const { user, logout, language, setLanguage, t } = useAppContext();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Filter notifications for current user
-  const myNotifications = notifications.filter(n => n.userId === user?.id || n.userId === user?.email).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const unreadCount = myNotifications.filter(n => !n.isRead).length;
 
   const handleLogout = () => {
     navigate('/');
@@ -141,7 +137,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50 relative">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
         <header className="flex items-center justify-between h-20 px-8 bg-white border-b border-gray-100 sticky top-0 z-20 shadow-sm">
           <div className="flex items-center gap-4">
             <button className="lg:hidden p-2 hover:bg-gray-100 rounded-lg text-gray-600" onClick={() => setSidebarOpen(true)}>
@@ -159,53 +155,10 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
             >
               {language === 'en' ? 'Arabic' : 'English'}
             </button>
-            
-            {/* Notification Bell with Dropdown */}
-            <div className="relative">
-                <button 
-                    onClick={() => setIsNotifOpen(!isNotifOpen)}
-                    className="relative p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-full transition-colors"
-                >
-                    <Bell size={22} />
-                    {unreadCount > 0 && (
-                        <span className="absolute top-2 right-2 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full text-[10px] font-bold text-white ring-2 ring-white">
-                            {unreadCount}
-                        </span>
-                    )}
-                </button>
-
-                {isNotifOpen && (
-                    <>
-                        <div className="fixed inset-0 z-30" onClick={() => setIsNotifOpen(false)}></div>
-                        <div className={`absolute top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-40 overflow-hidden animate-in fade-in zoom-in duration-200 ${language === 'ar' ? 'left-0' : 'right-0'}`}>
-                            <div className="p-3 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                                <h3 className="font-bold text-gray-800 text-sm">Notifications</h3>
-                                {unreadCount > 0 && (
-                                    <button onClick={markAllAsRead} className="text-xs text-primary-600 hover:underline">Mark all read</button>
-                                )}
-                            </div>
-                            <div className="max-h-[300px] overflow-y-auto">
-                                {myNotifications.length > 0 ? myNotifications.map(notif => (
-                                    <div 
-                                        key={notif.id} 
-                                        onClick={() => markAsRead(notif.id)}
-                                        className={`p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer flex gap-3 ${!notif.isRead ? 'bg-blue-50/30' : ''}`}
-                                    >
-                                        <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${!notif.isRead ? 'bg-blue-500' : 'bg-transparent'}`}></div>
-                                        <div>
-                                            <p className={`text-sm ${!notif.isRead ? 'font-bold text-gray-900' : 'text-gray-600'}`}>{notif.title}</p>
-                                            <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{notif.message}</p>
-                                            <p className="text-[10px] text-gray-400 mt-1">{new Date(notif.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                                        </div>
-                                    </div>
-                                )) : (
-                                    <div className="p-8 text-center text-gray-400 text-sm">No notifications.</div>
-                                )}
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
+            <button className="relative p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-full transition-colors">
+              <Bell size={22} />
+              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+            </button>
           </div>
         </header>
 

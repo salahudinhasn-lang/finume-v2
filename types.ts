@@ -1,3 +1,4 @@
+
 export type UserRole = 'CLIENT' | 'EXPERT' | 'ADMIN';
 
 export interface User {
@@ -121,17 +122,6 @@ export interface PayoutRequest {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   bankDetails?: string;
   requestIds: string[]; // List of Request IDs included in this payout
-}
-
-export interface Notification {
-  id: string;
-  userId: string; // Recipient
-  title: string;
-  message: string;
-  type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
-  isRead: boolean;
-  date: string;
-  link?: string;
 }
 
 export interface ChatMessage {

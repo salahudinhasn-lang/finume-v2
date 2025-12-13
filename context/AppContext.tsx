@@ -1,6 +1,7 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Client, Expert, Admin, Request, Service, Review, PricingPlan, PayoutRequest, Notification } from '../types';
-import { MOCK_CLIENTS, MOCK_EXPERTS, MOCK_REQUESTS, SERVICES, MOCK_ADMINS, MOCK_PLANS, MOCK_NOTIFICATIONS } from '../mockData';
+import { User, Client, Expert, Admin, Request, Service, Review, PricingPlan, PayoutRequest } from '../types';
+import { MOCK_CLIENTS, MOCK_EXPERTS, MOCK_REQUESTS, SERVICES, MOCK_ADMINS, MOCK_PLANS } from '../mockData';
 import { translations } from '../utils/translations';
 
 interface AppContextType {
@@ -19,7 +20,6 @@ interface AppContextType {
   plans: PricingPlan[];
   admins: Admin[];
   payoutRequests: PayoutRequest[];
-  notifications: Notification[];
   
   // Actions
   addRequest: (req: Request) => void;
@@ -43,22 +43,17 @@ interface AppContextType {
   addAdmin: (admin: Admin) => void;
   updateAdmin: (id: string, updates: Partial<Admin>) => void;
   deleteAdmin: (id: string) => void;
-  resetDatabase: () => void;
+  resetDatabase: () => void; // New action
 
   // Payout Actions
   requestPayout: (amount: number, requestIds?: string[]) => void;
   processPayout: (id: string, status: 'APPROVED' | 'REJECTED') => void;
   manualSettle: (requestIds: string[]) => void;
-
-  // Notification Actions
-  sendNotification: (toUserId: string, title: string, message: string, type?: 'INFO'|'SUCCESS'|'WARNING'|'ERROR') => void;
-  markAsRead: (notificationId: string) => void;
-  markAllAsRead: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const DB_KEY = 'FINUME_DB_V2'; // Version bump for schema changes
+const DB_KEY = 'FINUME_DB_V1';
 const USER_KEY = 'FINUME_USER_V1';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -74,7 +69,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [services, setServices] = useState<Service[]>([]);
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   
   // 1. Initialize from LocalStorage or Mock Data
   useEffect(() => {
@@ -92,7 +86,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 setServices(parsed.services || SERVICES);
                 setPlans(parsed.plans || MOCK_PLANS);
                 setPayoutRequests(parsed.payoutRequests || []);
-                setNotifications(parsed.notifications || MOCK_NOTIFICATIONS);
             } catch (e) {
                 console.error("Failed to load local DB", e);
                 resetToMock();
@@ -119,7 +112,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setAdmins(MOCK_ADMINS);
       setServices(SERVICES);
       setPlans(MOCK_PLANS);
-      setNotifications(MOCK_NOTIFICATIONS);
       setPayoutRequests([
         { id: 'WD-LEGACY', expertId: 'E1', expertName: 'Expert 1', amount: 0, requestDate: '2023-01-01', processedDate: '2023-01-01', status: 'APPROVED', requestIds: [] }
       ]);
@@ -140,10 +132,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (!isInitialized) return;
       
       const dbState = {
-          clients, experts, requests, admins, services, plans, payoutRequests, notifications
+          clients,
+          experts,
+          requests,
+          admins,
+          services,
+          plans,
+          payoutRequests
       };
       localStorage.setItem(DB_KEY, JSON.stringify(dbState));
-  }, [clients, experts, requests, admins, services, plans, payoutRequests, notifications, isInitialized]);
+  }, [clients, experts, requests, admins, services, plans, payoutRequests, isInitialized]);
 
   // 3. Persist User Session
   useEffect(() => {
@@ -156,14 +154,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [user, isInitialized]);
 
   const login = (email: string, role: string, newUser?: User) => {
-    if (newUser) { setUser(newUser); return; }
+    if (newUser) {
+        setUser(newUser);
+        return;
+    }
+
     const normalize = (s: string) => s.trim().toLowerCase();
     
     if (role === 'CLIENT') {
       const client = clients.find(c => normalize(c.email) === normalize(email));
-      if (client) { setUser(client); return; } 
-      if (email === 'client1@example.com' || !email) { setUser(clients[0]); } 
-      else {
+      if (client) {
+        setUser(client);
+        return;
+      } 
+      
+      if (email === 'client1@example.com' || !email) {
+        setUser(clients[0]);
+      } else {
         const tempUser: Client = {
             id: `C-${Date.now()}`,
             name: email.split('@')[0],
@@ -180,79 +187,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } else if (role === 'EXPERT') {
       const expert = experts.find(e => normalize(e.email) === normalize(email));
-      if (expert) { setUser(expert); return; }
-      setUser(experts[0]);
+      if (expert) {
+        setUser(expert);
+        return;
+      }
+      
+      if (email === 'expert1@example.com' || !email) {
+        setUser(experts[0]);
+      } else {
+         // Fallback for demo flow if trying to login as uncreated expert
+         alert("Expert account not found. Logging in as Demo Expert.");
+         setUser(experts[0]);
+      }
     } else {
       const admin = admins.find(a => normalize(a.email) === normalize(email));
-      if (admin) { setUser(admin); return; }
+      if (admin) {
+        setUser(admin);
+        return;
+      }
       setUser(admins[0]);
     }
   };
 
-  const logout = () => setUser(null);
+  const logout = () => {
+    setUser(null);
+  };
 
   const t = (key: string): string => {
     const keys = key.split('.');
     let value: any = translations[language];
-    for (const k of keys) { value = value?.[k]; }
+    for (const k of keys) {
+      value = value?.[k];
+    }
     return value || key;
   };
 
-  // --- Notification Logic ---
-  const sendNotification = (toUserId: string, title: string, message: string, type: Notification['type'] = 'INFO') => {
-      // Find the user object to get their actual ID if email was passed (or handle ID directly)
-      // Assuming toUserId is the user.id or user.email. Let's normalize to ID.
-      let targetId = toUserId;
-      // In this mock, we sometimes look up by email, sometimes ID.
-      // If we can't find a user by ID, check if it's an email in the DB.
-      
-      const newNotification: Notification = {
-          id: `NOTIF-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-          userId: targetId,
-          title,
-          message,
-          type,
-          isRead: false,
-          date: new Date().toISOString()
-      };
-      setNotifications(prev => [newNotification, ...prev]);
-  };
-
-  const markAsRead = (notificationId: string) => {
-      setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
-  };
-
-  const markAllAsRead = () => {
-      if (!user) return;
-      setNotifications(prev => prev.map(n => 
-          (n.userId === user.id || n.userId === user.email) ? { ...n, isRead: true } : n
-      ));
-  };
-
-  // --- Main Actions ---
-
   const addRequest = (req: Request) => {
     setRequests(prev => [req, ...prev]);
-    // Notify Admins
-    sendNotification('admin@finume.com', 'New Request Received', `Client ${req.clientName} posted a request for ${req.serviceName}.`, 'INFO');
   };
 
   const updateRequestStatus = (id: string, status: Request['status']) => {
     setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
-    
-    // Notifications Logic
-    const req = requests.find(r => r.id === id);
-    if (req) {
-        if (status === 'IN_PROGRESS' && req.clientId) {
-            sendNotification(req.clientId, 'Work Started', `Expert ${req.expertName} has started working on ${req.serviceName}.`, 'INFO');
-        }
-        if (status === 'REVIEW_CLIENT' && req.clientId) {
-            sendNotification(req.clientId, 'Approval Needed', `Expert ${req.expertName} has submitted work for approval.`, 'WARNING');
-        }
-        if (status === 'COMPLETED' && req.assignedExpertId) {
-            sendNotification(req.assignedExpertId, 'Job Completed', `You earned ${req.amount * 0.8} SAR from request ${req.id}.`, 'SUCCESS');
-        }
-    }
   };
 
   const assignRequest = (requestId: string, expertId: string) => {
@@ -261,12 +236,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setRequests(prev => prev.map(r => {
       if (r.id === requestId) {
-        // Notify Expert
-        sendNotification(expert.id, 'New Job Assigned', `You have been assigned to request ${requestId}.`, 'INFO');
-        // Notify Client
-        if (r.clientId) {
-            sendNotification(r.clientId, 'Expert Assigned', `${expert.name} is now handling your request.`, 'SUCCESS');
-        }
         return {
           ...r,
           assignedExpertId: expertId,
@@ -280,7 +249,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateExpertStatus = (expertId: string, status: Expert['status']) => {
     setExperts(prev => prev.map(e => e.id === expertId ? { ...e, status } : e));
-    sendNotification(expertId, 'Account Status Updated', `Your expert account status is now: ${status}`, status === 'ACTIVE' ? 'SUCCESS' : 'WARNING');
   };
 
   const updateRequest = (id: string, updates: Partial<Request>) => {
@@ -315,6 +283,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAdmins(prev => prev.filter(a => a.id !== id));
   };
 
+  // Service & Pricing Actions
   const updateService = (id: string, updates: Partial<Service>) => {
     setServices(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
   };
@@ -344,8 +313,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }
             return e;
         }));
-        // Notify Expert of Review
-        sendNotification(request.assignedExpertId, 'New Review', `You received a ${review.expertRating} star review!`, 'SUCCESS');
     }
   };
 
@@ -391,7 +358,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
       
       setPayoutRequests(prev => [newPayout, ...prev]);
-      sendNotification('admin@finume.com', 'New Payout Request', `${user.name} requested payout of ${payoutAmount} SAR.`, 'WARNING');
   };
 
   const processPayout = (id: string, status: 'APPROVED' | 'REJECTED') => {
@@ -399,33 +365,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           p.id === id ? { ...p, status, processedDate: new Date().toISOString().split('T')[0] } : p
       ));
 
-      // Notification
-      const payout = payoutRequests.find(p => p.id === id);
-      if (payout) {
-          if (status === 'APPROVED') {
-              sendNotification(payout.expertId, 'Payout Approved', `Your payout of ${payout.amount} SAR has been processed.`, 'SUCCESS');
-          } else {
-              sendNotification(payout.expertId, 'Payout Rejected', `Your payout request ${id} was rejected. Contact support.`, 'ERROR');
-              // Revert logic
-              if (payout.requestIds) {
-                  setRequests(prev => prev.map(r => {
-                      if (payout.requestIds.includes(r.id)) { return { ...r, payoutId: undefined }; }
-                      return r;
-                  }));
-              }
+      if (status === 'REJECTED') {
+          const payout = payoutRequests.find(p => p.id === id);
+          if (payout && payout.requestIds) {
+              setRequests(prev => prev.map(r => {
+                  if (payout.requestIds.includes(r.id)) {
+                      return { ...r, payoutId: undefined };
+                  }
+                  return r;
+              }));
           }
       }
   };
 
   const manualSettle = (requestIds: string[]) => {
       const payoutId = `SETTLE-MANUAL-${Date.now()}`;
-      const totalAmount = requests.filter(r => requestIds.includes(r.id)).reduce((sum, r) => sum + (r.amount * 0.8), 0);
-      const firstReq = requests.find(r => r.id === requestIds[0]);
-      const expertId = firstReq?.assignedExpertId;
+      
+      const totalAmount = requests
+        .filter(r => requestIds.includes(r.id))
+        .reduce((sum, r) => sum + (r.amount * 0.8), 0);
 
       const dummyPayout: PayoutRequest = {
           id: payoutId,
-          expertId: expertId || 'VARIOUS',
+          expertId: 'VARIOUS',
           expertName: 'Manual Settlement',
           amount: totalAmount,
           requestDate: new Date().toISOString().split('T')[0],
@@ -436,26 +398,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setPayoutRequests(prev => [dummyPayout, ...prev]);
 
       setRequests(prev => prev.map(r => {
-          if (requestIds.includes(r.id)) { return { ...r, payoutId: payoutId }; }
+          if (requestIds.includes(r.id)) {
+              return { ...r, payoutId: payoutId };
+          }
           return r;
       }));
-
-      // Notify Expert
-      if (expertId) {
-          sendNotification(expertId, 'Funds Settled', `Admin manually settled ${totalAmount} SAR for ${requestIds.length} tasks.`, 'SUCCESS');
-      }
   };
 
   return (
     <AppContext.Provider value={{
       user, login, logout, language, setLanguage, t,
-      clients, experts, requests, services, plans, admins, payoutRequests, notifications,
+      clients, experts, requests, services, plans, admins, payoutRequests,
       addRequest, updateRequestStatus, assignRequest, updateExpertStatus, updateRequest,
       updateClient, updateExpert, addClient, addExpert, submitReview,
       addAdmin, updateAdmin, deleteAdmin, resetDatabase,
       updateService, addService, deleteService, updatePlan,
-      requestPayout, processPayout, manualSettle,
-      sendNotification, markAsRead, markAllAsRead
+      requestPayout, processPayout, manualSettle
     }}>
       {children}
     </AppContext.Provider>

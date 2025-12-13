@@ -1,4 +1,5 @@
-import { Client, Expert, Request, Transaction, Service, Admin, PricingPlan, FileBatch, Notification } from './types';
+
+import { Client, Expert, Request, Transaction, Service, Admin, PricingPlan, FileBatch } from './types';
 
 // Generators
 const industries = ['Retail', 'Services', 'Manufacturing', 'Tech', 'Healthcare'];
@@ -129,7 +130,7 @@ const generateBatches = (date: string): FileBatch[] => {
     return batches;
 }
 
-// Generate Historical Requests
+// Generate Historical Requests (The Ledger Backfill)
 const generateHistoricalRequests = (experts: Expert[], clients: Client[]): Request[] => {
     const requests: Request[] = [];
     let reqId = 2000;
@@ -138,14 +139,20 @@ const generateHistoricalRequests = (experts: Expert[], clients: Client[]): Reque
         // Only generate history for ACTIVE experts
         if (expert.status !== 'ACTIVE') return;
 
+        // Target random lifetime earnings between 20k and 150k SAR for each expert
         const targetEarnings = 20000 + Math.floor(Math.random() * 130000);
         let currentEarnings = 0;
 
+        // Keep creating jobs until we hit the target
         while(currentEarnings < targetEarnings) {
             const client = clients[Math.floor(Math.random() * clients.length)];
             const service = SERVICES[Math.floor(Math.random() * SERVICES.length)];
+            
+            // Random date in past 2 years (730 days)
             const daysAgo = Math.floor(Math.random() * 730) + 10; 
             const date = new Date(Date.now() - (daysAgo * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+
+            // 80% chance of being settled if older than 30 days
             const isSettled = daysAgo > 30 && Math.random() > 0.2;
             const payoutId = isSettled ? 'WD-LEGACY' : undefined;
 
@@ -165,6 +172,7 @@ const generateHistoricalRequests = (experts: Expert[], clients: Client[]): Reque
                 payoutId: payoutId
             });
 
+            // Expert gets 80%
             currentEarnings += (service.price * 0.8);
         }
     });
@@ -179,11 +187,13 @@ export const generateActiveRequests = (count: number, clients: Client[], experts
     const expert = experts[i % experts.length];
     const service = SERVICES[i % SERVICES.length];
     const status = statuses[i % statuses.length];
-    const dateCreated = new Date(Date.now() - Math.floor(Math.random() * 1000000000)).toISOString().split('T')[0];
+    const dateCreated = new Date(Date.now() - Math.floor(Math.random() * 1000000000)).toISOString().split('T')[0]; // Recent
+    
+    // Some requests are NEW and unassigned (Marketplace logic)
     const isUnassigned = status === 'NEW';
 
     return {
-      id: `REQ-${5000 + i}`,
+      id: `REQ-${5000 + i}`, // Start IDs higher to separate from history
       clientId: client.id,
       clientName: client.companyName,
       serviceId: service.id,
@@ -200,23 +210,52 @@ export const generateActiveRequests = (count: number, clients: Client[], experts
 };
 
 export const MOCK_ADMINS: Admin[] = [
-  { id: 'ADMIN1', email: 'admin@finume.com', name: 'Super Admin', role: 'ADMIN', adminRole: 'SUPER_ADMIN', avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=0ea5e9&color=fff' },
-  { id: 'ADMIN2', email: 'finance@finume.com', name: 'Sarah Finance', role: 'ADMIN', adminRole: 'FINANCE', avatarUrl: 'https://ui-avatars.com/api/?name=Sarah+Finance&background=10b981&color=fff' },
-  { id: 'ADMIN3', email: 'support@finume.com', name: 'John Support', role: 'ADMIN', adminRole: 'SUPPORT', avatarUrl: 'https://ui-avatars.com/api/?name=John+Support&background=f59e0b&color=fff' },
-  { id: 'ADMIN4', email: 'sales@finume.com', name: 'Mike Sales', role: 'ADMIN', adminRole: 'SALES', avatarUrl: 'https://ui-avatars.com/api/?name=Mike+Sales&background=8b5cf6&color=fff' },
-  { id: 'ADMIN5', email: 'experts@finume.com', name: 'Lisa Relations', role: 'ADMIN', adminRole: 'EXPERT_RELATIONS', avatarUrl: 'https://ui-avatars.com/api/?name=Lisa+Relations&background=ec4899&color=fff' }
+  {
+    id: 'ADMIN1',
+    email: 'admin@finume.com',
+    name: 'Super Admin',
+    role: 'ADMIN',
+    adminRole: 'SUPER_ADMIN',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=0ea5e9&color=fff'
+  },
+  {
+    id: 'ADMIN2',
+    email: 'finance@finume.com',
+    name: 'Sarah Finance',
+    role: 'ADMIN',
+    adminRole: 'FINANCE',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Sarah+Finance&background=10b981&color=fff'
+  },
+  {
+    id: 'ADMIN3',
+    email: 'support@finume.com',
+    name: 'John Support',
+    role: 'ADMIN',
+    adminRole: 'SUPPORT',
+    avatarUrl: 'https://ui-avatars.com/api/?name=John+Support&background=f59e0b&color=fff'
+  },
+  {
+    id: 'ADMIN4',
+    email: 'sales@finume.com',
+    name: 'Mike Sales',
+    role: 'ADMIN',
+    adminRole: 'SALES',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Mike+Sales&background=8b5cf6&color=fff'
+  },
+  {
+    id: 'ADMIN5',
+    email: 'experts@finume.com',
+    name: 'Lisa Relations',
+    role: 'ADMIN',
+    adminRole: 'EXPERT_RELATIONS',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Lisa+Relations&background=ec4899&color=fff'
+  }
 ];
 
 export const MOCK_CLIENTS = generateClients(50);
 export const MOCK_EXPERTS = generateExperts(20);
 
-// Notifications for specific demo users
-export const MOCK_NOTIFICATIONS: Notification[] = [
-    { id: 'n1', userId: 'client1@example.com', title: 'Welcome to Finume', message: 'Your account has been successfully created.', type: 'SUCCESS', isRead: false, date: new Date().toISOString() },
-    { id: 'n2', userId: 'expert1@example.com', title: 'Profile Approved', message: 'You can now accept requests.', type: 'SUCCESS', isRead: true, date: new Date().toISOString() },
-    { id: 'n3', userId: 'admin@finume.com', title: 'System Alert', message: 'High server load detected.', type: 'WARNING', isRead: false, date: new Date().toISOString() }
-];
-
+// Combine History and Recent
 const history = generateHistoricalRequests(MOCK_EXPERTS, MOCK_CLIENTS);
 const recent = generateActiveRequests(50, MOCK_CLIENTS, MOCK_EXPERTS);
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, Headphones, Paperclip, RefreshCw, Sparkles } from 'lucide-react';
 import { generateAIResponse } from '../services/geminiService';
