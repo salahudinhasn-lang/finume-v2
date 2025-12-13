@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export const Card: React.FC<{ children?: React.ReactNode, className?: string, onClick?: React.MouseEventHandler<HTMLDivElement> }> = ({ children, className = '', onClick }) => (
@@ -7,9 +8,9 @@ export const Card: React.FC<{ children?: React.ReactNode, className?: string, on
 );
 
 export const Button = ({ 
-  children, onClick, variant = 'primary', size = 'md', className = '', type = 'button', disabled = false, title
+  children, onClick, variant = 'primary', size = 'md', className = '', type = 'button', disabled = false 
 }: { 
-  children?: React.ReactNode, onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void, variant?: 'primary' | 'secondary' | 'danger' | 'outline', size?: 'sm' | 'md' | 'lg', className?: string, type?: 'button' | 'submit', disabled?: boolean, title?: string
+  children?: React.ReactNode, onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void, variant?: 'primary' | 'secondary' | 'danger' | 'outline', size?: 'sm' | 'md' | 'lg', className?: string, type?: 'button' | 'submit', disabled?: boolean 
 }) => {
   const baseStyle = "rounded-lg font-medium transition-colors flex items-center justify-center gap-2";
   
@@ -32,7 +33,6 @@ export const Button = ({
       className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`} 
       onClick={onClick}
       disabled={disabled}
-      title={title}
     >
       {children}
     </button>

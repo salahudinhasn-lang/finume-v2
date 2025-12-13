@@ -5,7 +5,7 @@ import { Card, Badge, Button } from '../../components/UI';
 import { 
   Users, TrendingUp, AlertCircle, DollarSign, Check, X, 
   Briefcase, Activity, Calendar, ArrowUpRight, ArrowDownRight,
-  ShieldCheck, FileText, CheckCircle, ExternalLink, Trophy, Medal, Crown, Zap, Wallet, Trash2
+  ShieldCheck, FileText, CheckCircle, ExternalLink, Trophy, Medal, Crown, Zap, Wallet
 } from 'lucide-react';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, AreaChart, Area 
@@ -13,7 +13,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
-  const { clients, experts, requests, payoutRequests, updateExpertStatus, resetDatabase } = useAppContext();
+  const { clients, experts, requests, payoutRequests, updateExpertStatus } = useAppContext();
   const navigate = useNavigate();
 
   // --- 1. Dynamic Financial Metrics ---
@@ -165,10 +165,6 @@ const AdminDashboard = () => {
                 <span className="text-sm font-medium text-gray-500 px-3">Last 30 Days</span>
                 <Button size="sm" variant="secondary" className="h-8 w-8 p-0"><Calendar size={16} /></Button>
             </div>
-            {/* Reset Button for Dev/Demo */}
-            <Button size="sm" variant="danger" onClick={resetDatabase} className="h-9 px-3 text-xs bg-red-50 text-red-600 border border-red-200 hover:bg-red-100" title="Reset all data to default mock state">
-                <Trash2 size={14} className="mr-2" /> Reset Data
-            </Button>
          </div>
        </div>
 

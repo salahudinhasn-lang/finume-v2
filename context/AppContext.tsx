@@ -43,7 +43,6 @@ interface AppContextType {
   addAdmin: (admin: Admin) => void;
   updateAdmin: (id: string, updates: Partial<Admin>) => void;
   deleteAdmin: (id: string) => void;
-  resetDatabase: () => void; // New action
 
   // Payout Actions
   requestPayout: (amount: number, requestIds?: string[]) => void;
@@ -53,13 +52,9 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const DB_KEY = 'FINUME_DB_V1';
-const USER_KEY = 'FINUME_USER_V1';
-
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [language, setLanguage] = useState<'en' | 'ar'>('en');
-  const [isInitialized, setIsInitialized] = useState(false);
   
   // "Database" in state
   const [clients, setClients] = useState<Client[]>([]);
@@ -70,88 +65,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
   
-  // 1. Initialize from LocalStorage or Mock Data
   useEffect(() => {
-    const loadData = () => {
-        const savedData = localStorage.getItem(DB_KEY);
-        const savedUser = localStorage.getItem(USER_KEY);
-
-        if (savedData) {
-            try {
-                const parsed = JSON.parse(savedData);
-                setClients(parsed.clients || MOCK_CLIENTS);
-                setExperts(parsed.experts || MOCK_EXPERTS);
-                setRequests(parsed.requests || MOCK_REQUESTS);
-                setAdmins(parsed.admins || MOCK_ADMINS);
-                setServices(parsed.services || SERVICES);
-                setPlans(parsed.plans || MOCK_PLANS);
-                setPayoutRequests(parsed.payoutRequests || []);
-            } catch (e) {
-                console.error("Failed to load local DB", e);
-                resetToMock();
-            }
-        } else {
-            resetToMock();
-        }
-
-        if (savedUser) {
-            try {
-                setUser(JSON.parse(savedUser));
-            } catch (e) { console.error("Failed to restore session", e); }
-        }
-        setIsInitialized(true);
-    };
-
-    loadData();
-  }, []);
-
-  const resetToMock = () => {
-      setClients(MOCK_CLIENTS);
-      setExperts(MOCK_EXPERTS);
-      setRequests(MOCK_REQUESTS);
-      setAdmins(MOCK_ADMINS);
-      setServices(SERVICES);
-      setPlans(MOCK_PLANS);
-      setPayoutRequests([
+    // Initialize Mock Data only once
+    setClients(MOCK_CLIENTS);
+    setExperts(MOCK_EXPERTS);
+    setRequests(MOCK_REQUESTS);
+    setAdmins(MOCK_ADMINS);
+    setServices(SERVICES);
+    setPlans(MOCK_PLANS);
+    
+    // Legacy payouts for mock data consistency (no requests linked for these older ones)
+    setPayoutRequests([
         { id: 'WD-LEGACY', expertId: 'E1', expertName: 'Expert 1', amount: 0, requestDate: '2023-01-01', processedDate: '2023-01-01', status: 'APPROVED', requestIds: [] }
-      ]);
-  };
-
-  const resetDatabase = () => {
-      if(window.confirm("WARNING: This will wipe all current data and restore original mock data. Continue?")) {
-          localStorage.removeItem(DB_KEY);
-          localStorage.removeItem(USER_KEY);
-          resetToMock();
-          setUser(null);
-          window.location.reload();
-      }
-  };
-
-  // 2. Persist Data on Change
-  useEffect(() => {
-      if (!isInitialized) return;
-      
-      const dbState = {
-          clients,
-          experts,
-          requests,
-          admins,
-          services,
-          plans,
-          payoutRequests
-      };
-      localStorage.setItem(DB_KEY, JSON.stringify(dbState));
-  }, [clients, experts, requests, admins, services, plans, payoutRequests, isInitialized]);
-
-  // 3. Persist User Session
-  useEffect(() => {
-      if (!isInitialized) return;
-      if (user) {
-          localStorage.setItem(USER_KEY, JSON.stringify(user));
-      } else {
-          localStorage.removeItem(USER_KEY);
-      }
-  }, [user, isInitialized]);
+    ]);
+  }, []);
 
   const login = (email: string, role: string, newUser?: User) => {
     if (newUser) {
@@ -195,8 +122,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (email === 'expert1@example.com' || !email) {
         setUser(experts[0]);
       } else {
-         // Fallback for demo flow if trying to login as uncreated expert
-         alert("Expert account not found. Logging in as Demo Expert.");
+         alert("Expert not found. Logging in as Demo Expert.");
          setUser(experts[0]);
       }
     } else {
@@ -324,9 +250,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (specificRequestIds && specificRequestIds.length > 0) {
           requestIds = specificRequestIds;
+          // Calculate amount from specific IDs to be safe
           const selectedRequests = requests.filter(r => requestIds.includes(r.id));
           payoutAmount = selectedRequests.reduce((sum, r) => sum + (r.amount * 0.8), 0);
       } else {
+          // Fallback: Find All Unsettled
           const unsettledRequests = requests.filter(r => 
               r.assignedExpertId === user.id && 
               r.status === 'COMPLETED' && 
@@ -340,6 +268,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const payoutId = `WD-${Date.now()}`;
       
+      // Update Requests to link to this payout
       setRequests(prev => prev.map(r => {
           if (requestIds.includes(r.id)) {
               return { ...r, payoutId: payoutId };
@@ -365,6 +294,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           p.id === id ? { ...p, status, processedDate: new Date().toISOString().split('T')[0] } : p
       ));
 
+      // If rejected, unlink the requests so they can be requested again
       if (status === 'REJECTED') {
           const payout = payoutRequests.find(p => p.id === id);
           if (payout && payout.requestIds) {
@@ -379,15 +309,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const manualSettle = (requestIds: string[]) => {
+      // Create a dummy approved payout
       const payoutId = `SETTLE-MANUAL-${Date.now()}`;
       
+      // Calculate total
       const totalAmount = requests
         .filter(r => requestIds.includes(r.id))
         .reduce((sum, r) => sum + (r.amount * 0.8), 0);
 
+      // Create dummy payout record
       const dummyPayout: PayoutRequest = {
           id: payoutId,
-          expertId: 'VARIOUS',
+          expertId: 'VARIOUS', // Or specific if we filtered
           expertName: 'Manual Settlement',
           amount: totalAmount,
           requestDate: new Date().toISOString().split('T')[0],
@@ -397,6 +330,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
       setPayoutRequests(prev => [dummyPayout, ...prev]);
 
+      // Link Requests
       setRequests(prev => prev.map(r => {
           if (requestIds.includes(r.id)) {
               return { ...r, payoutId: payoutId };
@@ -411,7 +345,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       clients, experts, requests, services, plans, admins, payoutRequests,
       addRequest, updateRequestStatus, assignRequest, updateExpertStatus, updateRequest,
       updateClient, updateExpert, addClient, addExpert, submitReview,
-      addAdmin, updateAdmin, deleteAdmin, resetDatabase,
+      addAdmin, updateAdmin, deleteAdmin,
       updateService, addService, deleteService, updatePlan,
       requestPayout, processPayout, manualSettle
     }}>
