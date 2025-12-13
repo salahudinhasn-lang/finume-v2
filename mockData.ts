@@ -1,4 +1,3 @@
-
 import { Client, Expert, Request, Transaction, Service, Admin, PricingPlan, FileBatch, Notification } from './types';
 
 // Generators

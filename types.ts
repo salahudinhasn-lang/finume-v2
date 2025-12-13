@@ -1,4 +1,3 @@
-
 export type UserRole = 'CLIENT' | 'EXPERT' | 'ADMIN';
 
 export interface User {

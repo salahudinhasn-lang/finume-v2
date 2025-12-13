@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Headphones, Paperclip, CheckCircle, RefreshCw } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
