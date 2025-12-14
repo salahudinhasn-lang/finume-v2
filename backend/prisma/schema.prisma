@@ -1,0 +1,155 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Models
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      String   // Enum: CLIENT, EXPERT, ADMIN
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations (simplified for single table inheritance or optional fields)
+  // Client specific
+  companyName String?
+  industry    String?
+  totalSpent  Float    @default(0)
+  zatcaStatus String?  // Enum: GREEN, YELLOW, RED
+
+  // Expert specific
+  specializations String? // Stored as JSON or comma-separated
+  status          String? // Enum: ACTIVE, VETTING, SUSPENDED
+  totalEarned     Float    @default(0)
+  rating          Float    @default(0)
+  bio             String?
+  yearsExperience Int?
+  hourlyRate      Float?
+  isPremium       Boolean  @default(false)
+  isFeatured      Boolean  @default(false)
+
+  // Admin specific
+  adminRole String? // Enum: SUPER_ADMIN, ADMIN, FINANCE...
+
+  // Relations
+  sentMessages     ChatMessage[] @relation("SentMessages")
+  clientRequests   Request[]     @relation("ClientRequests")
+  expertRequests   Request[]     @relation("ExpertRequests")
+  uploadedFiles    UploadedFile[]
+  payouts          PayoutRequest[]
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  nameEn      String
+  nameAr      String
+  price       Float
+  description String
+  requests    Request[]
+}
+
+model PricingPlan {
+  id          String   @id @default(uuid())
+  name        String
+  price       Float
+  description String
+  tagline     String
+  features    String // JSON string
+  guarantee   String
+  isPopular   Boolean @default(false)
+  color       String?
+}
+
+model Request {
+  id              String        @id @default(uuid())
+  clientId        String
+  client          User          @relation("ClientRequests", fields: [clientId], references: [id])
+  serviceId       String
+  service         Service       @relation(fields: [serviceId], references: [id])
+  status          String        @default("NEW") // Enum: NEW, MATCHED, etc.
+  amount          Float
+  assignedExpertId String?
+  assignedExpert   User?        @relation("ExpertRequests", fields: [assignedExpertId], references: [id])
+  description     String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Review (Embedded 1:1)
+  reviewExpertRating Int?
+  reviewExpertComment String?
+  reviewAdminNps     Int?
+  reviewAdminComment String?
+  reviewDate         DateTime?
+
+  batches         FileBatch[]
+  transactions    Transaction[]
+  payoutRequestId String?       // Relation manual or loosely coupled
+}
+
+model FileBatch {
+  id               String        @id @default(uuid())
+  requestId        String
+  request          Request       @relation(fields: [requestId], references: [id])
+  date             DateTime      @default(now())
+  status           String        @default("PENDING") // Enum: PENDING, COMPLETED
+  assignedExpertId String?
+  // assignedExpert User? @relation... (Optional, can rely on Request's expert)
+
+  files            UploadedFile[]
+}
+
+model UploadedFile {
+  id          String   @id @default(uuid())
+  name        String
+  size        String
+  type        String
+  url         String
+  uploadedById String
+  uploadedBy   User    @relation(fields: [uploadedById], references: [id])
+  batchId     String?
+  batch       FileBatch? @relation(fields: [batchId], references: [id])
+  source      String? // Enum mapped to string
+  createdAt   DateTime @default(now())
+}
+
+model Transaction {
+  id        String            @id @default(uuid())
+  requestId String
+  request   Request           @relation(fields: [requestId], references: [id])
+  amount    Float
+  date      DateTime          @default(now())
+  status    String            // Enum: PAID, PENDING, REFUNDED
+  type      String            // Enum: PAYMENT, PAYOUT
+}
+
+model PayoutRequest {
+  id            String       @id @default(uuid())
+  expertId      String
+  expert        User         @relation(fields: [expertId], references: [id])
+  amount        Float
+  requestDate   DateTime     @default(now())
+  processedDate DateTime?
+  status        String       @default("PENDING") // Enum: PENDING, APPROVED, REJECTED
+  bankDetails   String?
+  requestIds    String // JSON string of IDs
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("SentMessages", fields: [userId], references: [id])
+  text      String
+  role      String   // 'user' or 'model' - if 'model', userId might be null or system bot user
+  timestamp DateTime @default(now())
+}
