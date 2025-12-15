@@ -61,15 +61,14 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
       )}
 
       {/* Sidebar - Dark Theme */}
-      <aside className={`fixed lg:static inset-y-0 ${language === 'ar' ? 'right-0' : 'left-0'} z-30 w-72 bg-slate-900 text-slate-300 flex flex-col transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? 'translate-x-0' : (language === 'ar' ? 'translate-x-full lg:translate-x-0' : '-translate-x-full lg:translate-x-0')
+      <aside className={`fixed lg:static inset-y-0 ${language === 'ar' ? 'right-0' : 'left-0'} z-30 w-72 bg-slate-900 text-slate-300 flex flex-col transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : (language === 'ar' ? 'translate-x-full lg:translate-x-0' : '-translate-x-full lg:translate-x-0')
         }`}>
-        
+
         {/* Sidebar Header */}
         <div className="flex items-center h-20 px-8 border-b border-slate-800 bg-slate-900">
           <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <Logo size={32} className="text-primary-500" />
-            <span className="text-2xl font-bold text-white tracking-tight">FINUME</span>
+            <span className="text-2xl font-bold text-white tracking-tight">{language === 'ar' ? 'فينومي' : 'FINUME'}</span>
           </Link>
           <button className="lg:hidden ml-auto text-slate-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
             <X size={20} />
@@ -79,31 +78,30 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         {/* Navigation Items */}
         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1 scrollbar-hide">
           <div className="px-4 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Main Menu
+            Main Menu
           </div>
           {getNavItems().map((item) => {
             const isActive = location.pathname === item.path;
             return (
-                <Link
+              <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
-                    isActive 
-                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' 
+                className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${isActive
+                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`}
-                >
+                  }`}
+              >
                 <div className="flex items-center gap-3">
-                    <item.icon size={20} className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-white transition-colors'} />
-                    {item.label}
+                  <item.icon size={20} className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-white transition-colors'} />
+                  {item.label}
                 </div>
                 {isActive && <ChevronRight size={16} className="text-primary-200" />}
-                </Link>
+              </Link>
             )
           })}
 
           <div className="mt-8 px-4 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Support
+            Support
           </div>
           <Link
             to="/qa"
@@ -118,15 +116,15 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         <div className="p-4 border-t border-slate-800 bg-slate-950">
           <div className="flex items-center gap-3 mb-3 px-2">
             <div className="relative">
-                <img src={user?.avatarUrl} alt="" className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700" />
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-slate-950 rounded-full"></span>
+              <img src={user?.avatarUrl} alt="" className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700" />
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-slate-950 rounded-full"></span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white truncate">{user?.name}</p>
               <p className="text-xs text-slate-500 truncate">{user?.email}</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={handleLogout}
             className="flex items-center justify-center gap-2 w-full px-4 py-2 text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors border border-slate-800 hover:border-slate-700"
           >
@@ -144,12 +142,12 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
               <Menu size={24} />
             </button>
             <div>
-                <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+              <h1 className="text-xl font-bold text-gray-900">{title}</h1>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
-             <button 
+            <button
               onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
               className="px-3 py-1.5 text-xs font-bold bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 uppercase tracking-wide transition-colors"
             >

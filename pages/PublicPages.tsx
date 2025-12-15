@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
-import { 
-  Shield, Info, Phone, Briefcase, FileText, 
-  CheckCircle, CreditCard, 
-  UserCheck, Mail, Building, ShieldCheck, FileQuestion, Smartphone, Cpu, Check,
-  BookOpen, Search, Coins, TrendingUp, Layout, Minus, HelpCircle, ArrowRight,
-  MessageCircle, FileCheck, Zap, Lock
+import {
+    Shield, Info, Phone, Briefcase, FileText,
+    CheckCircle, CreditCard,
+    UserCheck, Mail, Building, ShieldCheck, FileQuestion, Smartphone, Cpu, Check,
+    BookOpen, Search, Coins, TrendingUp, Layout, Minus, HelpCircle, ArrowRight,
+    MessageCircle, FileCheck, Zap, Lock
 } from 'lucide-react';
 import { Button } from '../components/UI';
 import { Link, useNavigate } from 'react-router-dom';
@@ -14,21 +14,21 @@ import { useAppContext } from '../context/AppContext';
 // --- Shared Components ---
 
 const PageContent = ({ title, icon: Icon, children }: { title: string, icon: any, children?: React.ReactNode }) => (
-  <div className="max-w-7xl mx-auto px-6 py-12">
-    <div className="flex items-center gap-3 mb-12 justify-center">
-        <div className="p-3 bg-primary-50 text-primary-600 rounded-xl">
-            <Icon size={32} />
+    <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="flex items-center gap-3 mb-12 justify-center">
+            <div className="p-3 bg-primary-50 text-primary-600 rounded-xl">
+                <Icon size={32} />
+            </div>
+            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">{title}</h1>
         </div>
-        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">{title}</h1>
+        <div className="max-w-5xl mx-auto">
+            {children}
+        </div>
     </div>
-    <div className="max-w-5xl mx-auto">
-        {children}
-    </div>
-  </div>
 );
 
 export const ServicesPage = () => {
-    const { services, user } = useAppContext();
+    const { services, user, t } = useAppContext();
     const navigate = useNavigate();
 
     const getIcon = (name: string) => {
@@ -49,10 +49,10 @@ export const ServicesPage = () => {
     };
 
     return (
-        <PageContent title="Professional Financial Services" icon={Briefcase}>
+        <PageContent title={t('public.servicesTitle')} icon={Briefcase}>
             <div className="text-center max-w-2xl mx-auto mb-16 -mt-6">
                 <p className="text-lg text-gray-500">
-                    From daily bookkeeping to complex Zakat filings, our network of certified experts covers every aspect of financial compliance in Saudi Arabia.
+                    {t('public.servicesDesc')}
                 </p>
             </div>
 
@@ -66,30 +66,30 @@ export const ServicesPage = () => {
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-3">{service.nameEn}</h3>
                             <p className="text-gray-500 mb-6 flex-1 leading-relaxed">{service.description}</p>
-                            
+
                             <div className="pt-6 border-t border-gray-50 flex items-center justify-between mt-auto">
                                 <div>
-                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Starting from</p>
-                                    <p className="text-xl font-bold text-primary-600">{service.price.toLocaleString()} <span className="text-sm text-gray-500 font-normal">SAR</span></p>
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">{t('public.startingFrom')}</p>
+                                    <p className="text-xl font-bold text-primary-600">{service.price.toLocaleString()} <span className="text-sm text-gray-500 font-normal">{t('common.sar')}</span></p>
                                 </div>
                                 <Button size="sm" onClick={() => handleBookService(service.id)} className="shadow-none bg-gray-900 hover:bg-gray-800">
-                                    Book Now
+                                    {t('public.bookNow')}
                                 </Button>
                             </div>
                         </div>
                     )
                 })}
-                
+
                 {/* Custom Card */}
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 p-8 rounded-2xl shadow-lg text-white flex flex-col">
                     <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center text-white mb-6">
                         <Layout size={28} />
                     </div>
-                    <h3 className="text-xl font-bold mb-3">Custom Enterprise Solution</h3>
-                    <p className="text-gray-300 mb-6 flex-1 leading-relaxed">Need a tailored package for multiple entities or complex consolidation? Let's build a plan that fits.</p>
+                    <h3 className="text-xl font-bold mb-3">{t('public.customTitle')}</h3>
+                    <p className="text-gray-300 mb-6 flex-1 leading-relaxed">{t('public.customDesc')}</p>
                     <div className="pt-6 border-t border-gray-700 mt-auto">
                         <Link to="/contact">
-                            <Button size="sm" className="w-full bg-white text-gray-900 hover:bg-gray-100 border-none">Contact Sales</Button>
+                            <Button size="sm" className="w-full bg-white text-gray-900 hover:bg-gray-100 border-none">{t('public.contactSales')}</Button>
                         </Link>
                     </div>
                 </div>
@@ -97,18 +97,18 @@ export const ServicesPage = () => {
 
             {/* Process Section */}
             <div className="bg-gray-50 rounded-3xl p-12 text-center border border-gray-100">
-                <h2 className="text-2xl font-bold text-gray-900 mb-12">How it works</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-12">{t('public.howItWorks')}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
                     {/* Connecting line */}
                     <div className="hidden md:block absolute top-8 left-[10%] right-[10%] h-0.5 bg-gray-200 -z-10"></div>
-                    
+
                     {[
-                        { step: 1, title: 'Select Service', desc: 'Choose from our catalog or post a custom request.' },
-                        { step: 2, title: 'Get Matched', desc: 'Our AI matches you with a certified expert instantly.' },
-                        { step: 3, title: 'Expert Delivery', desc: 'Work begins immediately via our secure platform.' },
-                        { step: 4, title: 'Approval', desc: 'Review deliverables and release payment only when happy.' }
+                        { step: 1, title: t('public.steps.1.title'), desc: t('public.steps.1.desc') },
+                        { step: 2, title: t('public.steps.2.title'), desc: t('public.steps.2.desc') },
+                        { step: 3, title: t('public.steps.3.title'), desc: t('public.steps.3.desc') },
+                        { step: 4, title: t('public.steps.4.title'), desc: t('public.steps.4.desc') }
                     ].map((item) => (
-                        <div key={item.step} className="relative"> 
+                        <div key={item.step} className="relative">
                             <div className="w-16 h-16 bg-white border-4 border-primary-100 text-primary-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4 shadow-sm relative z-10">
                                 {item.step}
                             </div>
@@ -123,7 +123,7 @@ export const ServicesPage = () => {
 };
 
 export const PricingPage = () => {
-    const { plans, user } = useAppContext();
+    const { plans, user, t } = useAppContext();
     const navigate = useNavigate();
     const [billing, setBilling] = useState<'MONTHLY' | 'YEARLY'>('YEARLY');
 
@@ -136,25 +136,25 @@ export const PricingPage = () => {
     };
 
     return (
-        <PageContent title="Transparent Pricing" icon={CreditCard}>
+        <PageContent title={t('public.pricingTitle')} icon={CreditCard}>
             <div className="text-center max-w-2xl mx-auto -mt-6 mb-12">
                 <p className="text-lg text-gray-500 mb-8">
-                    Simple, flat-rate pricing for peace of mind. No hidden fees, no hourly billing surprises.
+                    {t('public.pricingDesc')}
                 </p>
-                
+
                 {/* Toggle */}
                 <div className="inline-flex bg-gray-100 p-1 rounded-xl border border-gray-200 relative">
-                    <button 
+                    <button
                         onClick={() => setBilling('MONTHLY')}
                         className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${billing === 'MONTHLY' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
                     >
-                        Monthly
+                        {t('public.monthly')}
                     </button>
-                    <button 
+                    <button
                         onClick={() => setBilling('YEARLY')}
                         className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${billing === 'YEARLY' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
                     >
-                        Yearly <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full">-20%</span>
+                        {t('public.yearly')} <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full">-20%</span>
                     </button>
                 </div>
             </div>
@@ -162,21 +162,21 @@ export const PricingPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
                 {plans.map(plan => {
                     const price = billing === 'YEARLY' ? Math.round(plan.price * 0.8) : plan.price;
-                    
+
                     return (
                         <div key={plan.id} className={`relative p-8 bg-white rounded-2xl flex flex-col ${plan.isPopular ? 'border-2 border-primary-500 shadow-xl scale-105 z-10' : 'border border-gray-200 shadow-sm'}`}>
-                            {plan.isPopular && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary-600 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">Most Popular</div>}
-                            
+                            {plan.isPopular && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary-600 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">{t('public.mostPopular')}</div>}
+
                             <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                             <p className="text-gray-500 text-sm mb-6 h-10">{plan.description}</p>
-                            
+
                             <div className="mb-6">
                                 <div className="flex items-baseline">
                                     <span className="text-4xl font-extrabold text-gray-900">{price}</span>
-                                    <span className="text-lg font-medium text-gray-500 ml-1"> SAR / mo</span>
+                                    <span className="text-lg font-medium text-gray-500 ml-1"> {t('common.sar')} / {t('public.monthly').toLowerCase()}</span>
                                 </div>
                                 {billing === 'YEARLY' && (
-                                    <p className="text-xs text-green-600 font-medium mt-2">Billed {Math.round(price * 12).toLocaleString()} SAR yearly</p>
+                                    <p className="text-xs text-green-600 font-medium mt-2">{t('public.billedYearly')} {Math.round(price * 12).toLocaleString()} {t('common.sar')}</p>
                                 )}
                             </div>
 
@@ -190,10 +190,10 @@ export const PricingPage = () => {
                                     </li>
                                 ))}
                             </ul>
-                            
+
                             <div className="mt-auto">
                                 <Button onClick={() => handleSelectPlan(plan.id)} className={`w-full py-3 ${plan.isPopular ? 'bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-500/30' : 'bg-gray-900 hover:bg-gray-800'}`}>
-                                    Get Started
+                                    {t('public.getStarted')}
                                 </Button>
                             </div>
                         </div>
@@ -204,7 +204,7 @@ export const PricingPage = () => {
             {/* Comparison Table */}
             <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden mb-16">
                 <div className="p-8 border-b border-gray-100 bg-gray-50">
-                    <h3 className="text-2xl font-bold text-gray-900 text-center">Compare Plans</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 text-center">{t('public.comparePlans')}</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
@@ -245,7 +245,7 @@ export const PricingPage = () => {
 
             {/* FAQ */}
             <div className="max-w-3xl mx-auto">
-                <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">Frequently Asked Questions</h3>
+                <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">{t('public.faqTitle')}</h3>
                 <div className="space-y-4">
                     {[
                         { q: "Can I switch plans later?", a: "Yes, you can upgrade or downgrade at any time. Prorated charges will apply." },
@@ -263,144 +263,150 @@ export const PricingPage = () => {
     );
 };
 
-export const QAPage = () => (
-    <PageContent title="Frequently Asked Questions" icon={FileQuestion}>
-        <div className="space-y-6 max-w-3xl mx-auto">
-            {[
-                { q: "How are experts vetted?", a: "Every expert undergoes a rigorous 3-step verification process including identity verification, SOCPA certification check, and a technical interview." },
-                { q: "What happens if I'm not satisfied?", a: "We offer a money-back guarantee. If the delivered work doesn't meet the agreed scope, we'll refund your payment or find a replacement expert." },
-                { q: "Is the platform ZATCA compliant?", a: "Yes, all invoicing and tax related services provided through our platform adhere to the latest ZATCA Phase 2 regulations." },
-                { q: "How do payments work?", a: "Payments are held in escrow and only released to the expert once you approve the completed work." }
-            ].map((item, i) => (
-                <div key={i} className="bg-white p-6 rounded-xl border border-gray-200">
-                    <h3 className="font-bold text-lg text-gray-900 mb-2">{item.q}</h3>
-                    <p className="text-gray-600">{item.a}</p>
-                </div>
-            ))}
-        </div>
-    </PageContent>
-);
-
-export const AboutPage = () => (
-    <PageContent title="The 'Fine Protection' Marketplace" icon={ShieldCheck}>
-        <div className="prose prose-lg text-gray-600 mx-auto max-w-none">
-            
-            {/* Intro Section - SEO Enhanced */}
-            <div className="text-center max-w-4xl mx-auto mb-16 -mt-4">
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-6 tracking-tight">
-                    We don't just sell accounting. <br className="hidden sm:block" />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-blue-600">We sell safety.</span>
-                </h2>
-                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-8 mb-8">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Compliance as a Service (CaaS)</h3>
-                    <p className="text-xl leading-relaxed text-gray-700">
-                        We replace the expensive "Full-Time Accountant" with a tech-enabled <span className="font-bold text-primary-700 whitespace-nowrap bg-white px-2 py-0.5 rounded shadow-sm border border-primary-100">"Fine Protection Subscription."</span>
-                    </p>
-                </div>
+export const QAPage = () => {
+    const { t } = useAppContext();
+    return (
+        <PageContent title={t('public.faqTitle')} icon={FileQuestion}>
+            <div className="space-y-6 max-w-3xl mx-auto">
+                {[
+                    { q: "How are experts vetted?", a: "Every expert undergoes a rigorous 3-step verification process including identity verification, SOCPA certification check, and a technical interview." },
+                    { q: "What happens if I'm not satisfied?", a: "We offer a money-back guarantee. If the delivered work doesn't meet the agreed scope, we'll refund your payment or find a replacement expert." },
+                    { q: "Is the platform ZATCA compliant?", a: "Yes, all invoicing and tax related services provided through our platform adhere to the latest ZATCA Phase 2 regulations." },
+                    { q: "How do payments work?", a: "Payments are held in escrow and only released to the expert once you approve the completed work." }
+                ].map((item, i) => (
+                    <div key={i} className="bg-white p-6 rounded-xl border border-gray-200">
+                        <h3 className="font-bold text-lg text-gray-900 mb-2">{item.q}</h3>
+                        <p className="text-gray-600">{item.a}</p>
+                    </div>
+                ))}
             </div>
+        </PageContent>
+    );
+};
 
-            {/* The Shield Model */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-stretch mb-24">
-                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-center">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-blue-100 text-blue-600 rounded-xl"><Shield size={32} /></div>
-                        <h3 className="text-2xl font-bold text-gray-900 m-0">The "Shield" Model</h3>
-                    </div>
-                    <p className="text-lg font-medium text-gray-800 mb-4">We don't sell hours; <span className="text-blue-600 font-bold">we sell outcomes.</span></p>
-                    <p className="text-gray-600 leading-relaxed">
-                        Our vetted accountants leverage proprietary automation tools to handle compliance efficiently for 60+ clients simultaneously. This allows us to offer enterprise-grade financial protection at a price accessible to every SME in Saudi Arabia.
-                    </p>
-                </div>
-                
-                <div className="bg-gray-900 rounded-3xl p-8 text-white relative overflow-hidden group hover:shadow-2xl transition-all duration-300 flex flex-col justify-center">
-                    <div className="absolute top-0 right-0 p-8 opacity-10 transform translate-x-1/4 -translate-y-1/4 transition-transform group-hover:scale-110">
-                        <ShieldCheck size={200} />
-                    </div>
-                    <div className="relative z-10">
-                        <h4 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                            <Lock className="text-green-400" size={28} /> The Fine Guarantee
-                        </h4>
-                        <p className="text-gray-300 mb-8 leading-relaxed text-lg border-l-4 border-green-500 pl-4">
-                            The only platform in KSA that <strong>pays the fine</strong> if we make a mistake.
+export const AboutPage = () => {
+    const { t } = useAppContext();
+    return (
+        <PageContent title={t('public.aboutTitle')} icon={ShieldCheck}>
+            <div className="prose prose-lg text-gray-600 mx-auto max-w-none">
+
+                {/* Intro Section - SEO Enhanced */}
+                <div className="text-center max-w-4xl mx-auto mb-16 -mt-4">
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-6 tracking-tight">
+                        {t('public.aboutIntro1')} <br className="hidden sm:block" />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-blue-600">{t('public.aboutIntro2')}</span>
+                    </h2>
+                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-8 mb-8">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('public.caasTitle')}</h3>
+                        <p className="text-xl leading-relaxed text-gray-700">
+                            {t('public.caasDesc')}
                         </p>
-                        <div className="inline-block bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-5 py-4">
-                            <p className="font-bold text-white flex items-center gap-2">
-                                <CheckCircle className="text-green-400" size={20} /> Risk Reversal: 100% Protected
+                    </div>
+                </div>
+
+                {/* The Shield Model */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-stretch mb-24">
+                    <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-blue-100 text-blue-600 rounded-xl"><Shield size={32} /></div>
+                            <h3 className="text-2xl font-bold text-gray-900 m-0">{t('public.shieldTitle')}</h3>
+                        </div>
+                        <p className="text-lg font-medium text-gray-800 mb-4">{t('public.shieldDesc1')} <span className="text-blue-600 font-bold">{t('public.shieldDesc2')}</span></p>
+                        <p className="text-gray-600 leading-relaxed">
+                            {t('public.shieldBody')}
+                        </p>
+                    </div>
+
+                    <div className="bg-gray-900 rounded-3xl p-8 text-white relative overflow-hidden group hover:shadow-2xl transition-all duration-300 flex flex-col justify-center">
+                        <div className="absolute top-0 right-0 p-8 opacity-10 transform translate-x-1/4 -translate-y-1/4 transition-transform group-hover:scale-110">
+                            <ShieldCheck size={200} />
+                        </div>
+                        <div className="relative z-10">
+                            <h4 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                                <Lock className="text-green-400" size={28} /> {t('public.guaranteeTitle')}
+                            </h4>
+                            <p className="text-gray-300 mb-8 leading-relaxed text-lg border-l-4 border-green-500 pl-4">
+                                {t('public.guaranteeBody')}
+                            </p>
+                            <div className="inline-block bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-5 py-4">
+                                <p className="font-bold text-white flex items-center gap-2">
+                                    <CheckCircle className="text-green-400" size={20} /> {t('public.riskReversal')}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* How it Works - Tech + Human Loop (Flow) */}
+                <div className="mb-24 relative">
+                    <div className="text-center mb-16">
+                        <h3 className="text-3xl font-extrabold text-gray-900">{t('public.techTitle')}</h3>
+                        <p className="text-gray-500 mt-2">{t('public.techDesc')}</p>
+                    </div>
+
+                    {/* Visual Flow Connector (Desktop) */}
+                    <div className="hidden md:block absolute top-[60%] left-0 w-full h-2 bg-gray-100 -z-10 -translate-y-1/2 rounded-full overflow-hidden">
+                        <div className="w-full h-full bg-gradient-to-r from-green-100 via-blue-100 to-green-100 opacity-50"></div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Step 1: Input */}
+                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg relative text-center hover:-translate-y-2 transition-transform duration-300 group">
+                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold border-4 border-white shadow-md z-20">1</div>
+                            <div className="w-20 h-20 mx-auto bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                                <Smartphone size={40} />
+                            </div>
+                            <h4 className="text-xl font-bold text-gray-900 mb-4">{t('public.inputTitle')}</h4>
+                            <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl">
+                                {t('public.inputDesc')}
+                            </p>
+                        </div>
+
+                        {/* Step 2: Process */}
+                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg relative text-center hover:-translate-y-2 transition-transform duration-300 group">
+                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold border-4 border-white shadow-md z-20">2</div>
+                            <div className="w-20 h-20 mx-auto bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                                <Cpu size={40} />
+                            </div>
+                            <h4 className="text-xl font-bold text-gray-900 mb-4">{t('public.processTitle')}</h4>
+                            <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl">
+                                {t('public.processDesc')}
+                            </p>
+                        </div>
+
+                        {/* Step 3: Output */}
+                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg relative text-center hover:-translate-y-2 transition-transform duration-300 group">
+                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold border-4 border-white shadow-md z-20">3</div>
+                            <div className="w-20 h-20 mx-auto bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                                <CheckCircle size={40} />
+                            </div>
+                            <h4 className="text-xl font-bold text-gray-900 mb-4">{t('public.outputTitle')}</h4>
+                            <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl">
+                                {t('public.outputDesc')}
                             </p>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* How it Works - Tech + Human Loop (Flow) */}
-            <div className="mb-24 relative">
-                <div className="text-center mb-16">
-                    <h3 className="text-3xl font-extrabold text-gray-900">Technology + Human Loop</h3>
-                    <p className="text-gray-500 mt-2">The engine behind your safety.</p>
-                </div>
-                
-                {/* Visual Flow Connector (Desktop) */}
-                <div className="hidden md:block absolute top-[60%] left-0 w-full h-2 bg-gray-100 -z-10 -translate-y-1/2 rounded-full overflow-hidden">
-                    <div className="w-full h-full bg-gradient-to-r from-green-100 via-blue-100 to-green-100 opacity-50"></div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Step 1: Input */}
-                    <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg relative text-center hover:-translate-y-2 transition-transform duration-300 group">
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold border-4 border-white shadow-md z-20">1</div>
-                        <div className="w-20 h-20 mx-auto bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-inner">
-                            <Smartphone size={40} />
-                        </div>
-                        <h4 className="text-xl font-bold text-gray-900 mb-4">Input</h4>
-                        <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl">
-                            SME owner snaps a photo of an invoice via <span className="font-bold text-gray-900 inline-flex items-center gap-1 mx-1"><MessageCircle size={14} className="text-green-500"/> WhatsApp</span> or our App.
-                        </p>
+                {/* Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center border-t border-gray-100 pt-12">
+                    <div>
+                        <div className="text-4xl font-extrabold text-primary-600 mb-2">500+</div>
+                        <div className="text-gray-500 font-medium uppercase tracking-wide text-sm">{t('public.activeCompanies')}</div>
                     </div>
-
-                    {/* Step 2: Process */}
-                    <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg relative text-center hover:-translate-y-2 transition-transform duration-300 group">
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold border-4 border-white shadow-md z-20">2</div>
-                        <div className="w-20 h-20 mx-auto bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-inner">
-                            <Cpu size={40} />
-                        </div>
-                        <h4 className="text-xl font-bold text-gray-900 mb-4">Process</h4>
-                        <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl">
-                            <span className="font-bold text-purple-700 inline-flex items-center gap-1"><Zap size={14}/> Automation engine</span> categorizes it + <span className="font-bold text-gray-900 inline-flex items-center gap-1"><UserCheck size={14}/> Human Accountant</span> verifies it.
-                        </p>
+                    <div>
+                        <div className="text-4xl font-extrabold text-primary-600 mb-2">100%</div>
+                        <div className="text-gray-500 font-medium uppercase tracking-wide text-sm">{t('public.zatcaCompliant')}</div>
                     </div>
-
-                    {/* Step 3: Output */}
-                    <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg relative text-center hover:-translate-y-2 transition-transform duration-300 group">
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold border-4 border-white shadow-md z-20">3</div>
-                        <div className="w-20 h-20 mx-auto bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-inner">
-                            <CheckCircle size={40} />
-                        </div>
-                        <h4 className="text-xl font-bold text-gray-900 mb-4">Output</h4>
-                        <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl">
-                            <span className="font-bold text-gray-900 inline-flex items-center gap-1"><FileCheck size={14} className="text-blue-500"/> ZATCA-compliant</span> filing and guaranteed <span className="font-bold text-green-600 inline-flex items-center gap-1 bg-green-100 px-1.5 py-0.5 rounded border border-green-200 uppercase text-xs tracking-wider">"Green"</span> status.
-                        </p>
+                    <div>
+                        <div className="text-4xl font-extrabold text-green-500 mb-2">0 {t('common.sar')}</div>
+                        <div className="text-gray-500 font-medium uppercase tracking-wide text-sm">{t('public.finesIncurred')}</div>
                     </div>
                 </div>
             </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center border-t border-gray-100 pt-12">
-                <div>
-                    <div className="text-4xl font-extrabold text-primary-600 mb-2">500+</div>
-                    <div className="text-gray-500 font-medium uppercase tracking-wide text-sm">Active Companies</div>
-                </div>
-                <div>
-                    <div className="text-4xl font-extrabold text-primary-600 mb-2">100%</div>
-                    <div className="text-gray-500 font-medium uppercase tracking-wide text-sm">ZATCA Compliant</div>
-                </div>
-                <div>
-                    <div className="text-4xl font-extrabold text-green-500 mb-2">0 SAR</div>
-                    <div className="text-gray-500 font-medium uppercase tracking-wide text-sm">Fines Incurred</div>
-                </div>
-            </div>
-        </div>
-    </PageContent>
-);
+        </PageContent>
+    );
+};
 
 export const CareersPage = () => (
     <PageContent title="Join Our Team" icon={UserCheck}>
@@ -426,71 +432,74 @@ export const CareersPage = () => (
     </PageContent>
 );
 
-export const ContactPage = () => (
-    <PageContent title="Contact Us" icon={Phone}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div className="space-y-8">
-                <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">Get in touch</h3>
-                    <p className="text-gray-600 text-lg leading-relaxed">Have questions about our services or need help finding an expert? Our team is here to help you navigate your financial journey.</p>
+export const ContactPage = () => {
+    const { t } = useAppContext();
+    return (
+        <PageContent title={t('public.contactTitle')} icon={Phone}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="space-y-8">
+                    <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">{t('public.getStarted')}</h3>
+                        <p className="text-gray-600 text-lg leading-relaxed">{t('public.contactDesc')}</p>
+                    </div>
+                    <div className="space-y-6">
+                        <div className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mt-1"><Mail size={20} /></div>
+                            <div>
+                                <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">{t('auth.email')}</p>
+                                <p className="font-medium text-gray-900 text-lg">support@finume.com</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mt-1"><Phone size={20} /></div>
+                            <div>
+                                <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Phone</p>
+                                <p className="font-medium text-gray-900 text-lg">+966 54 000 0000</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mt-1"><Building size={20} /></div>
+                            <div>
+                                <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">{t('public.office')}</p>
+                                <p className="font-medium text-gray-900">{t('public.address')}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className="space-y-6">
-                    <div className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mt-1"><Mail size={20} /></div>
+                <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg">
+                    <form className="space-y-5">
                         <div>
-                            <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Email</p>
-                            <p className="font-medium text-gray-900 text-lg">support@finume.com</p>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">{t('public.name')}</label>
+                            <input type="text" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="Your name" />
                         </div>
-                    </div>
-                    <div className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mt-1"><Phone size={20} /></div>
                         <div>
-                            <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Phone</p>
-                            <p className="font-medium text-gray-900 text-lg">+966 54 000 0000</p>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">{t('auth.email')}</label>
+                            <input type="email" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="you@company.com" />
                         </div>
-                    </div>
-                    <div className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mt-1"><Building size={20} /></div>
                         <div>
-                            <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Office</p>
-                            <p className="font-medium text-gray-900">King Fahd Rd, Olaya Dist, Riyadh</p>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">{t('public.message')}</label>
+                            <textarea rows={4} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="How can we help?" />
                         </div>
-                    </div>
+                        <Button className="w-full py-3 shadow-lg bg-gray-900 hover:bg-gray-800">{t('public.sendMessage')}</Button>
+                    </form>
                 </div>
             </div>
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg">
-                <form className="space-y-5">
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Name</label>
-                        <input type="text" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="Your name" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
-                        <input type="email" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="you@company.com" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Message</label>
-                        <textarea rows={4} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="How can we help?" />
-                    </div>
-                    <Button className="w-full py-3 shadow-lg bg-gray-900 hover:bg-gray-800">Send Message</Button>
-                </form>
-            </div>
-        </div>
-    </PageContent>
-);
+        </PageContent>
+    );
+};
 
 export const PrivacyPage = () => (
     <PageContent title="Privacy Policy" icon={Shield}>
         <div className="prose prose-blue text-gray-600 max-w-3xl mx-auto">
             <h3 className="text-xl font-bold text-gray-900 mb-4">1. Information Collection</h3>
             <p className="mb-6">We collect information that you provide directly to us, including your name, email address, company details, and payment information when you register for an account or purchase services.</p>
-            
+
             <h3 className="text-xl font-bold text-gray-900 mb-4">2. Use of Information</h3>
             <p className="mb-6">We use the information we collect to provide, maintain, and improve our services, match you with experts, process payments, and communicate with you.</p>
-            
+
             <h3 className="text-xl font-bold text-gray-900 mb-4">3. Data Security</h3>
             <p className="mb-6">We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction.</p>
-            
+
             <h3 className="text-xl font-bold text-gray-900 mb-4">4. Sharing of Information</h3>
             <p className="mb-6">We do not share your personal information with third parties except as described in this policy, such as with our vetted experts to facilitate your requests.</p>
         </div>
@@ -502,13 +511,13 @@ export const TermsPage = () => (
         <div className="prose prose-blue text-gray-600 max-w-3xl mx-auto">
             <h3 className="text-xl font-bold text-gray-900 mb-4">1. Acceptance of Terms</h3>
             <p className="mb-6">By accessing or using Finume, you agree to be bound by these Terms. If you do not agree to these Terms, you may not access or use our services.</p>
-            
+
             <h3 className="text-xl font-bold text-gray-900 mb-4">2. Services</h3>
             <p className="mb-6">Finume connects businesses with independent financial experts. We are not a financial firm and do not provide financial advice directly. The experts are independent contractors.</p>
-            
+
             <h3 className="text-xl font-bold text-gray-900 mb-4">3. User Responsibilities</h3>
             <p className="mb-6">You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.</p>
-            
+
             <h3 className="text-xl font-bold text-gray-900 mb-4">4. Limitation of Liability</h3>
             <p className="mb-6">Finume shall not be liable for any indirect, incidental, special, consequential or punitive damages resulting from your use of the services.</p>
         </div>
@@ -519,13 +528,13 @@ export const CompliancePage = () => (
     <PageContent title="ZATCA Compliance" icon={ShieldCheck}>
         <div className="prose prose-blue text-gray-600 max-w-3xl mx-auto">
             <div className="bg-green-50 border border-green-200 p-6 rounded-xl mb-8">
-                <h3 className="text-lg font-bold text-green-800 mb-2 flex items-center gap-2"><CheckCircle size={20}/> Phase 2 Ready</h3>
+                <h3 className="text-lg font-bold text-green-800 mb-2 flex items-center gap-2"><CheckCircle size={20} /> Phase 2 Ready</h3>
                 <p className="text-green-700">Our platform and experts are fully equipped to handle ZATCA Phase 2 E-Invoicing integration and reporting requirements.</p>
             </div>
 
             <h3 className="text-xl font-bold text-gray-900 mb-4">Our Commitment</h3>
             <p className="mb-6">We ensure that all financial experts on our platform are knowledgeable about the latest regulations from the Zakat, Tax and Customs Authority (ZATCA).</p>
-            
+
             <h3 className="text-xl font-bold text-gray-900 mb-4">Services Covered</h3>
             <ul className="list-disc pl-5 mb-6 space-y-2">
                 <li>VAT Registration & Deregistration</li>

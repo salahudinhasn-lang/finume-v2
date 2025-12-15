@@ -12,21 +12,21 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [formData, setFormData] = useState({
-      name: '',
-      email: '',
-      password: '',
-      companyName: ''
+    name: '',
+    email: '',
+    password: '',
+    companyName: ''
   });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData({...formData, [e.target.name]: e.target.value});
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // Parse query params for redirect logic
     const searchParams = new URLSearchParams(location.search);
     const redirect = searchParams.get('redirect');
@@ -36,103 +36,103 @@ const RegisterPage = () => {
 
     // Simulate API call
     setTimeout(() => {
-        const newClient: Client = {
-            id: `C-${Date.now()}`,
-            name: formData.name,
-            email: formData.email,
-            companyName: formData.companyName,
-            role: 'CLIENT',
-            industry: 'Technology',
-            totalSpent: 0,
-            zatcaStatus: 'GREEN',
-            avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${formData.name}`
-        };
-        
-        // 1. Add to Database
-        addClient(newClient);
-        
-        // 2. Auto Login with new user object to avoid race condition
-        login(newClient.email, 'CLIENT', newClient);
-        
-        setIsLoading(false);
-        
-        // 3. Redirect with State
-        if (redirect) {
-            navigate(redirect, { state: { action, serviceId, planId } });
-        } else {
-            navigate('/client');
-        }
+      const newClient: Client = {
+        id: `C-${Date.now()}`,
+        name: formData.name,
+        email: formData.email,
+        companyName: formData.companyName,
+        role: 'CLIENT',
+        industry: 'Technology',
+        totalSpent: 0,
+        zatcaStatus: 'GREEN',
+        avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${formData.name}`
+      };
+
+      // 1. Add to Database
+      addClient(newClient);
+
+      // 2. Auto Login with new user object to avoid race condition
+      login(newClient.email, 'CLIENT', newClient);
+
+      setIsLoading(false);
+
+      // 3. Redirect with State
+      if (redirect) {
+        navigate(redirect, { state: { action, serviceId, planId } });
+      } else {
+        navigate('/client');
+      }
     }, 800);
   };
 
   return (
     <div className="min-h-screen flex bg-white font-sans" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      
+
       {/* Left Column - Visuals & Trust */}
       <div className="hidden lg:flex lg:w-5/12 relative bg-[#0B0F19] text-white overflow-hidden flex-col justify-between p-12">
-         {/* Background pattern */}
-         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#1e293b 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
-         
-         <div className="relative z-10">
-             <Link to="/" className="inline-flex items-center gap-2 mb-10">
-                <Logo className="text-primary-500" />
-                <span className="text-xl font-bold tracking-tight">FINUME</span>
-             </Link>
-             
-             <h2 className="text-3xl font-extrabold leading-tight mb-6">
-                 Your financial operating system.
-             </h2>
-             <p className="text-gray-400 text-lg mb-8">
-                 Join 500+ Saudi companies managing compliance, bookkeeping, and payroll in one place.
-             </p>
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#1e293b 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
 
-             <ul className="space-y-4 mb-12">
-                 <li className="flex items-center gap-3 text-gray-300">
-                     <div className="bg-green-500/20 p-1.5 rounded-full text-green-400"><Check size={16} /></div>
-                     ZATCA Phase 2 E-Invoicing Ready
-                 </li>
-                 <li className="flex items-center gap-3 text-gray-300">
-                     <div className="bg-green-500/20 p-1.5 rounded-full text-green-400"><Check size={16} /></div>
-                     Dedicated Certified Accountant
-                 </li>
-                 <li className="flex items-center gap-3 text-gray-300">
-                     <div className="bg-green-500/20 p-1.5 rounded-full text-green-400"><Check size={16} /></div>
-                     Automatic Monthly Financial Reports
-                 </li>
-             </ul>
-         </div>
+        <div className="relative z-10">
+          <Link to="/" className="inline-flex items-center gap-2 mb-10">
+            <Logo className="text-primary-500" />
+            <span className="text-xl font-bold tracking-tight">FINUME</span>
+          </Link>
 
-         {/* Testimonial Card */}
-         <div className="relative z-10 bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl">
-             <div className="flex gap-1 text-yellow-400 mb-3">
-                 {[1,2,3,4,5].map(i => <Star key={i} size={16} fill="currentColor" />)}
-             </div>
-             <p className="text-gray-300 italic mb-4 text-sm leading-relaxed">
-                 "Finume transformed how we handle VAT. I used to spend hours worrying about fines, now it's all automated and verified by an expert."
-             </p>
-             <div className="flex items-center gap-3">
-                 <img src="https://api.dicebear.com/7.x/initials/svg?seed=OM" className="w-8 h-8 rounded-full border border-white/20" alt="User" />
-                 <div>
-                     <p className="text-sm font-bold text-white">Omar Al-Fahad</p>
-                     <p className="text-xs text-gray-500">CEO, TechFlow KSA</p>
-                 </div>
-             </div>
-         </div>
+          <h2 className="text-3xl font-extrabold leading-tight mb-6">
+            {t('client.registerTitle')}
+          </h2>
+          <p className="text-gray-400 text-lg mb-8">
+            {t('client.registerDesc')}
+          </p>
+
+          <ul className="space-y-4 mb-12">
+            <li className="flex items-center gap-3 text-gray-300">
+              <div className="bg-green-500/20 p-1.5 rounded-full text-green-400"><Check size={16} /></div>
+              {t('client.zatcaReady')}
+            </li>
+            <li className="flex items-center gap-3 text-gray-300">
+              <div className="bg-green-500/20 p-1.5 rounded-full text-green-400"><Check size={16} /></div>
+              {t('client.dedicatedAccountant')}
+            </li>
+            <li className="flex items-center gap-3 text-gray-300">
+              <div className="bg-green-500/20 p-1.5 rounded-full text-green-400"><Check size={16} /></div>
+              {t('client.monthlyReports')}
+            </li>
+          </ul>
+        </div>
+
+        {/* Testimonial Card */}
+        <div className="relative z-10 bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl">
+          <div className="flex gap-1 text-yellow-400 mb-3">
+            {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} fill="currentColor" />)}
+          </div>
+          <p className="text-gray-300 italic mb-4 text-sm leading-relaxed">
+            {t('client.testimonial')}
+          </p>
+          <div className="flex items-center gap-3">
+            <img src="https://api.dicebear.com/7.x/initials/svg?seed=OM" className="w-8 h-8 rounded-full border border-white/20" alt="User" />
+            <div>
+              <p className="text-sm font-bold text-white">{t('client.testimonialAuthor')}</p>
+              <p className="text-xs text-gray-500">{t('client.testimonialRole')}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Right Column - Form */}
       <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-white relative">
         <div className="lg:hidden absolute top-6 left-6">
-             <Link to="/" className="inline-flex items-center gap-2">
-                <Logo size={32} className="text-primary-600" />
-             </Link>
+          <Link to="/" className="inline-flex items-center gap-2">
+            <Logo size={32} className="text-primary-600" />
+          </Link>
         </div>
 
         <div className="mx-auto w-full max-w-sm lg:w-96">
           <div className="text-center lg:text-left mb-8">
             <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">{t('auth.createAccount')}</h2>
             <p className="text-sm text-gray-600">
-              Already have an account? <Link to="/login" className="font-bold text-primary-600 hover:text-primary-500">Sign in</Link>
+              {t('auth.haveAccount')} <Link to="/login" className="font-bold text-primary-600 hover:text-primary-500">{t('auth.signInAs')}</Link>
             </p>
           </div>
 
@@ -223,21 +223,21 @@ const RegisterPage = () => {
             </div>
 
             <div className="flex items-start pt-2">
-                <input id="terms" type="checkbox" required className="h-4 w-4 mt-0.5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded cursor-pointer" />
-                <label htmlFor="terms" className="ml-2 block text-xs text-gray-500 cursor-pointer">
-                    By creating an account, I agree to Finume's <a href="#" className="text-primary-600 font-bold hover:underline">Terms of Service</a> and <a href="#" className="text-primary-600 font-bold hover:underline">Privacy Policy</a>.
-                </label>
+              <input id="terms" type="checkbox" required className="h-4 w-4 mt-0.5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded cursor-pointer" />
+              <label htmlFor="terms" className="ml-2 block text-xs text-gray-500 cursor-pointer">
+                {t('client.termsAgreement')}
+              </label>
             </div>
 
             <Button type="submit" className="w-full py-3.5 text-base shadow-lg shadow-primary-500/20 rounded-xl" disabled={isLoading}>
-              {isLoading ? t('common.loading') : 'Get Started'}
+              {isLoading ? t('common.loading') : t('client.getStarted')}
             </Button>
           </form>
-          
+
           <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-             <p className="text-xs text-gray-500">
-                Are you a financial expert? <Link to="/join-expert" className="font-bold text-gray-800 hover:text-primary-600 underline">Apply to join the network</Link>
-             </p>
+            <p className="text-xs text-gray-500">
+              {t('client.areYouExpert')} <Link to="/join-expert" className="font-bold text-gray-800 hover:text-primary-600 underline">{t('client.applyJoin')}</Link>
+            </p>
           </div>
         </div>
       </div>

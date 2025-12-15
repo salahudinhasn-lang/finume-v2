@@ -11,7 +11,7 @@ interface AppContextType {
   language: 'en' | 'ar';
   setLanguage: (lang: 'en' | 'ar') => void;
   t: (key: string) => string;
-  
+
   // Data Access
   clients: Client[];
   experts: Expert[];
@@ -20,7 +20,7 @@ interface AppContextType {
   plans: PricingPlan[];
   admins: Admin[];
   payoutRequests: PayoutRequest[];
-  
+
   // Actions
   addRequest: (req: Request) => void;
   updateRequestStatus: (id: string, status: Request['status']) => void;
@@ -32,13 +32,13 @@ interface AppContextType {
   addClient: (client: Client) => void;
   addExpert: (expert: Expert) => void;
   submitReview: (requestId: string, review: Review) => void;
-  
+
   // Service & Pricing Actions
   updateService: (id: string, updates: Partial<Service>) => void;
   addService: (service: Service) => void;
   deleteService: (id: string) => void;
   updatePlan: (id: string, updates: Partial<PricingPlan>) => void;
-  
+
   // Admin Actions
   addAdmin: (admin: Admin) => void;
   updateAdmin: (id: string, updates: Partial<Admin>) => void;
@@ -55,7 +55,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [language, setLanguage] = useState<'en' | 'ar'>('en');
-  
+
   // "Database" in state
   const [clients, setClients] = useState<Client[]>([]);
   const [experts, setExperts] = useState<Expert[]>([]);
@@ -64,7 +64,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [services, setServices] = useState<Service[]>([]);
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
-  
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+  }, [language]);
+
   useEffect(() => {
     // Initialize Mock Data only once
     setClients(MOCK_CLIENTS);
@@ -73,41 +78,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAdmins(MOCK_ADMINS);
     setServices(SERVICES);
     setPlans(MOCK_PLANS);
-    
+
     // Legacy payouts for mock data consistency (no requests linked for these older ones)
     setPayoutRequests([
-        { id: 'WD-LEGACY', expertId: 'E1', expertName: 'Expert 1', amount: 0, requestDate: '2023-01-01', processedDate: '2023-01-01', status: 'APPROVED', requestIds: [] }
+      { id: 'WD-LEGACY', expertId: 'E1', expertName: 'Expert 1', amount: 0, requestDate: '2023-01-01', processedDate: '2023-01-01', status: 'APPROVED', requestIds: [] }
     ]);
   }, []);
 
   const login = (email: string, role: string, newUser?: User) => {
     if (newUser) {
-        setUser(newUser);
-        return;
+      setUser(newUser);
+      return;
     }
 
     const normalize = (s: string) => s.trim().toLowerCase();
-    
+
     if (role === 'CLIENT') {
       const client = clients.find(c => normalize(c.email) === normalize(email));
       if (client) {
         setUser(client);
         return;
-      } 
-      
+      }
+
       if (email === 'client1@example.com' || !email) {
         setUser(clients[0]);
       } else {
         const tempUser: Client = {
-            id: `C-${Date.now()}`,
-            name: email.split('@')[0],
-            email: email,
-            role: 'CLIENT',
-            companyName: 'New Company',
-            industry: 'General',
-            totalSpent: 0,
-            zatcaStatus: 'GREEN',
-            avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`
+          id: `C-${Date.now()}`,
+          name: email.split('@')[0],
+          email: email,
+          role: 'CLIENT',
+          companyName: 'New Company',
+          industry: 'General',
+          totalSpent: 0,
+          zatcaStatus: 'GREEN',
+          avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`
         };
         setClients(prev => [tempUser, ...prev]);
         setUser(tempUser);
@@ -118,12 +123,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUser(expert);
         return;
       }
-      
+
       if (email === 'expert1@example.com' || !email) {
         setUser(experts[0]);
       } else {
-         alert("Expert not found. Logging in as Demo Expert.");
-         setUser(experts[0]);
+        alert(translations[language === 'en' ? 'en' : 'ar'].financials.expertNotFound); // Access translation directly as context update is async/hook limitation here
+        setUser(experts[0]);
       }
     } else {
       const admin = admins.find(a => normalize(a.email) === normalize(email));
@@ -230,113 +235,113 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRequests(prev => prev.map(r => r.id === requestId ? { ...r, review } : r));
     const request = requests.find(r => r.id === requestId);
     if (request && request.assignedExpertId) {
-        setExperts(prev => prev.map(e => {
-            if (e.id === request.assignedExpertId) {
-                const totalRatings = 10;
-                const currentSum = e.rating * totalRatings;
-                const newRating = (currentSum + review.expertRating) / (totalRatings + 1);
-                return { ...e, rating: Math.min(5, Math.max(0, newRating)) };
-            }
-            return e;
-        }));
+      setExperts(prev => prev.map(e => {
+        if (e.id === request.assignedExpertId) {
+          const totalRatings = 10;
+          const currentSum = e.rating * totalRatings;
+          const newRating = (currentSum + review.expertRating) / (totalRatings + 1);
+          return { ...e, rating: Math.min(5, Math.max(0, newRating)) };
+        }
+        return e;
+      }));
     }
   };
 
   const requestPayout = (amount: number, specificRequestIds?: string[]) => {
-      if (!user || user.role !== 'EXPERT') return;
-      
-      let requestIds: string[] = [];
-      let payoutAmount = amount;
+    if (!user || user.role !== 'EXPERT') return;
 
-      if (specificRequestIds && specificRequestIds.length > 0) {
-          requestIds = specificRequestIds;
-          // Calculate amount from specific IDs to be safe
-          const selectedRequests = requests.filter(r => requestIds.includes(r.id));
-          payoutAmount = selectedRequests.reduce((sum, r) => sum + (r.amount * 0.8), 0);
-      } else {
-          // Fallback: Find All Unsettled
-          const unsettledRequests = requests.filter(r => 
-              r.assignedExpertId === user.id && 
-              r.status === 'COMPLETED' && 
-              !r.payoutId
-          );
-          requestIds = unsettledRequests.map(r => r.id);
-          payoutAmount = unsettledRequests.reduce((sum, r) => sum + (r.amount * 0.8), 0);
+    let requestIds: string[] = [];
+    let payoutAmount = amount;
+
+    if (specificRequestIds && specificRequestIds.length > 0) {
+      requestIds = specificRequestIds;
+      // Calculate amount from specific IDs to be safe
+      const selectedRequests = requests.filter(r => requestIds.includes(r.id));
+      payoutAmount = selectedRequests.reduce((sum, r) => sum + (r.amount * 0.8), 0);
+    } else {
+      // Fallback: Find All Unsettled
+      const unsettledRequests = requests.filter(r =>
+        r.assignedExpertId === user.id &&
+        r.status === 'COMPLETED' &&
+        !r.payoutId
+      );
+      requestIds = unsettledRequests.map(r => r.id);
+      payoutAmount = unsettledRequests.reduce((sum, r) => sum + (r.amount * 0.8), 0);
+    }
+
+    if (requestIds.length === 0) return;
+
+    const payoutId = `WD-${Date.now()}`;
+
+    // Update Requests to link to this payout
+    setRequests(prev => prev.map(r => {
+      if (requestIds.includes(r.id)) {
+        return { ...r, payoutId: payoutId };
       }
+      return r;
+    }));
 
-      if (requestIds.length === 0) return;
+    const newPayout: PayoutRequest = {
+      id: payoutId,
+      expertId: user.id,
+      expertName: user.name,
+      amount: payoutAmount,
+      requestDate: new Date().toISOString().split('T')[0],
+      status: 'PENDING',
+      requestIds: requestIds
+    };
 
-      const payoutId = `WD-${Date.now()}`;
-      
-      // Update Requests to link to this payout
-      setRequests(prev => prev.map(r => {
-          if (requestIds.includes(r.id)) {
-              return { ...r, payoutId: payoutId };
-          }
-          return r;
-      }));
-
-      const newPayout: PayoutRequest = {
-          id: payoutId,
-          expertId: user.id,
-          expertName: user.name,
-          amount: payoutAmount,
-          requestDate: new Date().toISOString().split('T')[0],
-          status: 'PENDING',
-          requestIds: requestIds
-      };
-      
-      setPayoutRequests(prev => [newPayout, ...prev]);
+    setPayoutRequests(prev => [newPayout, ...prev]);
   };
 
   const processPayout = (id: string, status: 'APPROVED' | 'REJECTED') => {
-      setPayoutRequests(prev => prev.map(p => 
-          p.id === id ? { ...p, status, processedDate: new Date().toISOString().split('T')[0] } : p
-      ));
+    setPayoutRequests(prev => prev.map(p =>
+      p.id === id ? { ...p, status, processedDate: new Date().toISOString().split('T')[0] } : p
+    ));
 
-      // If rejected, unlink the requests so they can be requested again
-      if (status === 'REJECTED') {
-          const payout = payoutRequests.find(p => p.id === id);
-          if (payout && payout.requestIds) {
-              setRequests(prev => prev.map(r => {
-                  if (payout.requestIds.includes(r.id)) {
-                      return { ...r, payoutId: undefined };
-                  }
-                  return r;
-              }));
+    // If rejected, unlink the requests so they can be requested again
+    if (status === 'REJECTED') {
+      const payout = payoutRequests.find(p => p.id === id);
+      if (payout && payout.requestIds) {
+        setRequests(prev => prev.map(r => {
+          if (payout.requestIds.includes(r.id)) {
+            return { ...r, payoutId: undefined };
           }
+          return r;
+        }));
       }
+    }
   };
 
   const manualSettle = (requestIds: string[]) => {
-      // Create a dummy approved payout
-      const payoutId = `SETTLE-MANUAL-${Date.now()}`;
-      
-      // Calculate total
-      const totalAmount = requests
-        .filter(r => requestIds.includes(r.id))
-        .reduce((sum, r) => sum + (r.amount * 0.8), 0);
+    // Create a dummy approved payout
+    const payoutId = `SETTLE-MANUAL-${Date.now()}`;
 
-      // Create dummy payout record
-      const dummyPayout: PayoutRequest = {
-          id: payoutId,
-          expertId: 'VARIOUS', // Or specific if we filtered
-          expertName: 'Manual Settlement',
-          amount: totalAmount,
-          requestDate: new Date().toISOString().split('T')[0],
-          processedDate: new Date().toISOString().split('T')[0],
-          status: 'APPROVED',
-          requestIds: requestIds
-      };
-      setPayoutRequests(prev => [dummyPayout, ...prev]);
+    // Calculate total
+    const totalAmount = requests
+      .filter(r => requestIds.includes(r.id))
+      .reduce((sum, r) => sum + (r.amount * 0.8), 0);
 
-      // Link Requests
-      setRequests(prev => prev.map(r => {
-          if (requestIds.includes(r.id)) {
-              return { ...r, payoutId: payoutId };
-          }
-          return r;
-      }));
+    // Create dummy payout record
+    const dummyPayout: PayoutRequest = {
+      id: payoutId,
+      expertId: 'VARIOUS', // Or specific if we filtered
+      expertName: translations[language === 'en' ? 'en' : 'ar'].financials.manualSettlement,
+      amount: totalAmount,
+      requestDate: new Date().toISOString().split('T')[0],
+      processedDate: new Date().toISOString().split('T')[0],
+      status: 'APPROVED',
+      requestIds: requestIds
+    };
+    setPayoutRequests(prev => [dummyPayout, ...prev]);
+
+    // Link Requests
+    setRequests(prev => prev.map(r => {
+      if (requestIds.includes(r.id)) {
+        return { ...r, payoutId: payoutId };
+      }
+      return r;
+    }));
   };
 
   return (
