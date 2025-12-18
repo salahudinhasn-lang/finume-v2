@@ -92,7 +92,7 @@ export interface Request {
   clientName: string; // Denormalized for ease
   serviceId: string;
   serviceName: string;
-  status: 'NEW' | 'MATCHED' | 'IN_PROGRESS' | 'REVIEW_CLIENT' | 'REVIEW_ADMIN' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING_PAYMENT' | 'NEW' | 'MATCHED' | 'IN_PROGRESS' | 'REVIEW_CLIENT' | 'REVIEW_ADMIN' | 'COMPLETED' | 'CANCELLED';
   amount: number;
   dateCreated: string;
   assignedExpertId?: string;
@@ -125,8 +125,8 @@ export interface PayoutRequest {
 }
 
 export interface ChatMessage {
-    id: string;
-    role: 'user' | 'model';
-    text: string;
-    timestamp: number;
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  timestamp: number;
 }

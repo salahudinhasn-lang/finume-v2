@@ -279,18 +279,21 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {/* Main Charts Section */}
+            {/* Main Charts Section - Glassmorphic */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Revenue Chart */}
-                <Card className="lg:col-span-2 border-none shadow-md">
-                    <div className="flex justify-between items-center mb-6">
+                <Card className="lg:col-span-2 border border-gray-100 shadow-xl bg-white/80 backdrop-blur-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50/50 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                    <div className="flex justify-between items-center mb-8 relative z-10">
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">{t('admin.revenuePerformance')}</h3>
+                            <h3 className="text-xl font-bold text-gray-900">{t('admin.revenuePerformance')}</h3>
                             <p className="text-sm text-gray-500">{t('admin.revenueTrend')}</p>
                         </div>
-                        <Button size="sm" variant="outline" onClick={() => navigate('/admin/financials', { state: { view: 'REVENUE' } })}>{t('admin.fullReport')}</Button>
+                        <Button size="sm" variant="outline" className="bg-white/50 backdrop-blur-sm hover:bg-white" onClick={() => navigate('/admin/financials', { state: { view: 'REVENUE' } })}>
+                            {t('admin.fullReport')}
+                        </Button>
                     </div>
-                    <div className="h-[320px] w-full">
+                    <div className="h-[350px] w-full relative z-10">
                         <ResponsiveContainer>
                             <AreaChart data={revenueChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
@@ -299,33 +302,36 @@ const AdminDashboard = () => {
                                         <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} tickFormatter={(val: number) => val >= 1000 ? `${val / 1000}k` : `${val}`} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} tickFormatter={(val: number) => val >= 1000 ? `${val / 1000}k` : `${val}`} />
                                 <Tooltip
                                     formatter={(value: number) => [`${value.toLocaleString()} ${t('common.sar')}`, t('admin.netRevenue')]}
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
+                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '16px', backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
                                     itemStyle={{ color: '#059669', fontWeight: 600 }}
                                 />
-                                <Area type="monotone" dataKey="revenue" stroke="#10b981" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={3} activeDot={{ r: 6, strokeWidth: 0 }} />
+                                <Area type="monotone" dataKey="revenue" stroke="#10b981" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={4} activeDot={{ r: 8, strokeWidth: 4, stroke: '#fff' }} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </Card>
 
                 {/* Service Distribution */}
-                <Card className="border-none shadow-md flex flex-col">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">{t('admin.serviceDemand')}</h3>
-                    <p className="text-sm text-gray-500 mb-6">{t('admin.marketplaceDist')}</p>
-                    <div className="h-[250px] w-full relative flex-1">
+                <Card className="border border-gray-100 shadow-xl bg-white/80 backdrop-blur-xl flex flex-col relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/50 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                    <div className="relative z-10">
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">{t('admin.serviceDemand')}</h3>
+                        <p className="text-sm text-gray-500 mb-6">{t('admin.marketplaceDist')}</p>
+                    </div>
+                    <div className="h-[250px] w-full relative flex-1 z-10">
                         <ResponsiveContainer>
                             <PieChart>
                                 <Pie
                                     data={pieData}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={70}
-                                    outerRadius={90}
+                                    innerRadius={75}
+                                    outerRadius={95}
                                     paddingAngle={5}
                                     dataKey="value"
                                     stroke="none"
@@ -334,22 +340,22 @@ const AdminDashboard = () => {
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                             </PieChart>
                         </ResponsiveContainer>
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none flex-col">
-                            <p className="text-3xl font-extrabold text-gray-900">{totalOrders}</p>
-                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">{t('admin.requests')}</p>
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none flex-col animate-in fade-in zoom-in duration-700">
+                            <p className="text-4xl font-extrabold text-gray-900 tracking-tight">{totalOrders}</p>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">{t('admin.requests')}</p>
                         </div>
                     </div>
-                    <div className="space-y-2 mt-4">
+                    <div className="space-y-3 mt-6 relative z-10">
                         {pieData.slice(0, 3).map((entry, index) => (
-                            <div key={index} className="flex items-center justify-between text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                                    <span className="font-medium">{entry.name}</span>
+                            <div key={index} className="flex items-center justify-between text-sm text-slate-600 bg-white/50 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                                    <span className="font-semibold">{entry.name}</span>
                                 </div>
-                                <span className="font-bold text-gray-900">{entry.value}</span>
+                                <span className="font-black text-slate-900">{entry.value}</span>
                             </div>
                         ))}
                     </div>
@@ -358,86 +364,105 @@ const AdminDashboard = () => {
 
             {/* --- Top Performers Lists --- */}
             <div>
-                <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                    <Trophy size={24} className="text-yellow-500" /> {t('admin.leaderboards')}
+                <h2 className="text-2xl font-black text-slate-800 mb-8 flex items-center gap-3">
+                    <div className="bg-yellow-100 p-2 rounded-xl text-yellow-600">
+                        <Trophy size={28} />
+                    </div>
+                    {t('admin.leaderboards')}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
                     {/* Top Experts by Value */}
-                    <Card className="flex flex-col border-none shadow-md">
-                        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-                            <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600"><Medal size={18} /></div>
-                            <h3 className="font-bold text-gray-800 text-sm">{t('admin.topRevenueExperts')}</h3>
+                    <Card className="flex flex-col border border-gray-100 shadow-lg bg-white/90">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-50">
+                            <div className="p-2.5 bg-emerald-100 rounded-xl text-emerald-600 shadow-sm"><Medal size={20} /></div>
+                            <h3 className="font-bold text-slate-800">{t('admin.topRevenueExperts')}</h3>
                         </div>
-                        <div className="flex-1 space-y-4">
+                        <div className="flex-1 space-y-5">
                             {topExpertsByValue.map((exp: any, idx) => (
                                 <div key={idx} className="flex items-center justify-between group">
-                                    <div className="flex items-center gap-3">
-                                        <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${idx === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}`}>{idx + 1}</span>
-                                        <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden ring-2 ring-white shadow-sm"><img src={exp?.avatarUrl} alt="" className="w-full h-full object-cover" /></div>
-                                        <span className="truncate w-24 text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors" title={exp?.name}>{exp?.name}</span>
+                                    <div className="flex items-center gap-4">
+                                        <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shadow-sm transition-transform group-hover:scale-110 ${idx === 0 ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-50' : 'bg-slate-100 text-slate-500'}`}>
+                                            {idx + 1}
+                                        </span>
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-md"><img src={exp?.avatarUrl} alt="" className="w-full h-full object-cover" /></div>
+                                        <div className="flex flex-col">
+                                            <span className="truncate w-24 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors" title={exp?.name}>{exp?.name}</span>
+                                            <span className="text-[10px] text-emerald-500 font-bold">{exp.value.toLocaleString()} SAR</span>
+                                        </div>
                                     </div>
-                                    <span className="text-sm font-bold text-emerald-600">{exp.value.toLocaleString()}</span>
                                 </div>
                             ))}
                         </div>
                     </Card>
 
                     {/* Top Experts by Count */}
-                    <Card className="flex flex-col border-none shadow-md">
-                        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-                            <div className="p-2 bg-blue-100 rounded-lg text-blue-600"><Briefcase size={18} /></div>
-                            <h3 className="font-bold text-gray-800 text-sm">{t('admin.mostActiveExperts')}</h3>
+                    <Card className="flex flex-col border border-gray-100 shadow-lg bg-white/90">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-50">
+                            <div className="p-2.5 bg-blue-100 rounded-xl text-blue-600 shadow-sm"><Briefcase size={20} /></div>
+                            <h3 className="font-bold text-slate-800">{t('admin.mostActiveExperts')}</h3>
                         </div>
-                        <div className="flex-1 space-y-4">
+                        <div className="flex-1 space-y-5">
                             {topExpertsByCount.map((exp: any, idx) => (
                                 <div key={idx} className="flex items-center justify-between group">
-                                    <div className="flex items-center gap-3">
-                                        <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${idx === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}`}>{idx + 1}</span>
-                                        <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden ring-2 ring-white shadow-sm"><img src={exp?.avatarUrl} alt="" className="w-full h-full object-cover" /></div>
-                                        <span className="truncate w-24 text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors" title={exp?.name}>{exp?.name}</span>
+                                    <div className="flex items-center gap-4">
+                                        <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shadow-sm transition-transform group-hover:scale-110 ${idx === 0 ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-50' : 'bg-slate-100 text-slate-500'}`}>
+                                            {idx + 1}
+                                        </span>
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-md"><img src={exp?.avatarUrl} alt="" className="w-full h-full object-cover" /></div>
+                                        <div className="flex flex-col">
+                                            <span className="truncate w-24 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors" title={exp?.name}>{exp?.name}</span>
+                                            <span className="text-[10px] text-blue-500 font-bold">{exp.count} {t('admin.jobs')}</span>
+                                        </div>
                                     </div>
-                                    <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{exp.count} {t('admin.jobs')}</span>
                                 </div>
                             ))}
                         </div>
                     </Card>
 
                     {/* Top Clients by Value */}
-                    <Card className="flex flex-col border-none shadow-md">
-                        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-                            <div className="p-2 bg-purple-100 rounded-lg text-purple-600"><Crown size={18} /></div>
-                            <h3 className="font-bold text-gray-800 text-sm">{t('admin.topSpenders')}</h3>
+                    <Card className="flex flex-col border border-gray-100 shadow-lg bg-white/90">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-50">
+                            <div className="p-2.5 bg-purple-100 rounded-xl text-purple-600 shadow-sm"><Crown size={20} /></div>
+                            <h3 className="font-bold text-slate-800">{t('admin.topSpenders')}</h3>
                         </div>
-                        <div className="flex-1 space-y-4">
+                        <div className="flex-1 space-y-5">
                             {topClientsByValue.map((client: any, idx) => (
                                 <div key={idx} className="flex items-center justify-between group">
-                                    <div className="flex items-center gap-3">
-                                        <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${idx === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}`}>{idx + 1}</span>
-                                        <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden ring-2 ring-white shadow-sm"><img src={client?.avatarUrl} alt="" className="w-full h-full object-cover" /></div>
-                                        <span className="truncate w-24 text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors" title={client?.companyName}>{client?.companyName}</span>
+                                    <div className="flex items-center gap-4">
+                                        <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shadow-sm transition-transform group-hover:scale-110 ${idx === 0 ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-50' : 'bg-slate-100 text-slate-500'}`}>
+                                            {idx + 1}
+                                        </span>
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-md"><img src={client?.avatarUrl} alt="" className="w-full h-full object-cover" /></div>
+                                        <div className="flex flex-col">
+                                            <span className="truncate w-24 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors" title={client?.companyName}>{client?.companyName}</span>
+                                            <span className="text-[10px] text-purple-500 font-bold">{client.value.toLocaleString()} SAR</span>
+                                        </div>
                                     </div>
-                                    <span className="text-sm font-bold text-purple-600">{client.value.toLocaleString()}</span>
                                 </div>
                             ))}
                         </div>
                     </Card>
 
                     {/* Top Clients by Requests */}
-                    <Card className="flex flex-col border-none shadow-md">
-                        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-                            <div className="p-2 bg-orange-100 rounded-lg text-orange-600"><FileText size={18} /></div>
-                            <h3 className="font-bold text-gray-800 text-sm">{t('admin.mostFrequentClients')}</h3>
+                    <Card className="flex flex-col border border-gray-100 shadow-lg bg-white/90">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-50">
+                            <div className="p-2.5 bg-orange-100 rounded-xl text-orange-600 shadow-sm"><FileText size={20} /></div>
+                            <h3 className="font-bold text-slate-800">{t('admin.mostFrequentClients')}</h3>
                         </div>
-                        <div className="flex-1 space-y-4">
+                        <div className="flex-1 space-y-5">
                             {topClientsByCount.map((client: any, idx) => (
                                 <div key={idx} className="flex items-center justify-between group">
-                                    <div className="flex items-center gap-3">
-                                        <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${idx === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}`}>{idx + 1}</span>
-                                        <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden ring-2 ring-white shadow-sm"><img src={client?.avatarUrl} alt="" className="w-full h-full object-cover" /></div>
-                                        <span className="truncate w-24 text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors" title={client?.companyName}>{client?.companyName}</span>
+                                    <div className="flex items-center gap-4">
+                                        <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shadow-sm transition-transform group-hover:scale-110 ${idx === 0 ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-50' : 'bg-slate-100 text-slate-500'}`}>
+                                            {idx + 1}
+                                        </span>
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-md"><img src={client?.avatarUrl} alt="" className="w-full h-full object-cover" /></div>
+                                        <div className="flex flex-col">
+                                            <span className="truncate w-24 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors" title={client?.companyName}>{client?.companyName}</span>
+                                            <span className="text-[10px] text-orange-500 font-bold">{client.count} {t('admin.requests')}</span>
+                                        </div>
                                     </div>
-                                    <span className="text-sm font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">{client.count} {t('admin.requests')}</span>
                                 </div>
                             ))}
                         </div>
@@ -449,84 +474,94 @@ const AdminDashboard = () => {
             {/* Action Lists */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Expert Vetting Queue */}
-                <Card className="flex flex-col h-full border-none shadow-md">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-orange-100 text-orange-600 rounded-xl"><ShieldCheck size={20} /></div>
+                <Card className="flex flex-col h-full border border-gray-100 shadow-lg bg-gradient-to-b from-white to-orange-50/30">
+                    <div className="flex justify-between items-center mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-orange-100 text-orange-600 rounded-2xl shadow-sm"><ShieldCheck size={24} /></div>
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900">{t('admin.expertVettingQueue')}</h3>
-                                <p className="text-xs text-gray-500">{t('admin.vettingQueueDesc')}</p>
+                                <h3 className="text-xl font-bold text-slate-900">{t('admin.expertVettingQueue')}</h3>
+                                <p className="text-sm text-slate-500">{t('admin.vettingQueueDesc')}</p>
                             </div>
                         </div>
-                        <Badge status="VETTING" />
+                        <Badge status="VETTING" className="px-3 py-1 text-sm rounded-xl" />
                     </div>
 
-                    <div className="flex-1 overflow-y-auto max-h-[300px] pr-2 space-y-3">
+                    <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-4">
                         {pendingExperts.length > 0 ? (
                             pendingExperts.map(expert => (
-                                <div key={expert.id} className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-between group">
-                                    <div className="flex items-center gap-4">
-                                        <img src={expert.avatarUrl} alt="" className="w-10 h-10 rounded-full bg-gray-200 ring-2 ring-white shadow-sm" />
+                                <div key={expert.id} className="p-5 border border-white bg-white/60 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
+                                    <div className="flex items-center gap-5">
+                                        <img src={expert.avatarUrl} alt="" className="w-12 h-12 rounded-full bg-slate-100 ring-4 ring-white shadow-sm" />
                                         <div>
-                                            <p className="font-bold text-gray-900 text-sm">{expert.name}</p>
-                                            <p className="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-0.5 rounded-full w-fit mt-1">{expert.specializations[0]}</p>
+                                            <p className="font-bold text-slate-900 text-base">{expert.name}</p>
+                                            <p className="text-xs text-slate-600 font-bold bg-slate-100 px-3 py-1 rounded-full w-fit mt-1.5">{expert.specializations[0]}</p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button size="sm" variant="outline" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-red-600 border-red-200 hover:bg-red-50"><X size={14} /></Button>
-                                        <Button size="sm" onClick={() => updateExpertStatus(expert.id, 'ACTIVE')} className="bg-green-600 hover:bg-green-700 shadow-lg shadow-green-200"><Check size={14} /></Button>
+                                    <div className="flex gap-2">
+                                        <Button size="sm" variant="outline" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-red-500 border-red-100 hover:bg-red-50 hover:border-red-200 h-10 w-10 p-0 rounded-xl transition-all"><X size={18} /></Button>
+                                        <Button size="sm" onClick={() => updateExpertStatus(expert.id, 'ACTIVE')} className="bg-green-500 hover:bg-green-600 shadow-lg shadow-green-200 text-white h-10 w-10 p-0 rounded-xl transition-all hover:scale-105"><Check size={18} /></Button>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-gray-400 py-12">
-                                <div className="p-4 bg-green-50 rounded-full mb-3">
-                                    <CheckCircle size={32} className="text-green-500" />
+                            <div className="h-full flex flex-col items-center justify-center text-slate-400 py-16 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+                                <div className="p-4 bg-green-100 rounded-full mb-4 animate-bounce">
+                                    <CheckCircle size={32} className="text-green-600" />
                                 </div>
-                                <p className="font-medium text-gray-600">{t('admin.allCaughtUp')}</p>
+                                <p className="font-bold text-slate-700 text-lg">{t('admin.allCaughtUp')}</p>
                                 <p className="text-sm">{t('admin.noPendingInfinite')}</p>
                             </div>
                         )}
                     </div>
-                    <div className="pt-4 border-t border-gray-100 mt-4">
-                        <Button variant="outline" className="w-full text-sm font-medium" onClick={() => navigate('/admin/experts', { state: { filter: 'VETTING' } })}>{t('admin.viewAllApps')}</Button>
+                    <div className="pt-6 border-t border-gray-100 mt-6">
+                        <Button variant="outline" className="w-full py-6 rounded-xl font-bold border-gray-200 hover:bg-white hover:shadow-md transition-all text-slate-600" onClick={() => navigate('/admin/experts', { state: { filter: 'VETTING' } })}>{t('admin.viewAllApps')}</Button>
                     </div>
                 </Card>
 
                 {/* Recent Activity / Requests */}
-                <Card className="flex flex-col h-full border-none shadow-md">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 text-blue-600 rounded-xl"><Activity size={20} /></div>
+                <Card className="flex flex-col h-full border border-gray-100 shadow-lg bg-gradient-to-b from-white to-blue-50/30">
+                    <div className="flex justify-between items-center mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-blue-100 text-blue-600 rounded-2xl shadow-sm"><Activity size={24} /></div>
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900">{t('admin.recentActivity')}</h3>
-                                <p className="text-xs text-gray-500">{t('admin.latestRequests')}</p>
+                                <h3 className="text-xl font-bold text-slate-900">{t('admin.recentActivity')}</h3>
+                                <p className="text-sm text-slate-500">{t('admin.latestRequests')}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto max-h-[300px] pr-2 space-y-0">
-                        {requests.slice(0, 6).map((req, idx) => (
+                    <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 relative">
+                        {/* Timeline Line */}
+                        <div className="absolute left-[19px] top-4 bottom-4 w-0.5 bg-slate-100 z-0"></div>
+
+                        {requests.slice(0, 8).map((req, idx) => (
                             <div key={req.id}
                                 onClick={() => navigate('/admin/requests')}
-                                className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 px-3 rounded-lg transition-colors cursor-pointer group"
+                                className="relative z-10 flex items-start gap-4 py-4 px-2 hover:bg-blue-50/50 rounded-xl transition-all cursor-pointer group"
                             >
-                                <div className={`w-2.5 h-2.5 rounded-full shrink-0 shadow-sm ${req.status === 'COMPLETED' ? 'bg-green-500' :
-                                        req.status === 'NEW' ? 'bg-blue-500' : 'bg-orange-500'
-                                    }`} />
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-gray-800 text-sm truncate group-hover:text-primary-600 transition-colors">{req.serviceName}</p>
-                                    <p className="text-xs text-gray-500 truncate mt-0.5">{req.clientName} • <span className="font-mono">{req.dateCreated}</span></p>
+                                <div className={`w-10 h-10 rounded-full shrink-0 shadow-sm flex items-center justify-center border-4 border-white ${req.status === 'COMPLETED' ? 'bg-green-100 text-green-600' :
+                                        req.status === 'NEW' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'
+                                    }`}>
+                                    {req.status === 'COMPLETED' ? <CheckCircle size={16} strokeWidth={3} /> : <FileText size={16} strokeWidth={3} />}
                                 </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-gray-900 text-sm">{req.amount.toLocaleString()}</p>
-                                    <span className="text-[10px] text-gray-400 uppercase font-medium bg-gray-100 px-2 py-0.5 rounded">{req.status}</span>
+
+                                <div className="flex-1 min-w-0 pt-1">
+                                    <div className="flex justify-between items-start">
+                                        <p className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">{req.serviceName}</p>
+                                        <p className="font-black text-slate-800 text-sm">{req.amount.toLocaleString()} SAR</p>
+                                    </div>
+                                    <div className="flex justify-between items-center mt-1">
+                                        <p className="text-xs text-slate-500 font-medium">{req.clientName} • <span className="text-slate-400">{req.dateCreated}</span></p>
+                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${req.status === 'NEW' ? 'bg-blue-100 text-blue-700' :
+                                                req.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                                            }`}>{req.status}</span>
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
-                    <div className="pt-4 border-t border-gray-100 mt-4">
-                        <Button variant="outline" className="w-full text-sm font-medium" onClick={() => navigate('/admin/requests')}>{t('admin.viewAllRequests')}</Button>
+                    <div className="pt-6 border-t border-gray-100 mt-6">
+                        <Button variant="outline" className="w-full py-6 rounded-xl font-bold border-gray-200 hover:bg-white hover:shadow-md transition-all text-slate-600" onClick={() => navigate('/admin/requests')}>{t('admin.viewAllRequests')}</Button>
                     </div>
                 </Card>
             </div>

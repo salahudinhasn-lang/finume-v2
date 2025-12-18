@@ -7,13 +7,13 @@ export const Card: React.FC<{ children?: React.ReactNode, className?: string, on
   </div>
 );
 
-export const Button = ({ 
-  children, onClick, variant = 'primary', size = 'md', className = '', type = 'button', disabled = false 
-}: { 
-  children?: React.ReactNode, onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void, variant?: 'primary' | 'secondary' | 'danger' | 'outline', size?: 'sm' | 'md' | 'lg', className?: string, type?: 'button' | 'submit', disabled?: boolean 
+export const Button = ({
+  children, onClick, variant = 'primary', size = 'md', className = '', type = 'button', disabled = false
+}: {
+  children?: React.ReactNode, onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void, variant?: 'primary' | 'secondary' | 'danger' | 'outline', size?: 'sm' | 'md' | 'lg', className?: string, type?: 'button' | 'submit', disabled?: boolean
 }) => {
   const baseStyle = "rounded-lg font-medium transition-colors flex items-center justify-center gap-2";
-  
+
   const sizes = {
     sm: "px-3 py-1.5 text-sm",
     md: "px-4 py-2",
@@ -28,9 +28,9 @@ export const Button = ({
   };
 
   return (
-    <button 
-      type={type} 
-      className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`} 
+    <button
+      type={type}
+      className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`}
       onClick={onClick}
       disabled={disabled}
     >
@@ -41,6 +41,7 @@ export const Button = ({
 
 export const Badge = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
+    PENDING_PAYMENT: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
     NEW: 'bg-blue-100 text-blue-800',
     MATCHED: 'bg-indigo-100 text-indigo-800',
     IN_PROGRESS: 'bg-yellow-100 text-yellow-800',

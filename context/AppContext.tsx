@@ -50,6 +50,9 @@ interface AppContextType {
   manualSettle: (requestIds: string[]) => void;
 }
 
+// Define API Base URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -71,7 +74,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [language]);
 
   useEffect(() => {
-    // Initialize Mock Data only once
+    // Initialize Mock Data
     setClients(MOCK_CLIENTS);
     setExperts(MOCK_EXPERTS);
     setRequests(MOCK_REQUESTS);
@@ -79,29 +82,75 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setServices(SERVICES);
     setPlans(MOCK_PLANS);
 
-    // Legacy payouts for mock data consistency (no requests linked for these older ones)
+    // Legacy payouts
     setPayoutRequests([
       { id: 'WD-LEGACY', expertId: 'E1', expertName: 'Expert 1', amount: 0, requestDate: '2023-01-01', processedDate: '2023-01-01', status: 'APPROVED', requestIds: [] }
     ]);
+
+    // Check LocalStorage for User Session
+    const savedUser = localStorage.getItem('finume_user');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error('Failed to restore session');
+      }
+    }
+
+    const initBackend = async () => {
+      try {
+        // Fetch Users
+        const usersRes = await fetch(`${API_BASE_URL}/api/users`);
+        if (usersRes.ok) {
+          const usersData = await usersRes.json();
+          setClients(usersData.clients || []);
+          setExperts(usersData.experts || []);
+          setAdmins(usersData.admins || []);
+        }
+
+        // Fetch Requests
+        await fetchRequests();
+      } catch (e) {
+        console.warn('Backend not available:', e);
+      }
+    };
+    initBackend();
   }, []);
 
   const login = (email: string, role: string, newUser?: User) => {
+    const normalize = (s: string) => s.trim().toLowerCase();
+    // Try DB Login first (if password provided, usually handled by passed user object or API)
+    // Since login signature doesn't take password, we might need to assume verify happened before calling login?
+    // OR update login signature. The plan said update login signature.
+    // Let's rely on the LoginPage calling the API, and then calling login(user) with the result.
+
+    // But we need to update the data in context too.
+    // And we need to support the manual "Just click login" flow for demos if user didn't enter password? 
+    // User said: "make all passwords as 12121212", so they WILL enter it.
+
+    // If we are strictly following "Keep app showing", we want real data.
+
+    // Current Login: local find.
+    // New Login: passed user object (authenticated)
     if (newUser) {
       setUser(newUser);
+      localStorage.setItem('finume_user', JSON.stringify(newUser));
       return;
     }
-
-    const normalize = (s: string) => s.trim().toLowerCase();
+    // If no newUser passed, fall back to mock/local check (or error?)
+    // We will modify Auth.tsx to ALWAYS pass newUser (result of API).
 
     if (role === 'CLIENT') {
       const client = clients.find(c => normalize(c.email) === normalize(email));
       if (client) {
         setUser(client);
+        localStorage.setItem('finume_user', JSON.stringify(client));
         return;
       }
 
       if (email === 'client1@example.com' || !email) {
         setUser(clients[0]);
+        localStorage.setItem('finume_user', JSON.stringify(clients[0]));
       } else {
         const tempUser: Client = {
           id: `C-${Date.now()}`,
@@ -116,32 +165,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
         setClients(prev => [tempUser, ...prev]);
         setUser(tempUser);
+        localStorage.setItem('finume_user', JSON.stringify(tempUser));
       }
     } else if (role === 'EXPERT') {
       const expert = experts.find(e => normalize(e.email) === normalize(email));
       if (expert) {
         setUser(expert);
+        localStorage.setItem('finume_user', JSON.stringify(expert));
         return;
       }
 
       if (email === 'expert1@example.com' || !email) {
         setUser(experts[0]);
+        localStorage.setItem('finume_user', JSON.stringify(experts[0]));
       } else {
         alert(translations[language === 'en' ? 'en' : 'ar'].financials.expertNotFound); // Access translation directly as context update is async/hook limitation here
         setUser(experts[0]);
+        localStorage.setItem('finume_user', JSON.stringify(experts[0]));
       }
     } else {
       const admin = admins.find(a => normalize(a.email) === normalize(email));
       if (admin) {
         setUser(admin);
+        localStorage.setItem('finume_user', JSON.stringify(admin));
         return;
       }
       setUser(admins[0]);
+      localStorage.setItem('finume_user', JSON.stringify(admins[0]));
     }
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('finume_user');
   };
 
   const t = (key: string): string => {
@@ -153,8 +209,68 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return value || key;
   };
 
-  const addRequest = (req: Request) => {
+  // Fetch Requests from Backend
+  const fetchRequests = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/requests`);
+      if (res.ok) {
+        const data = await res.json();
+        // Map backend data format to frontend type if necessary, or ensure they match
+        // Ideally we merge with mocks or replace. For this demo, let's prepend backend data to mocks or replace.
+        // Since we want to see "saved" data, we should prioritize backend.
+        // However, our mocks are static. Let's just append.
+        // Actually, we don't have a full User system on backend yet (auth is skipped), so standardizing IDs is tricky.
+        // We will just log success for now and maybe append to state.
+        // Merge backend data with mocks.
+        // For simplicity, we prioritize backend data if IDs match, or append.
+        // Actually, let's just REPLACE requests with backend data + any mocks that don't exist in backend (if needed).
+        // Since we want to see "new transactions", backend is truth.
+        // But MOCK_REQUESTS should be kept for demo purposes if backend is empty.
+
+        if (Array.isArray(data) && data.length > 0) {
+          // If backend has data, use it. Migh want to mix in mocks if backend has few.
+          // For now, let's just setRequests to (backend + mocks) avoiding duplicates by ID?
+          // Or just PREPEND backend items.
+          setRequests(prev => {
+            const newIds = new Set(data.map((d: any) => d.id));
+            const filteredPrev = prev.filter(p => !newIds.has(p.id) && p.id.startsWith('R-')); // Keep mocks (R- prefix) if not colliding
+            return [...data, ...filteredPrev];
+          });
+        }
+        console.log('Fetched requests from DB:', data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch requests', e);
+    }
+  };
+
+  const addRequest = async (req: Request) => {
+    // 1. Optimistic UI Update
     setRequests(prev => [req, ...prev]);
+
+    // 2. Persist to Backend
+    try {
+      const payload = {
+        clientId: req.clientId,
+        serviceId: req.serviceId,
+        description: req.description,
+        amount: req.amount,
+        batches: req.batches
+      };
+
+      const res = await fetch(`${API_BASE_URL}/api/requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        const savedReq = await res.json();
+        setRequests(prev => prev.map(r => r.id === req.id ? { ...r, id: savedReq.id, status: savedReq.status } : r));
+      }
+    } catch (error) {
+      console.error('Failed to save request to DB', error);
+    }
   };
 
   const updateRequestStatus = (id: string, status: Request['status']) => {

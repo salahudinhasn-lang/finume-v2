@@ -11,6 +11,104 @@ const PublicLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
+  React.useEffect(() => {
+    // Update HTML attributes
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+
+    // SEO Configuration
+    const seoConfig: Record<string, { en: { title: string; description: string }; ar: { title: string; description: string } }> = {
+      '/': {
+        en: {
+          title: 'Finume | Financial Operating System for SMEs',
+          description: 'The all-in-one financial operating system for Saudi SMEs. Bookkeeping, ZATCA e-invoicing, and certified financial experts.'
+        },
+        ar: {
+          title: 'Finume | منظومتك المالية المتكاملة',
+          description: 'نظام التشغيل المالي المتكامل للمنشآت السعودية. مسك دفاتر، فوترة إلكترونية متوافقة مع الزكاة، وخبراء ماليين معتمدين.'
+        }
+      },
+      '/services': {
+        en: {
+          title: 'Services | Finume',
+          description: 'Explore our financial services: bookkeeping, CFO advisory, and tax compliance solutions tailored for Saudi businesses.'
+        },
+        ar: {
+          title: 'خدماتنا | Finume',
+          description: 'اكتشف حلولنا المالية: مسك الدفاتر، الاستشارات المالية، وحلول التوافق الضريبي المصممة خصيصاً للمنشآت السعودية.'
+        }
+      },
+      '/experts': {
+        en: {
+          title: 'Experts | Finume',
+          description: 'Connect with certified financial experts and accountants in Saudi Arabia. Verified professionals to help grow your business.'
+        },
+        ar: {
+          title: 'الخبراء | Finume',
+          description: 'تواصل مع نخبة من الخبراء الماليين والمحاسبين المعتمدين في المملكة. محترفون موثوقون لمساعدة نمو أعمالك.'
+        }
+      },
+      '/pricing': {
+        en: {
+          title: 'Pricing | Finume',
+          description: 'Transparent pricing plans for all business sizes. Choose the package that fits your financial management needs.'
+        },
+        ar: {
+          title: 'الباقات | Finume',
+          description: 'خطط أسعار شفافة تناسب جميع أحجام الأعمال. اختر الباقة التي تناسب احتياجات إدارتك المالية.'
+        }
+      },
+      '/about': {
+        en: {
+          title: 'About Us | Finume',
+          description: 'Learn about Finume mission to empower Saudi SMEs with intelligent financial tools and expert guidance.'
+        },
+        ar: {
+          title: 'عن فينيومي | Finume',
+          description: 'تعرف على مهمة فينيومي في تمكين المنشآت السعودية بأدوات مالية ذكية وتوجيه من الخبراء.'
+        }
+      },
+      '/login': {
+        en: {
+          title: 'Login | Finume',
+          description: 'Access your financial dashboard. Secure login for business owners and financial experts.'
+        },
+        ar: {
+          title: 'تسجيل الدخول | Finume',
+          description: 'مرحباً بك في لوحة التحكم المالية. تسجيل دخول آمن لأصحاب الأعمال والخبراء الماليين.'
+        }
+      },
+      '/register': {
+        en: {
+          title: 'Get Started | Finume',
+          description: 'Create your Finume account today. Join thousands of Saudi businesses streamlining their finances.'
+        },
+        ar: {
+          title: 'انضم إلينا | Finume',
+          description: 'أنشئ حسابك في فينيومي اليوم. انضم لآلاف المنشآت السعودية التي تدير ماليتها بذكاء.'
+        }
+      }
+    };
+
+    // Default SEO
+    const currentConfig = seoConfig[location.pathname] || seoConfig['/'];
+    const { title, description } = currentConfig[language as 'en' | 'ar'];
+
+    document.title = title;
+
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', description);
+    } else {
+      const newMeta = document.createElement('meta');
+      newMeta.name = 'description';
+      newMeta.content = description;
+      document.head.appendChild(newMeta);
+    }
+
+  }, [language, location.pathname]);
+
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'ar' : 'en');
   };
@@ -45,8 +143,8 @@ const PublicLayout = () => {
                     key={link.path}
                     to={link.path}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${isActive
-                        ? 'bg-primary-50 text-primary-700'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       }`}
                   >
                     {link.name}
@@ -62,7 +160,7 @@ const PublicLayout = () => {
                 className="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-full transition-colors flex items-center gap-1"
               >
                 <Globe size={18} />
-                <span className="text-xs font-bold uppercase">{language}</span>
+                <span className="text-xs font-bold uppercase">{language === 'en' ? 'AR' : 'EN'}</span>
               </button>
 
               <div className="h-6 w-px bg-gray-200 mx-1"></div>
@@ -143,20 +241,20 @@ const PublicLayout = () => {
                 <span className="text-2xl font-bold text-white tracking-tight">{language === 'ar' ? 'فينومي' : 'FINUME'}</span>
               </div>
               <p className="text-slate-400 text-lg max-w-md leading-relaxed">
-                The financial operating system for modern businesses in Saudi Arabia. Compliant, fast, and secure.
+                {t('pol.footerDesc')}
               </p>
             </div>
             <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50">
-              <h3 className="text-white font-bold mb-2">Subscribe to our newsletter</h3>
-              <p className="text-slate-400 text-sm mb-4">Get the latest ZATCA updates and financial tips.</p>
+              <h3 className="text-white font-bold mb-2">{t('pol.subscribeTitle')}</h3>
+              <p className="text-slate-400 text-sm mb-4">{t('pol.subscribeDesc')}</p>
               <div className="flex gap-2">
                 <input
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t('pol.enterEmail')}
                   className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                 />
                 <button className="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm transition-colors">
-                  Subscribe
+                  {t('pol.subscribeBtn')}
                 </button>
               </div>
             </div>
@@ -167,24 +265,24 @@ const PublicLayout = () => {
             {/* Column 1 */}
             <div>
               <h3 className="text-sm font-bold text-white tracking-wider uppercase mb-6 flex items-center gap-2">
-                Platform
+                {t('pol.platform')}
               </h3>
               <ul className="space-y-4">
-                <li><Link to="/experts" className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 group"><ChevronRight size={12} className="text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" /> {t('nav.experts')}</Link></li>
-                <li><Link to="/services" className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 group"><ChevronRight size={12} className="text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" /> {t('nav.services')}</Link></li>
-                <li><Link to="/pricing" className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 group"><ChevronRight size={12} className="text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" /> {t('nav.pricing')}</Link></li>
-                <li><Link to="/join-expert" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">Become an Expert</Link></li>
+                <li><Link to="/experts" className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 group"><ChevronRight size={12} className="text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity rtl:rotate-180" /> {t('nav.experts')}</Link></li>
+                <li><Link to="/services" className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 group"><ChevronRight size={12} className="text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity rtl:rotate-180" /> {t('nav.services')}</Link></li>
+                <li><Link to="/pricing" className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 group"><ChevronRight size={12} className="text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity rtl:rotate-180" /> {t('nav.pricing')}</Link></li>
+                <li><Link to="/join-expert" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">{t('pol.becomeExpert')}</Link></li>
               </ul>
             </div>
 
             {/* Column 2 */}
             <div>
-              <h3 className="text-sm font-bold text-white tracking-wider uppercase mb-6">Company</h3>
+              <h3 className="text-sm font-bold text-white tracking-wider uppercase mb-6">{t('pol.company')}</h3>
               <ul className="space-y-4">
                 <li><Link to="/about" className="text-slate-400 hover:text-white transition-colors">{t('nav.about')}</Link></li>
                 <li><Link to="/careers" className="text-slate-400 hover:text-white transition-colors flex items-center gap-2">
                   {t('footer.careers')}
-                  <span className="text-[10px] bg-primary-500/20 text-primary-400 px-2 py-0.5 rounded-full">Hiring</span>
+                  <span className="text-[10px] bg-primary-500/20 text-primary-400 px-2 py-0.5 rounded-full">{t('pol.hiring')}</span>
                 </Link></li>
                 <li><Link to="/contact" className="text-slate-400 hover:text-white transition-colors">{t('footer.contact')}</Link></li>
               </ul>
@@ -192,17 +290,17 @@ const PublicLayout = () => {
 
             {/* Column 3 */}
             <div>
-              <h3 className="text-sm font-bold text-white tracking-wider uppercase mb-6">Resources</h3>
+              <h3 className="text-sm font-bold text-white tracking-wider uppercase mb-6">{t('pol.resources')}</h3>
               <ul className="space-y-4">
-                <li><Link to="/qa" className="text-slate-400 hover:text-white transition-colors">Help Center</Link></li>
-                <li><Link to="/compliance" className="text-slate-400 hover:text-white transition-colors">ZATCA Guide</Link></li>
-                <li><a href="#" className="text-slate-400 hover:text-white transition-colors">API Documentation</a></li>
+                <li><Link to="/qa" className="text-slate-400 hover:text-white transition-colors">{t('pol.helpCenter')}</Link></li>
+                <li><Link to="/compliance" className="text-slate-400 hover:text-white transition-colors">{t('pol.zatcaGuide')}</Link></li>
+                <li><a href="#" className="text-slate-400 hover:text-white transition-colors">{t('pol.apiDocs')}</a></li>
               </ul>
             </div>
 
             {/* Column 4 */}
             <div>
-              <h3 className="text-sm font-bold text-white tracking-wider uppercase mb-6">Legal</h3>
+              <h3 className="text-sm font-bold text-white tracking-wider uppercase mb-6">{t('pol.legal')}</h3>
               <ul className="space-y-4">
                 <li><Link to="/privacy" className="text-slate-400 hover:text-white transition-colors">{t('footer.privacy')}</Link></li>
                 <li><Link to="/terms" className="text-slate-400 hover:text-white transition-colors">{t('footer.terms')}</Link></li>

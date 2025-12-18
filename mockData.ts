@@ -17,35 +17,35 @@ export const SERVICES: Service[] = [
 
 export const MOCK_PLANS: PricingPlan[] = [
   {
-      id: 'basic',
-      name: 'CR Guard (Basic)',
-      price: 250,
-      description: 'Dormant / Low-Activity CRs',
-      tagline: '"Keep my CR Active"',
-      features: ['Zero-filing VAT', 'Annual Qawaem (Basic)', 'Zakat "Estimated" Filing'],
-      guarantee: 'Yes (Basic)',
-      color: 'border-gray-200'
+    id: 'basic',
+    name: 'CR Guard (Basic)',
+    price: 250,
+    description: 'Dormant / Low-Activity CRs',
+    tagline: '"Keep my CR Active"',
+    features: ['Zero-filing VAT', 'Annual Qawaem (Basic)', 'Zakat "Estimated" Filing'],
+    guarantee: 'Yes (Basic)',
+    color: 'border-gray-200'
   },
   {
-      id: 'standard',
-      name: 'ZATCA Shield (Standard)',
-      price: 1300,
-      description: 'Active Shops / Cafes',
-      tagline: '"No VAT Fines"',
-      features: ['Quarterly VAT Filing', 'Monthly Bookkeeping', 'E-Invoicing Review'],
-      guarantee: 'Yes (Full)',
-      isPopular: true,
-      color: 'border-primary-500'
+    id: 'standard',
+    name: 'ZATCA Shield (Standard)',
+    price: 1300,
+    description: 'Active Shops / Cafes',
+    tagline: '"No VAT Fines"',
+    features: ['Quarterly VAT Filing', 'Monthly Bookkeeping', 'E-Invoicing Review'],
+    guarantee: 'Yes (Full)',
+    isPopular: true,
+    color: 'border-primary-500'
   },
   {
-      id: 'pro',
-      name: 'Audit Proof (Pro)',
-      price: 5000,
-      description: 'Funded Startups / Contractors',
-      tagline: '"CFO-Level Reporting"',
-      features: ['Full Monthly Closing', 'Cost Center Accounting', 'Audit Coordination'],
-      guarantee: 'Yes (Full)',
-      color: 'border-gray-200'
+    id: 'pro',
+    name: 'Audit Proof (Pro)',
+    price: 5000,
+    description: 'Funded Startups / Contractors',
+    tagline: '"CFO-Level Reporting"',
+    features: ['Full Monthly Closing', 'Cost Center Accounting', 'Audit Coordination'],
+    guarantee: 'Yes (Full)',
+    color: 'border-gray-200'
   }
 ];
 
@@ -55,6 +55,12 @@ const EXPERT_BIOS = [
   "Former Big 4 auditor helping SMEs streamline their financial reporting.",
   "Zakat and Tax expert with a focus on manufacturing and logistics companies.",
   "Virtual CFO helping tech startups manage burn rate and fundraising preparation."
+];
+
+const FINANCE_SKILLS = [
+  "VAT Compliance", "Zakat Filing", "Bookkeeping", "Financial Modeling",
+  "Auditing", "CFO Advisory", "Corporate Tax", "Payroll Management",
+  "Cost Accounting", "Feasibility Studies", "Risk Management", "M&A Advisory"
 ];
 
 // Generate Clients
@@ -79,7 +85,10 @@ export const generateExperts = (count: number): Expert[] => {
     email: `expert${i + 1}@example.com`,
     name: `Expert ${i + 1}`,
     role: 'EXPERT',
-    specializations: [SERVICES[i % SERVICES.length].nameEn, SERVICES[(i + 1) % SERVICES.length].nameEn],
+    specializations: [
+      FINANCE_SKILLS[i % FINANCE_SKILLS.length],
+      FINANCE_SKILLS[(i + 3) % FINANCE_SKILLS.length]
+    ],
     status: i < 15 ? 'ACTIVE' : 'VETTING',
     totalEarned: 0, // Calculated dynamically from requests now
     rating: 4.5 + (Math.random() * 0.5), // High ratings
@@ -87,97 +96,97 @@ export const generateExperts = (count: number): Expert[] => {
     bio: EXPERT_BIOS[i % EXPERT_BIOS.length],
     yearsExperience: 5 + Math.floor(Math.random() * 15),
     hourlyRate: 200 + Math.floor(Math.random() * 300),
-    isPremium: i % 5 === 0, // Every 5th expert is Premium
-    isFeatured: i % 3 === 0, // Every 3rd expert is Featured
+    isPremium: i % 3 === 0, // Increased frequency: Every 3rd is Premium
+    isFeatured: i % 4 === 0, // Every 4th is Featured
   }));
 };
 
 // Generate Mock Batches
 const generateBatches = (date: string): FileBatch[] => {
-    const batches: FileBatch[] = [];
-    const sources = ['WHATSAPP', 'DESKTOP', 'MOBILE_WEB', 'APP'] as const;
-    
-    // 50% chance of having a batch
-    if (Math.random() > 0.5) {
-        batches.push({
-            id: date,
-            date: date,
-            status: 'COMPLETED',
-            files: [
-                { 
-                    id: 'f1', 
-                    name: 'Invoice_001.pdf', 
-                    size: '1.2 MB', 
-                    type: 'application/pdf', 
-                    uploadedBy: 'CLIENT', 
-                    uploadedAt: date + 'T10:00:00', 
-                    url: '#',
-                    source: sources[Math.floor(Math.random() * sources.length)]
-                },
-                { 
-                    id: 'f2', 
-                    name: 'Bank_Statement.csv', 
-                    size: '450 KB', 
-                    type: 'text/csv', 
-                    uploadedBy: 'CLIENT', 
-                    uploadedAt: date + 'T10:05:00', 
-                    url: '#',
-                    source: sources[Math.floor(Math.random() * sources.length)]
-                }
-            ]
-        });
-    }
-    return batches;
+  const batches: FileBatch[] = [];
+  const sources = ['WHATSAPP', 'DESKTOP', 'MOBILE_WEB', 'APP'] as const;
+
+  // 50% chance of having a batch
+  if (Math.random() > 0.5) {
+    batches.push({
+      id: date,
+      date: date,
+      status: 'COMPLETED',
+      files: [
+        {
+          id: 'f1',
+          name: 'Invoice_001.pdf',
+          size: '1.2 MB',
+          type: 'application/pdf',
+          uploadedBy: 'CLIENT',
+          uploadedAt: date + 'T10:00:00',
+          url: '#',
+          source: sources[Math.floor(Math.random() * sources.length)]
+        },
+        {
+          id: 'f2',
+          name: 'Bank_Statement.csv',
+          size: '450 KB',
+          type: 'text/csv',
+          uploadedBy: 'CLIENT',
+          uploadedAt: date + 'T10:05:00',
+          url: '#',
+          source: sources[Math.floor(Math.random() * sources.length)]
+        }
+      ]
+    });
+  }
+  return batches;
 }
 
 // Generate Historical Requests (The Ledger Backfill)
 const generateHistoricalRequests = (experts: Expert[], clients: Client[]): Request[] => {
-    const requests: Request[] = [];
-    let reqId = 2000;
+  const requests: Request[] = [];
+  let reqId = 2000;
 
-    experts.forEach(expert => {
-        // Only generate history for ACTIVE experts
-        if (expert.status !== 'ACTIVE') return;
+  experts.forEach(expert => {
+    // Only generate history for ACTIVE experts
+    if (expert.status !== 'ACTIVE') return;
 
-        // Target random lifetime earnings between 20k and 150k SAR for each expert
-        const targetEarnings = 20000 + Math.floor(Math.random() * 130000);
-        let currentEarnings = 0;
+    // Target random lifetime earnings between 20k and 150k SAR for each expert
+    const targetEarnings = 20000 + Math.floor(Math.random() * 130000);
+    let currentEarnings = 0;
 
-        // Keep creating jobs until we hit the target
-        while(currentEarnings < targetEarnings) {
-            const client = clients[Math.floor(Math.random() * clients.length)];
-            const service = SERVICES[Math.floor(Math.random() * SERVICES.length)];
-            
-            // Random date in past 2 years (730 days)
-            const daysAgo = Math.floor(Math.random() * 730) + 10; 
-            const date = new Date(Date.now() - (daysAgo * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+    // Keep creating jobs until we hit the target
+    while (currentEarnings < targetEarnings) {
+      const client = clients[Math.floor(Math.random() * clients.length)];
+      const service = SERVICES[Math.floor(Math.random() * SERVICES.length)];
 
-            // 80% chance of being settled if older than 30 days
-            const isSettled = daysAgo > 30 && Math.random() > 0.2;
-            const payoutId = isSettled ? 'WD-LEGACY' : undefined;
+      // Random date in past 2 years (730 days)
+      const daysAgo = Math.floor(Math.random() * 730) + 10;
+      const date = new Date(Date.now() - (daysAgo * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
 
-            requests.push({
-                id: `REQ-${reqId++}`,
-                clientId: client.id,
-                clientName: client.companyName,
-                serviceId: service.id,
-                serviceName: service.nameEn,
-                status: 'COMPLETED',
-                amount: service.price,
-                dateCreated: date,
-                assignedExpertId: expert.id,
-                expertName: expert.name,
-                description: `Historical Service: ${service.nameEn}`,
-                batches: [],
-                payoutId: payoutId
-            });
+      // 80% chance of being settled if older than 30 days
+      const isSettled = daysAgo > 30 && Math.random() > 0.2;
+      const payoutId = isSettled ? 'WD-LEGACY' : undefined;
 
-            // Expert gets 80%
-            currentEarnings += (service.price * 0.8);
-        }
-    });
+      requests.push({
+        id: `REQ-${reqId++}`,
+        clientId: client.id,
+        clientName: client.companyName,
+        serviceId: service.id,
+        serviceName: service.nameEn,
+        status: 'COMPLETED',
+        amount: service.price,
+        dateCreated: date,
+        assignedExpertId: expert.id,
+        expertName: expert.name,
+        description: `Historical Service: ${service.nameEn}`,
+        batches: [],
+        payoutId: payoutId
+      });
 
-    return requests;
+      // Expert gets 80%
+      currentEarnings += (service.price * 0.8);
+    }
+  });
+
+  return requests;
 };
 
 // Generate Recent/Active Requests
@@ -188,7 +197,7 @@ export const generateActiveRequests = (count: number, clients: Client[], experts
     const service = SERVICES[i % SERVICES.length];
     const status = statuses[i % statuses.length];
     const dateCreated = new Date(Date.now() - Math.floor(Math.random() * 1000000000)).toISOString().split('T')[0]; // Recent
-    
+
     // Some requests are NEW and unassigned (Marketplace logic)
     const isUnassigned = status === 'NEW';
 
@@ -259,4 +268,4 @@ export const MOCK_EXPERTS = generateExperts(20);
 const history = generateHistoricalRequests(MOCK_EXPERTS, MOCK_CLIENTS);
 const recent = generateActiveRequests(50, MOCK_CLIENTS, MOCK_EXPERTS);
 
-export const MOCK_REQUESTS = [...history, ...recent].sort((a,b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+export const MOCK_REQUESTS = [...history, ...recent].sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());

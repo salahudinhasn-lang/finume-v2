@@ -9,7 +9,9 @@ import JoinExpert from './pages/JoinExpert';
 import ClientPortal from './pages/client/ClientDashboard';
 import ClientRequests from './pages/client/ClientRequests';
 import ClientPayments from './pages/client/ClientPayments';
+import PaymentPage from './pages/client/PaymentPage';
 import ClientSettings from './pages/client/ClientSettings';
+import ClientServices from './pages/client/ClientServices';
 import BrowseExperts from './pages/client/BrowseExperts';
 import ExpertPortal from './pages/expert/ExpertDashboard';
 import ExpertTasks from './pages/expert/ExpertTasks';
@@ -26,14 +28,14 @@ import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import WhatsAppButton from './components/WhatsAppButton';
 import UnifiedChat from './components/UnifiedChat';
-import { 
-  ServicesPage, PricingPage, QAPage, AboutPage, CareersPage, 
-  ContactPage, PrivacyPage, TermsPage, CompliancePage 
+import {
+  ServicesPage, PricingPage, QAPage, AboutPage, CareersPage,
+  ContactPage, PrivacyPage, TermsPage, CompliancePage
 } from './pages/PublicPages';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children?: React.ReactNode, allowedRoles: string[] }) => {
   const { user } = useAppContext();
-  
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -101,10 +103,24 @@ const AppContent = () => {
             </Layout>
           </ProtectedRoute>
         } />
+        <Route path="/client/checkout" element={
+          <ProtectedRoute allowedRoles={['CLIENT']}>
+            <Layout title="Secure Checkout">
+              <PaymentPage />
+            </Layout>
+          </ProtectedRoute>
+        } />
         <Route path="/client/settings" element={
           <ProtectedRoute allowedRoles={['CLIENT']}>
             <Layout title="Settings">
               <ClientSettings />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/client/services" element={
+          <ProtectedRoute allowedRoles={['CLIENT']}>
+            <Layout title="Services & Pricing">
+              <ClientServices />
             </Layout>
           </ProtectedRoute>
         } />
@@ -192,7 +208,7 @@ const AppContent = () => {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      
+
       {/* Floating Action Buttons */}
       <UnifiedChat />
       <WhatsAppButton />

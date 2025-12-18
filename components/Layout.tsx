@@ -27,6 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
     if (user?.role === 'CLIENT') {
       return [
         { icon: LayoutDashboard, label: t('sidebar.dashboard'), path: '/client' },
+        { icon: Tag, label: 'Services & Pricing', path: '/client/services' },
         { icon: Search, label: t('sidebar.browseExperts'), path: '/client/experts' },
         { icon: FileText, label: t('sidebar.myRequests'), path: '/client/requests' },
         { icon: DollarSign, label: t('sidebar.payments'), path: '/client/payments' },
@@ -68,7 +69,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         <div className="flex items-center h-20 px-8 border-b border-slate-800 bg-slate-900">
           <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <Logo size={32} className="text-primary-500" />
-            <span className="text-2xl font-bold text-white tracking-tight">{language === 'ar' ? 'فينومي' : 'FINUME'}</span>
+            <span className="text-2xl font-bold text-white tracking-tight">{language === 'ar' ? 'Finume | فينومي' : 'FINUME'}</span>
           </Link>
           <button className="lg:hidden ml-auto text-slate-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
             <X size={20} />
@@ -87,8 +88,8 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${isActive
-                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                   }`}
               >
                 <div className="flex items-center gap-3">
