@@ -26,44 +26,31 @@ const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
+    // MOCK LOGIN BYPASS: Directly call login() which falls back to mock data
+    // Simulate a small network delay for UX
+    setTimeout(() => {
+      login(email, role);
 
-      if (res.ok) {
-        const user = await res.json();
-        login(email, role, user);
+      // Navigation Logic
+      const searchParams = new URLSearchParams(location.search);
+      const redirect = searchParams.get('redirect');
 
-        // Navigation Logic
-        const searchParams = new URLSearchParams(location.search);
-        const redirect = searchParams.get('redirect');
-
-        if (role === 'CLIENT') {
-          if (redirect) {
-            const action = searchParams.get('action');
-            const serviceId = searchParams.get('serviceId');
-            const planId = searchParams.get('planId');
-            navigate(redirect, { state: { action, serviceId, planId } });
-          } else {
-            navigate('/client');
-          }
-        } else if (role === 'EXPERT') {
-          navigate('/expert');
+      if (role === 'CLIENT') {
+        if (redirect) {
+          const action = searchParams.get('action');
+          const serviceId = searchParams.get('serviceId');
+          const planId = searchParams.get('planId');
+          navigate(redirect, { state: { action, serviceId, planId } });
         } else {
-          navigate('/admin');
+          navigate('/client');
         }
+      } else if (role === 'EXPERT') {
+        navigate('/expert');
       } else {
-        alert('Invalid credentials');
+        navigate('/admin');
       }
-    } catch (error) {
-      console.error('Login failed', error);
-      alert('Login failed');
-    } finally {
       setIsLoading(false);
-    }
+    }, 800);
   };
 
   return (
