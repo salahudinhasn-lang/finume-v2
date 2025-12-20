@@ -48,6 +48,7 @@ interface AppContextType {
   requestPayout: (amount: number, requestIds?: string[]) => void;
   processPayout: (id: string, status: 'APPROVED' | 'REJECTED') => void;
   manualSettle: (requestIds: string[]) => void;
+  checkUsageLimit: (type: 'TRANSACTIONS' | 'REVENUE') => boolean;
 }
 
 // Define API Base URL
@@ -114,7 +115,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.warn('Backend not available:', e);
       }
     };
-    initBackend();
   }, []);
 
   const login = (email: string, role: string, newUser?: User) => {
@@ -248,7 +248,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // 1. Optimistic UI Update
     setRequests(prev => [req, ...prev]);
 
-    // 2. Persist to Backend
+    // 2. Persist to Backend (Disabled)
+    /*
     try {
       const payload = {
         clientId: req.clientId,
@@ -271,6 +272,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (error) {
       console.error('Failed to save request to DB', error);
     }
+    */
   };
 
   const updateRequestStatus = (id: string, status: Request['status']) => {
@@ -460,6 +462,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  // Usage Limit Implementation
+  const checkUsageLimit = (type: 'TRANSACTIONS' | 'REVENUE') => {
+    if (!user || user.role !== 'CLIENT') return false;
+
+    // For now, assume a basic plan if not found.
+    // In real app, we'd fetch plan details linked to user subscription.
+    // Let's cycle limits for demo:
+    // If client email contains 'limit', we trigger limit.
+    // Or just random for now? No, let's use a hardcoded logic based on plan name if available, or just mock it.
+
+    // Mock Limits
+    const MAX_TRANSACTIONS = 5; // Low limit to trigger easily
+    const MAX_REVENUE = 50000;
+
+    // Count current usage (Mock: count requests)
+    const currentTransactions = requests.filter(r => r.clientId === user.id).length;
+
+    if (type === 'TRANSACTIONS') {
+      // If user has > 5 requests, trigger limit
+      return currentTransactions >= MAX_TRANSACTIONS;
+    }
+
+    return false;
+  };
+
   return (
     <AppContext.Provider value={{
       user, login, logout, language, setLanguage, t,
@@ -468,7 +495,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateClient, updateExpert, addClient, addExpert, submitReview,
       addAdmin, updateAdmin, deleteAdmin,
       updateService, addService, deleteService, updatePlan,
-      requestPayout, processPayout, manualSettle
+      requestPayout, processPayout, manualSettle, checkUsageLimit
     }}>
       {children}
     </AppContext.Provider>
@@ -480,3 +507,4 @@ export const useAppContext = () => {
   if (!context) throw new Error('useAppContext must be used within AppProvider');
   return context;
 };
+
