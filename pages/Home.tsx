@@ -295,9 +295,10 @@ const HomePage = () => {
             {/* Background Image with Overlay */}
             <div className="absolute inset-0 z-0">
               <img
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80"
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=60&w=1200"
                 className="w-full h-full object-cover opacity-20"
                 alt="Team collaboration"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900/60"></div>
             </div>
@@ -325,7 +326,7 @@ const HomePage = () => {
               {/* Decorative Grid or Stats for Right Side */}
               <div className="hidden lg:grid grid-cols-2 gap-4">
                 <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl">
-                  <div className="text-3xl font-black text-white mb-1">Top 1%</div>
+                  <div className="text-3xl font-black text-white mb-1">Top 3%</div>
                   <div className="text-sm text-slate-400">Talent Acceptance Rate</div>
                 </div>
                 <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl mt-8">
