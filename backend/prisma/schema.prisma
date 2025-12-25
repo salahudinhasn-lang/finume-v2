@@ -49,6 +49,7 @@ model User {
   expertRequests   Request[]     @relation("ExpertRequests")
   uploadedFiles    UploadedFile[]
   payouts          PayoutRequest[]
+  permissions      ClientFeaturePermissions?
 }
 
 model Service {
@@ -153,4 +154,23 @@ model ChatMessage {
   text      String
   role      String   // 'user' or 'model' - if 'model', userId might be null or system bot user
   timestamp DateTime @default(now())
+}
+
+// Admin & Platform Control
+model PlatformSettings {
+  id               String  @id @default("global")
+  showExpertsPage  Boolean @default(false)
+  showServicesPage Boolean @default(false)
+}
+
+model ClientFeaturePermissions {
+  id                  String  @id @default(uuid())
+  clientId            String  @unique
+  client              User    @relation(fields: [clientId], references: [id])
+  canViewReports      Boolean @default(true)
+  canUploadDocs       Boolean @default(true)
+  canDownloadInvoices Boolean @default(true)
+  canRequestCalls     Boolean @default(true)
+  canSubmitTickets    Boolean @default(true)
+  canViewMarketplace  Boolean @default(false)
 }

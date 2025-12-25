@@ -14,7 +14,8 @@ const PricingTable = () => {
 
     const calculatePrice = (basePrice: number) => {
         if (billingCycle === 'yearly') {
-            return Math.floor(basePrice * 0.8 * 12).toLocaleString();
+            // Show monthly equivalent (20% off)
+            return Math.floor(basePrice * 0.8).toLocaleString();
         }
         return basePrice.toLocaleString();
     };
@@ -59,8 +60,15 @@ const PricingTable = () => {
                             {MOCK_PLANS.map(plan => (
                                 <th key={plan.id} className={`p-6 text-center w-1/4 border-l border-gray-100 ${plan.isPopular ? 'bg-indigo-50/50' : ''}`}>
                                     <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                                    <div className="mt-2 text-3xl font-black text-gray-900">
-                                        {calculatePrice(plan.price)} <span className="text-sm font-bold text-gray-500">SAR / {billingCycle === 'yearly' ? 'year' : 'mo'}</span>
+                                    <div className="mt-2 flex flex-col items-center">
+                                        <div className="text-3xl font-black text-gray-900">
+                                            {calculatePrice(plan.price)} <span className="text-sm font-bold text-gray-500">SAR / mo</span>
+                                        </div>
+                                        {billingCycle === 'yearly' && (
+                                            <div className="text-xs text-slate-400 font-medium mt-1">
+                                                Billed {(plan.price * 12 * 0.8).toLocaleString()} SAR yearly
+                                            </div>
+                                        )}
                                     </div>
                                     <p className="text-xs font-medium text-gray-500 mt-1">{plan.tagline}</p>
                                     {billingCycle === 'yearly' && (

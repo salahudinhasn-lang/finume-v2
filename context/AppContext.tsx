@@ -100,13 +100,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const initBackend = async () => {
       try {
-        // Fetch Users
+        // Fetch Settings
+        const settingsRes = await fetch(`${API_BASE_URL}/api/settings`);
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          setSettings(settingsData);
+        }
+
+        // Fetch Users (including permissions)
         const usersRes = await fetch(`${API_BASE_URL}/api/users`);
         if (usersRes.ok) {
           const usersData = await usersRes.json();
           setClients(usersData.clients || []);
           setExperts(usersData.experts || []);
           setAdmins(usersData.admins || []);
+
+          // Hydrate client permissions map
+          const permsMap: Record<string, ClientFeaturePermissions> = {};
+          (usersData.clients as Client[]).forEach((c: any) => {
+            if (c.permissions) {
+              permsMap[c.id] = c.permissions;
+            }
+          });
+          setClientPermissions(permsMap);
         }
 
         // Fetch Requests
@@ -507,15 +523,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   };
 
-  const updatePermissions = (clientId: string, newPerms: Partial<ClientFeaturePermissions>) => {
+  const updatePermissions = async (clientId: string, newPerms: Partial<ClientFeaturePermissions>) => {
+    const updated = { ...getPermissions(clientId), ...newPerms };
+
+    // Optimistic Update
     setClientPermissions(prev => ({
       ...prev,
-      [clientId]: { ...getPermissions(clientId), ...newPerms }
+      [clientId]: updated
     }));
+
+    // Persist
+    try {
+      await fetch(`${API_BASE_URL}/api/permissions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId, permissions: updated })
+      });
+    } catch (e) {
+      console.error('Failed to persist permissions', e);
+    }
   };
 
-  const updateSettings = (newSettings: Partial<PlatformSettings>) => {
+  const updateSettings = async (newSettings: Partial<PlatformSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
+
+    // Persist
+    try {
+      await fetch(`${API_BASE_URL}/api/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...settings, ...newSettings })
+      });
+    } catch (e) {
+      console.error('Failed to persist settings', e);
+    }
   };
 
   return (

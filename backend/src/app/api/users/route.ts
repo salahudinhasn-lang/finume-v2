@@ -6,7 +6,9 @@ const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
     try {
-        const users = await prisma.user.findMany();
+        const users = await prisma.user.findMany({
+            include: { permissions: true }
+        });
 
         // Split by role for frontend convenience, matches AppContext expectation
         const clients = users.filter(u => u.role === 'CLIENT');
