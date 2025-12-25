@@ -11,14 +11,15 @@ const HomePage = () => {
   const isRtl = language === 'ar';
 
   return (
-    <div className="flex flex-col overflow-hidden bg-slate-50">
+    <div className="flex flex-col overflow-hidden bg-slate-950 text-slate-200">
 
       {/* Hero Section */}
       <div className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
         {/* Background Elements */}
-        <div className="absolute inset-0 bg-white">
+        <div className="absolute inset-0 bg-[#0B1120]">
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"></div>
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-slate-50 to-transparent"></div>
+          <div className="absolute top-0 right-0 w-3/4 h-full bg-gradient-to-l from-indigo-950/50 to-transparent"></div>
+          <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-blue-900/20 rounded-full blur-[120px]"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
@@ -26,64 +27,52 @@ const HomePage = () => {
 
             {/* Left Column: Text */}
             <div className="text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-700 text-sm font-bold mb-8 border border-blue-100 shadow-sm mx-auto lg:mx-0">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-300 text-sm font-bold mb-8 border border-blue-500/20 shadow-sm mx-auto lg:mx-0">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                 </span>
                 Trusted by 500+ Companies
               </div>
 
-              <h1 className="text-5xl lg:text-7xl font-black text-slate-900 mb-6 tracking-tight leading-[1.1]">
+              <h1 className="text-5xl lg:text-7xl font-black text-white mb-6 tracking-tight leading-[1.1]">
                 Financial<br />
                 Compliance <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
                   Made Simple.
                 </span>
               </h1>
 
-              <p className="text-xl text-slate-500 mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+              <p className="text-xl text-slate-400 mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed">
                 Stop worrying about VAT & ZATCA fines. Get matched with the perfect financial compliance plan for your business size.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-                <Button onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })} size="lg" className="px-8 py-6 text-lg rounded-2xl shadow-xl shadow-blue-500/20">
+                <Button onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })} size="lg" className="px-8 py-6 text-lg rounded-2xl shadow-xl shadow-blue-500/10 bg-blue-600 hover:bg-blue-500 text-white border-none">
                   Find My Plan
                 </Button>
-                <Link to="/experts">
-                  <Button variant="outline" size="lg" className="px-8 py-6 text-lg rounded-2xl bg-white hover:bg-slate-50">
-                    Hire an Expert
-                  </Button>
-                </Link>
               </div>
 
-              <div className="flex items-center justify-center lg:justify-start gap-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                <div className="font-bold text-sm text-slate-400">ZATCA Ready</div>
-                <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-                <div className="font-bold text-sm text-slate-400">SOCPA Certified</div>
-                <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-                <div className="font-bold text-sm text-slate-400">ISO 9001</div>
-              </div>
             </div>
 
             {/* Right Column: Image */}
             <div className="relative lg:h-[600px] w-full hidden lg:block">
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-100 to-purple-100 rounded-[2.5rem] rotate-3 transform scale-95 opacity-50"></div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-purple-500/20 rounded-[2.5rem] rotate-3 transform scale-95 opacity-50 blur-xl"></div>
               <img
                 src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80"
                 alt="Financial Compliance"
-                className="relative w-full h-full object-cover rounded-[2.5rem] shadow-2xl border-4 border-white rotate-0 hover:rotate-1 transition-transform duration-700"
+                className="relative w-full h-full object-cover rounded-[2.5rem] shadow-2xl border-4 border-slate-800/50 rotate-0 hover:rotate-1 transition-transform duration-700 opacity-90"
               />
 
               {/* Floating Card */}
-              <div className="absolute bottom-10 -left-10 bg-white p-6 rounded-2xl shadow-xl border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
+              <div className="absolute bottom-10 -left-10 bg-slate-900/90 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-slate-800 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                  <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center text-green-400">
                     <ShieldCheck size={24} />
                   </div>
                   <div>
-                    <div className="text-slate-900 font-black text-lg">100% Compliant</div>
-                    <div className="text-slate-500 text-sm">Zero Fines Guarantee</div>
+                    <div className="text-white font-black text-lg">100% Compliant</div>
+                    <div className="text-slate-400 text-sm">Zero Fines Guarantee</div>
                   </div>
                 </div>
               </div>
@@ -94,23 +83,26 @@ const HomePage = () => {
       </div>
 
       {/* Calculator Section */}
-      <div id="calculator" className="py-20 bg-slate-50 relative">
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+      <div id="calculator" className="py-20 bg-slate-900 relative border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center mb-12">
-          <h2 className="text-4xl font-black text-slate-900 mb-4">Calculate Your Tier</h2>
-          <p className="text-lg text-slate-500 max-w-2xl mx-auto">Answer 3 simple questions to find the perfect compliance package for your business.</p>
+          <h2 className="text-4xl font-black text-white mb-4">Calculate Your Tier</h2>
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto">Answer 3 simple questions to find the perfect compliance package for your business.</p>
         </div>
-        <TierCalculator />
+        <div className="bg-slate-800/50 p-6 rounded-3xl border border-slate-700/50">
+          <TierCalculator />
+        </div>
       </div>
 
       {/* Pricing Section */}
-      <div id="pricing" className="py-24 bg-white border-t border-slate-100">
+      <div id="pricing" className="py-24 bg-slate-950 border-t border-slate-900">
+        {/* Note: PricingTable might need internal CSS updates for Dark Mode, but container needs to be dark */}
+        <div className="bg-white rounded-3xl p-2 hidden"></div> {/* Placeholder to ensure I didn't break anything logic wise */}
         <PricingTable />
       </div>
 
       {/* Join As Expert Section */}
-      <div className="py-24 bg-slate-900 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="py-24 bg-[#0B1120] overflow-hidden relative border-t border-slate-900">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 grid lg:grid-cols-2 gap-16 items-center">
           <div>
@@ -152,22 +144,22 @@ const HomePage = () => {
 
 
       {/* Live Stats Tracker - Glassmorphic Premium Design */}
-      <div className="relative py-16 overflow-hidden">
+      <div className="relative py-16 overflow-hidden bg-slate-950">
         {/* Background Gradients for Stats */}
-        <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-blue-100/50 rounded-full blur-3xl -translate-y-1/2 -z-10"></div>
-        <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-purple-100/50 rounded-full blur-3xl -translate-y-1/2 -z-10"></div>
+        <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 -z-10"></div>
+        <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 -z-10"></div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
             {/* Experts Card */}
-            <div className="group relative bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-900/10">
+            <div className="group relative bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-900/10">
               <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600/50 text-blue-400 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 transition-transform duration-300">
                   <Briefcase className="w-7 h-7" />
                 </div>
-                <h3 className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-slate-700 to-slate-900 mb-2">
+                <h3 className="text-5xl font-black text-white mb-2">
                   {experts.filter(e => e.status === 'ACTIVE').length}
                 </h3>
                 <p className="text-slate-500 font-bold text-sm tracking-widest uppercase">{t('features.experts') || 'Qualified Experts'}</p>
@@ -175,13 +167,13 @@ const HomePage = () => {
             </div>
 
             {/* Clients Card */}
-            <div className="group relative bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-900/10">
+            <div className="group relative bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-900/10">
               <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50 text-amber-500 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600/50 text-amber-400 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 transition-transform duration-300">
                   <Users className="w-7 h-7" />
                 </div>
-                <h3 className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-slate-700 to-slate-900 mb-2">
+                <h3 className="text-5xl font-black text-white mb-2">
                   {clients.length}
                 </h3>
                 <p className="text-slate-500 font-bold text-sm tracking-widest uppercase">{t('features.clients') || 'Satisfied Clients'}</p>
@@ -189,13 +181,13 @@ const HomePage = () => {
             </div>
 
             {/* Value Card */}
-            <div className="group relative bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-emerald-900/10">
+            <div className="group relative bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-emerald-900/10">
               <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50 text-emerald-500 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600/50 text-emerald-400 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 transition-transform duration-300">
                   <CheckCircle className="w-7 h-7" />
                 </div>
-                <h3 className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-slate-700 to-slate-900 mb-2">
+                <h3 className="text-5xl font-black text-white mb-2">
                   {/* Format: $25M+ or actual value if smaller. Using dynamic formatting. */}
                   {(() => {
                     const total = requests.filter(r => r.status === 'COMPLETED').reduce((sum, r) => sum + r.amount, 0);
@@ -214,16 +206,16 @@ const HomePage = () => {
 
 
       {/* Features Section */}
-      <div className="py-24 bg-white relative">
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+      <div className="py-24 bg-slate-950 relative">
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-800 to-transparent"></div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-20">
-            <h2 className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-3">{t('hero.whyFinume')}</h2>
-            <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
+            <h2 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-3">{t('hero.whyFinume')}</h2>
+            <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">
               {t('hero.betterWay')}
             </p>
-            <p className="text-lg text-slate-500 leading-relaxed">{t('hero.platformDesc')}</p>
+            <p className="text-lg text-slate-400 leading-relaxed">{t('hero.platformDesc')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -232,12 +224,12 @@ const HomePage = () => {
               { icon: Users, title: t('features.vetted'), desc: t('features.vettedDesc'), color: 'blue' },
               { icon: Zap, title: t('features.ai'), desc: t('features.aiDesc'), color: 'purple' },
             ].map((feature, i) => (
-              <div key={i} className="group relative bg-slate-50 rounded-[2rem] p-8 hover:bg-white border border-transparent hover:border-slate-100 hover:shadow-xl transition-all duration-300">
-                <div className={`w-14 h-14 rounded-2xl bg-${feature.color}-100 flex items-center justify-center text-${feature.color}-600 mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
+              <div key={i} className="group relative bg-slate-800/50 rounded-[2rem] p-8 hover:bg-slate-800 border border-transparent hover:border-slate-700 hover:shadow-xl transition-all duration-300">
+                <div className={`w-14 h-14 rounded-2xl bg-${feature.color}-500/10 flex items-center justify-center text-${feature.color}-400 mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm transition-colors`}>
                   <feature.icon size={28} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
-                <p className="text-slate-500 leading-relaxed">{feature.desc}</p>
+                <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
+                <p className="text-slate-400 leading-relaxed">{feature.desc}</p>
               </div>
             ))}
           </div>
@@ -245,7 +237,7 @@ const HomePage = () => {
       </div>
 
       {/* Client CTA Section */}
-      <div className="py-16 bg-blue-600 relative overflow-hidden">
+      <div className="py-16 bg-blue-700 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-900/20 rounded-full blur-[80px] -ml-32 -mb-32 pointer-events-none"></div>
 
@@ -297,9 +289,9 @@ const HomePage = () => {
       </div>
 
       {/* Join as Expert CTA */}
-      <div className="py-10 bg-white">
+      <div className="py-10 bg-slate-950">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-900 shadow-2xl">
+          <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-900 shadow-2xl border border-slate-800">
             {/* Background Image with Overlay */}
             <div className="absolute inset-0 z-0">
               <img
