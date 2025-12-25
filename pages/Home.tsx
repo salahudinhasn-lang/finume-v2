@@ -237,50 +237,83 @@ const HomePage = () => {
       </div>
 
       {/* Client CTA Section */}
-      <div className="py-16 bg-blue-700 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-900/20 rounded-full blur-[80px] -ml-32 -mb-32 pointer-events-none"></div>
+      <div className="py-20 relative overflow-hidden">
+        {/* Dark Premium Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950"></div>
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 grid md:grid-cols-2 gap-12 items-center">
+        {/* Decorative Blurs */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] -mr-32 -mt-32 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px] -ml-32 -mb-32 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 brightness-100 contrast-150 mix-blend-overlay"></div>
+
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mb-6 tracking-tight">
-              Ready to streamline your<br />financial operations?
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-300 text-xs font-bold mb-6 border border-blue-500/20 backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              </span>
+              Live Matching Active
+            </div>
+
+            <h2 className="text-4xl sm:text-5xl font-black text-white mb-6 tracking-tight leading-tight">
+              Ready to streamline your<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">financial operations?</span>
             </h2>
-            <p className="text-blue-100 text-lg mb-8 leading-relaxed max-w-xl">
-              Join hundreds of businesses that trust Finume for their VAT, bookkeeping, and CFO needs. Get matched with a vetted expert in minutes.
+            <p className="text-blue-100/80 text-lg mb-10 leading-relaxed max-w-xl">
+              Join hundreds of innovative businesses that trust Finume for their VAT, bookkeeping, and CFO needs.
+              Get matched with a vetted expert in minutes, not days.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/experts">
-                <Button className="!bg-white !text-blue-600 hover:!bg-blue-50 border-none px-8 py-4 rounded-xl font-bold text-lg shadow-xl hover:-translate-y-1 transition-transform">
+                <Button className="!bg-gradient-to-r !from-blue-600 !to-indigo-600 !text-white hover:!from-blue-500 hover:!to-indigo-500 border-none px-8 py-4 rounded-xl font-bold text-lg shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-1 transition-all">
                   Hire an Expert Now
                 </Button>
               </Link>
               <Link to="/services">
-                <Button variant="outline" className="!border-blue-400 !text-white hover:!bg-white/10 px-8 py-4 rounded-xl font-bold text-lg">
+                <Button variant="outline" className="!bg-white/5 !border-white/10 !text-white hover:!bg-white/10 backdrop-blur-sm px-8 py-4 rounded-xl font-bold text-lg hover:-translate-y-1 transition-transform">
                   Explore Services
                 </Button>
               </Link>
             </div>
           </div>
-          <div className="relative">
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-[2rem] shadow-2xl transform md:rotate-2 hover:rotate-0 transition-transform duration-500">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white shadow-lg">
-                  <CheckCircle size={24} strokeWidth={3} />
+
+          <div className="relative mx-auto w-full max-w-md">
+            {/* Glow Effect behind card */}
+            <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full transform scale-90"></div>
+
+            <div className="relative bg-slate-900/60 backdrop-blur-2xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl transform md:rotate-2 hover:rotate-0 transition-transform duration-500 group">
+              {/* Highlight Line */}
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+
+              <div className="flex items-center gap-5 mb-8">
+                <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-500/20 group-hover:scale-110 transition-transform duration-300">
+                  <CheckCircle size={28} strokeWidth={3} />
                 </div>
                 <div>
-                  <div className="text-white font-bold text-lg">Request Completed</div>
-                  <div className="text-blue-200 text-sm">Just now</div>
+                  <div className="text-white font-bold text-xl">Request Completed</div>
+                  <div className="text-blue-300/80 text-sm font-medium">Just now • #REQ-2024-88</div>
                 </div>
               </div>
+
               <div className="space-y-4">
-                <div className="bg-white/10 p-4 rounded-xl">
-                  <div className="flex justify-between text-sm text-blue-100 mb-1">Service</div>
-                  <div className="font-bold text-white">Quarterly VAT Filing</div>
+                <div className="bg-slate-800/50 border border-white/5 p-5 rounded-2xl transition-colors hover:bg-slate-800/80">
+                  <div className="flex justify-between text-xs font-bold text-blue-300/70 mb-2 uppercase tracking-wider">Service Type</div>
+                  <div className="font-bold text-white text-lg">Quarterly VAT Filing</div>
                 </div>
-                <div className="bg-white/10 p-4 rounded-xl">
-                  <div className="flex justify-between text-sm text-blue-100 mb-1">Status</div>
-                  <div className="font-bold text-green-300 flex items-center gap-2">● Submitted to ZATCA</div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-800/50 border border-white/5 p-5 rounded-2xl transition-colors hover:bg-slate-800/80">
+                    <div className="flex justify-between text-xs font-bold text-blue-300/70 mb-2 uppercase tracking-wider">Status</div>
+                    <div className="font-bold text-emerald-400 flex items-center gap-2 text-sm">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Submitted
+                    </div>
+                  </div>
+                  <div className="bg-slate-800/50 border border-white/5 p-5 rounded-2xl transition-colors hover:bg-slate-800/80">
+                    <div className="flex justify-between text-xs font-bold text-blue-300/70 mb-2 uppercase tracking-wider">Est. Savings</div>
+                    <div className="font-bold text-white text-sm">SAR 4,500</div>
+                  </div>
                 </div>
               </div>
             </div>
