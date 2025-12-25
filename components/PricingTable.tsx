@@ -25,24 +25,24 @@ const PricingTable = () => {
     return (
         <div className="w-full max-w-7xl mx-auto px-4 py-12">
             <div className="text-center mb-10">
-                <h2 className="text-4xl font-black text-slate-900 mb-4">Compare Plans & Limits</h2>
-                <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
+                <h2 className="text-4xl font-black text-white mb-4">Compare Plans & Limits</h2>
+                <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-8">
                     Choose the plan that fits your current business scale. Upgrade anytime as you grow.
                 </p>
 
                 {/* Billing Toggle */}
                 <div className="flex justify-center items-center gap-4">
-                    <div className="relative bg-slate-100 p-1 rounded-full flex items-center cursor-pointer select-none" onClick={toggleBilling}>
+                    <div className="relative bg-slate-800 p-1 rounded-full flex items-center cursor-pointer select-none border border-slate-700" onClick={toggleBilling}>
                         <div
-                            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 z-10 ${billingCycle === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 z-10 ${billingCycle === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                         >
                             Monthly
                         </div>
                         <div
-                            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 z-10 flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 z-10 flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                         >
                             Yearly
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors ${billingCycle === 'yearly' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600'}`}>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors ${billingCycle === 'yearly' ? 'bg-green-500 text-white' : 'bg-green-900/30 text-green-400'}`}>
                                 -20%
                             </span>
                         </div>
@@ -205,7 +205,7 @@ const PricingTable = () => {
             <div className="mt-8 text-center">
                 <button
                     onClick={() => setShowOverage(!showOverage)}
-                    className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
+                    className="inline-flex items-center text-sm font-bold text-slate-400 hover:text-white transition-colors"
                 >
                     <AlertTriangle size={16} className="mr-2" />
                     {showOverage ? 'Hide Overage Policy' : 'Show Overage Policy & Fees'}
