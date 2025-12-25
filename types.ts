@@ -102,7 +102,18 @@ export interface UploadedFile {
   uploadedBy: 'CLIENT' | 'EXPERT' | 'ADMIN';
   uploadedAt: string; // ISO string including time
   source?: 'WHATSAPP' | 'DESKTOP' | 'MOBILE_WEB' | 'APP';
+  category?: DocumentCategory;
 }
+
+export type DocumentCategory =
+  | 'Sales Invoice'
+  | 'Purchase Invoice'
+  | 'Contract'
+  | 'Expense'
+  | 'Petty Cash'
+  | 'Bank Statement'
+  | 'VAT Return'
+  | 'Other';
 
 export interface FileBatch {
   id: string; // Usually the date string YYYY-MM-DD

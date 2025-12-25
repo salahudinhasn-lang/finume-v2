@@ -4,8 +4,9 @@ import { useAppContext } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/UI';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Eye, CheckCircle, Star, ThumbsUp, X, FileText, Download, Clock, Check } from 'lucide-react';
-import { Request, Review, FileBatch } from '../../types';
-import { FileBatchManager } from '../../components/FileBatchManager';
+import { Request, Review, FileBatch, DocumentCategory, UploadedFile } from '../../types';
+import { DocumentBatchList } from '../../components/DocumentBatchList';
+import { SmartUploadWidget } from '../../components/SmartUploadWidget';
 
 const ClientRequests = () => {
     const { user, requests, updateRequestStatus, submitReview, updateRequest } = useAppContext();
@@ -68,6 +69,51 @@ const ClientRequests = () => {
         if (selectedRequest) {
             updateRequest(selectedRequest.id, { batches: newBatches });
             setSelectedRequest(prev => prev ? { ...prev, batches: newBatches } : null);
+        }
+    };
+
+    const handleSmartUpload = (files: File[], requestId: string) => {
+        // Find existing request or use selectedRequest if matches
+        const req = requests.find(r => r.id === requestId);
+        if (!req) return;
+
+        const categories: DocumentCategory[] = ['Sales Invoice', 'Purchase Invoice', 'Contract', 'Expense', 'Petty Cash', 'Bank Statement', 'VAT Return', 'Other'];
+
+        const newFiles: UploadedFile[] = files.map((f, idx) => ({
+            id: `f-${Date.now()}-${idx}`,
+            name: f.name,
+            size: (f.size / 1024 / 1024).toFixed(2) + ' MB',
+            type: f.type,
+            url: '#',
+            uploadedBy: 'CLIENT',
+            uploadedAt: new Date().toISOString(),
+            source: 'DESKTOP',
+            category: categories[Math.floor(Math.random() * categories.length)] // Simulating AI
+        }));
+
+        const today = new Date().toISOString().split('T')[0];
+        let currentBatches = req.batches || [];
+        const existingBatchIndex = currentBatches.findIndex(b => b.id === today);
+
+        if (existingBatchIndex >= 0) {
+            currentBatches[existingBatchIndex] = {
+                ...currentBatches[existingBatchIndex],
+                files: [...currentBatches[existingBatchIndex].files, ...newFiles]
+            };
+        } else {
+            currentBatches = [{
+                id: today,
+                date: today,
+                files: newFiles,
+                status: 'PENDING'
+            }, ...currentBatches];
+        }
+
+        updateRequest(req.id, { batches: currentBatches });
+
+        // Update local state if currently viewing this request
+        if (selectedRequest && selectedRequest.id === req.id) {
+            setSelectedRequest(prev => prev ? { ...prev, batches: currentBatches } : null);
         }
     };
 
@@ -219,8 +265,15 @@ const ClientRequests = () => {
                             </div>
 
                             {/* File Batch Manager Integration */}
-                            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                                <FileBatchManager
+                            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 space-y-8">
+                                <SmartUploadWidget
+                                    activeRequests={[selectedRequest]}
+                                    preselectedRequestId={selectedRequest.id}
+                                    onUploadComplete={handleSmartUpload}
+                                    className='border-dashed border-2 shadow-sm'
+                                />
+
+                                <DocumentBatchList
                                     batches={selectedRequest.batches || []}
                                     onUpdateBatches={handleUpdateBatches}
                                     userRole="CLIENT"

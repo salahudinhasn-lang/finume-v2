@@ -122,6 +122,7 @@ model UploadedFile {
   batchId     String?
   batch       FileBatch? @relation(fields: [batchId], references: [id])
   source      String? // Enum mapped to string
+  category    String? // Enum: SALES_INVOICE, PURCHASE_INVOICE, etc.
   createdAt   DateTime @default(now())
 }
 
