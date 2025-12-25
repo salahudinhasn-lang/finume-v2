@@ -18,34 +18,61 @@ export const SERVICES: Service[] = [
 export const MOCK_PLANS: PricingPlan[] = [
   {
     id: 'basic',
-    name: 'CR Guard (Basic)',
-    price: 250,
-    description: 'Dormant / Low-Activity CRs',
-    tagline: '"Keep my CR Active"',
-    features: ['Zero-filing VAT', 'Annual Qawaem (Basic)', 'Zakat "Estimated" Filing'],
-    guarantee: 'Yes (Basic)',
-    color: 'border-gray-200'
+    name: 'CR Guard',
+    price: 500,
+    description: 'Dormant or pre-revenue CRs',
+    tagline: '"Keep my legal status active"',
+    features: ['Zero-filing VAT', 'Basic Annual Qawaem', 'Zakat Est. Filing'],
+    guarantee: 'Basic Compliance',
+    color: 'border-slate-200',
+    limits: {
+      revenue: { label: '< 375k SAR', value: 375000 },
+      transactions: { label: '< 50 / mo', value: 50 },
+      invoices: { label: '< 5 / mo', value: 5 },
+      bills: { label: '< 10 / mo', value: 10 },
+      bankAccounts: { label: '1 Account', value: 1 },
+      employees: { label: 'None', value: 0 },
+      features: { international: false, stock: 'Basic', contracts: false }
+    }
   },
   {
     id: 'standard',
-    name: 'ZATCA Shield (Standard)',
-    price: 1300,
-    description: 'Active Shops / Cafes',
-    tagline: '"No VAT Fines"',
-    features: ['Quarterly VAT Filing', 'Monthly Bookkeeping', 'E-Invoicing Review'],
-    guarantee: 'Yes (Full)',
+    name: 'ZATCA Shield',
+    price: 1750,
+    description: 'Active shops, cafes, and service businesses',
+    tagline: '"Avoid fines & stay compliant"',
+    features: ['Quarterly VAT Filing', 'Monthly Bookkeeping', 'E-Invoicing Review', 'Payroll (GOSI)'],
+    guarantee: 'Fine Protection (100%)',
     isPopular: true,
-    color: 'border-primary-500'
+    color: 'border-blue-500',
+    limits: {
+      revenue: { label: '< 5M SAR', value: 5000000 },
+      transactions: { label: 'Up to 300 / mo', value: 300 },
+      invoices: { label: 'Unlimited', value: 9999 },
+      bills: { label: 'Up to 100', value: 100 },
+      bankAccounts: { label: 'Up to 3', value: 3 },
+      employees: { label: 'Up to 10', value: 10 },
+      features: { international: 'Basic', stock: 'Basic', contracts: 'Basic' }
+    }
   },
   {
     id: 'pro',
-    name: 'Audit Proof (Pro)',
+    name: 'Audit Proof',
     price: 5000,
-    description: 'Funded Startups / Contractors',
-    tagline: '"CFO-Level Reporting"',
-    features: ['Full Monthly Closing', 'Cost Center Accounting', 'Audit Coordination'],
-    guarantee: 'Yes (Full)',
-    color: 'border-gray-200'
+    description: 'Funded startups & Government contractors',
+    tagline: '"CFO-level governance"',
+    features: ['Monthly Closing', 'Cost Accounting', 'Audit Coordination', 'Full Payroll & HR'],
+    guarantee: 'Audit Defense Support',
+    color: 'border-purple-500',
+    limits: {
+      revenue: { label: 'Unlimited', value: 99999999 },
+      transactions: { label: 'Unlimited', value: 9999 },
+      invoices: { label: 'Unlimited', value: 9999 },
+      bills: { label: 'Unlimited', value: 9999 },
+      bankAccounts: { label: 'Unlimited', value: 99 },
+      employees: { label: 'Unlimited', value: 999 },
+      features: { international: true, stock: 'Full', contracts: true }
+    }
   }
 ];
 

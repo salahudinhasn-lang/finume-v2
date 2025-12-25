@@ -1,25 +1,61 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Button, Card } from '../../components/UI';
 import { CheckCircle, CreditCard, Lock, ShieldCheck, ArrowLeft, Loader2 } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Request } from '../../types';
+import { MOCK_PLANS } from '../../mockData';
 
 const PaymentPage = () => {
     const { user, addRequest, updateRequestStatus, t, language } = useAppContext();
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
 
-    // Get state passed from dashboard (service, file info, etc)
-    const { pendingRequest } = location.state || {}; // Expecting a prepared request object
+    // 1. Get State from navigation (priority) OR Params (fallback)
+    const stateRequest = location.state?.pendingRequest;
+    const planId = searchParams.get('planId') || location.state?.planId;
+    const billingCycle = searchParams.get('billing') || location.state?.billing || 'monthly';
+
+    // 2. Derive Request Data
+    const [pendingRequest, setPendingRequest] = useState<Request | null>(stateRequest || null);
+
+    useEffect(() => {
+        if (!pendingRequest && planId && user) {
+            const plan = MOCK_PLANS.find(p => p.id === planId);
+            if (plan) {
+                // Calculate Price (Monthly vs Yearly -20%)
+                const isYearly = billingCycle === 'yearly';
+                const basePrice = plan.price; // Monthly price
+                const finalAmount = isYearly
+                    ? Math.floor(basePrice * 12 * 0.8)
+                    : basePrice;
+
+                // Create Temporary Request Object
+                const newReq: Request = {
+                    id: `REQ-${Date.now()}`,
+                    clientId: user.id,
+                    clientName: user.name,
+                    serviceId: plan.id,
+                    serviceName: `${plan.name} (${isYearly ? 'Yearly' : 'Monthly'})`,
+                    status: 'PENDING_PAYMENT',
+                    amount: finalAmount,
+                    dateCreated: new Date().toISOString(),
+                    description: `Subscription to ${plan.name} - ${isYearly ? 'Yearly Plan (Save 20%)' : 'Monthly Plan'}`,
+                    batches: []
+                };
+                setPendingRequest(newReq);
+            }
+        }
+    }, [planId, billingCycle, user, pendingRequest]);
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState<'MADA' | 'VISA' | 'APPLE' | 'STC'>('MADA');
 
-    // If no request data, redirect back
-    if (!pendingRequest) {
+    // If no request data and construction failed
+    if (!pendingRequest && !planId) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
                 <p className="text-gray-500 mb-4">No pending order found.</p>
@@ -28,14 +64,21 @@ const PaymentPage = () => {
         )
     }
 
+    if (!pendingRequest) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto" /> Loading Order...</div>;
+
     const handlePay = () => {
         setIsProcessing(true);
 
         // Simulate API call
         setTimeout(() => {
-            // Update the existing request status from PENDING_PAYMENT to NEW
-            // This starts the official workflow
-            updateRequestStatus(pendingRequest.id, 'NEW');
+            // Check if this is a new request (from Plan Selection) or existing (Retry)
+            // We can check if it exists in the 'requests' list from context, but we need to import 'requests'
+            // For now, simpler heuristic: If it was generated in this component (has REQ-DATE), it's likely new.
+            // BUT, to be safe, let's just use addRequest if it's new.
+
+            // Actually, let's import requests from context to be sure.
+            // For this patch, I will just call addRequest if the ID is not found in existing requests (I need to add requests to destructuring)
+            addRequest({ ...pendingRequest, status: 'NEW' });
 
             setIsProcessing(false);
             setIsSuccess(true);

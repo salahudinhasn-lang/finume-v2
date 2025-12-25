@@ -487,6 +487,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   };
 
+  // State for Platform Settings and Permissions
+  const [settings, setSettings] = useState<PlatformSettings>({
+    showExpertsPage: false, // Default HIDDEN
+    showServicesPage: false // Default HIDDEN
+  });
+
+  // Per-Client Permissions (Locked features)
+  const [clientPermissions, setClientPermissions] = useState<Record<string, ClientFeaturePermissions>>({});
+
+  const getPermissions = (clientId: string): ClientFeaturePermissions => {
+    return clientPermissions[clientId] || {
+      canViewReports: true,
+      canUploadDocs: true,
+      canDownloadInvoices: true,
+      canRequestCalls: true,
+      canSubmitTickets: true,
+      canViewMarketplace: false // Private by default
+    };
+  };
+
+  const updatePermissions = (clientId: string, newPerms: Partial<ClientFeaturePermissions>) => {
+    setClientPermissions(prev => ({
+      ...prev,
+      [clientId]: { ...getPermissions(clientId), ...newPerms }
+    }));
+  };
+
+  const updateSettings = (newSettings: Partial<PlatformSettings>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }));
+  };
+
   return (
     <AppContext.Provider value={{
       user, login, logout, language, setLanguage, t,
@@ -495,7 +526,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateClient, updateExpert, addClient, addExpert, submitReview,
       addAdmin, updateAdmin, deleteAdmin,
       updateService, addService, deleteService, updatePlan,
-      requestPayout, processPayout, manualSettle, checkUsageLimit
+      requestPayout, processPayout, manualSettle, checkUsageLimit,
+      settings, updateSettings, getPermissions, updatePermissions
     }}>
       {children}
     </AppContext.Provider>

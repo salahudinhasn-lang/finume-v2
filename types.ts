@@ -55,6 +55,33 @@ export interface PricingPlan {
   guarantee: string;
   isPopular?: boolean;
   color?: string;
+  limits?: {
+    revenue: { label: string; value: number };
+    transactions: { label: string; value: number };
+    invoices: { label: string; value: number };
+    bills: { label: string; value: number };
+    bankAccounts: { label: string; value: number };
+    employees: { label: string; value: number };
+    features: {
+      international: boolean | 'Basic';
+      stock: 'Basic' | 'Full';
+      contracts: boolean | 'Basic';
+    };
+  };
+}
+
+export interface PlatformSettings {
+  showExpertsPage: boolean;
+  showServicesPage: boolean;
+}
+
+export interface ClientFeaturePermissions {
+  canViewReports: boolean;
+  canUploadDocs: boolean;
+  canDownloadInvoices: boolean;
+  canRequestCalls: boolean;
+  canSubmitTickets: boolean;
+  canViewMarketplace: boolean; // New: View Experts/Services
 }
 
 export interface Review {

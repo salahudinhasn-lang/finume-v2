@@ -40,7 +40,8 @@ const LoginPage = () => {
           const action = searchParams.get('action');
           const serviceId = searchParams.get('serviceId');
           const planId = searchParams.get('planId');
-          navigate(redirect, { state: { action, serviceId, planId } });
+          const billing = searchParams.get('billing');
+          navigate(redirect, { state: { action, serviceId, planId, billing } });
         } else {
           navigate('/client');
         }
