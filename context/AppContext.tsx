@@ -177,7 +177,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           industry: 'General',
           totalSpent: 0,
           zatcaStatus: 'GREEN',
-          avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`
+          avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`,
+          gamification: {
+            totalPoints: 120,
+            totalStars: 5,
+            currentStreak: 4,
+            level: 'Silver'
+          }
         };
         setClients(prev => [tempUser, ...prev]);
         setUser(tempUser);
@@ -322,10 +328,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateClient = (id: string, updates: Partial<Client>) => {
     setClients(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    if (user && user.id === id) {
+      setUser(prev => prev ? { ...prev, ...updates } as User : null);
+    }
   };
 
   const updateExpert = (id: string, updates: Partial<Expert>) => {
     setExperts(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    if (user && user.id === id) {
+      setUser(prev => prev ? { ...prev, ...updates } as User : null);
+    }
   };
 
   const addClient = (client: Client) => {

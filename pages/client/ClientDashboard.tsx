@@ -6,10 +6,15 @@ import { useNavigate } from 'react-router-dom';
 import { Request, UploadedFile, DocumentCategory } from '../../types';
 import { matchServiceWithAI } from '../../services/geminiService';
 import { SmartUploadWidget } from '../../components/SmartUploadWidget';
+import { GamificationBar } from '../../components/GamificationBar';
 
 const ClientDashboard = () => {
-    const { user, requests, t, language, services, plans, addRequest, updateRequest } = useAppContext();
+    const { user, requests, t, language, services, plans, addRequest, updateRequest, clients } = useAppContext();
     const navigate = useNavigate();
+
+    // Get updated gamification stats
+    const currentClient = clients.find(c => c.id === user?.id);
+    const clientGamification = currentClient?.gamification;
 
     const handleSmartUpload = (files: File[], requestId: string) => {
         const req = requests.find(r => r.id === requestId);
@@ -26,7 +31,8 @@ const ClientDashboard = () => {
             uploadedBy: 'CLIENT',
             uploadedAt: new Date().toISOString(),
             source: 'DESKTOP',
-            category: categories[Math.floor(Math.random() * categories.length)] // Simulating AI Logic
+            category: categories[Math.floor(Math.random() * categories.length)], // Simulating AI Logic
+            status: 'PENDING'
         }));
 
         const today = new Date().toISOString().split('T')[0];
@@ -78,10 +84,19 @@ const ClientDashboard = () => {
 
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
                     <div className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-sm font-medium">
-                            {isSafe ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
-                            {isSafe ? t('client.safeTitle') : t('client.dangerTitle')}
+                        <div className="flex flex-wrap gap-4 items-center">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-sm font-medium">
+                                {isSafe ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+                                {isSafe ? t('client.safeTitle') : t('client.dangerTitle')}
+                            </div>
+                            {/* Gamification Bar Integrated Here */}
+                            {clientGamification && (
+                                <div className="hidden md:block">
+                                    <GamificationBar gamification={clientGamification} className="bg-white/10 backdrop-blur-md border border-white/20 p-1.5 rounded-full text-white" />
+                                </div>
+                            )}
                         </div>
+
                         <div>
                             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
                                 {t('client.welcome')} {user?.name.split(' ')[0]}
@@ -105,15 +120,23 @@ const ClientDashboard = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/10 w-full md:w-auto min-w-[240px]">
-                        <p className="text-sm opacity-80 uppercase tracking-wider font-bold mb-1">{t('client.actionNeeded')}</p>
-                        <div className="flex items-center gap-4">
-                            <span className="text-5xl font-black">{needsAction ? '1' : '0'}</span>
-                            <div className="flex flex-col text-sm font-medium opacity-80 leading-tight">
-                                <span>{needsAction ? 'Urgent Items' : 'All Clear'}</span>
-                                <span>{needsAction ? 'Review Now' : 'Relax & Focus'}</span>
+                    <div className="flex flex-col gap-4 w-full md:w-auto">
+                        <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/10 w-full md:w-auto min-w-[240px]">
+                            <p className="text-sm opacity-80 uppercase tracking-wider font-bold mb-1">{t('client.actionNeeded')}</p>
+                            <div className="flex items-center gap-4">
+                                <span className="text-5xl font-black">{needsAction ? '1' : '0'}</span>
+                                <div className="flex flex-col text-sm font-medium opacity-80 leading-tight">
+                                    <span>{needsAction ? 'Urgent Items' : 'All Clear'}</span>
+                                    <span>{needsAction ? 'Review Now' : 'Relax & Focus'}</span>
+                                </div>
                             </div>
                         </div>
+                        {/* Mobile Gamification Bar */}
+                        {clientGamification && (
+                            <div className="md:hidden">
+                                <GamificationBar gamification={clientGamification} className="bg-white/10 backdrop-blur-md border border-white/20 p-2 rounded-xl text-white w-fit" />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

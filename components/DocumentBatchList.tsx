@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
-import { FileBatch, UploadedFile, UserRole, DocumentCategory } from '../types';
-import { Folder, FileText, CheckCircle, Clock, Trash2, Download, Search, Filter, AlertCircle, Edit2, ChevronDown, ChevronRight } from 'lucide-react';
+import { FileBatch, UploadedFile, UserRole, DocumentCategory, ClientGamification, FileStatus } from '../types';
+import { Folder, FileText, CheckCircle, Clock, Trash2, Download, Search, Filter, AlertCircle, Edit2, ChevronDown, ChevronRight, PlayCircle, PauseCircle } from 'lucide-react';
 import { Button } from './UI';
+import { ComplianceWidget } from './ComplianceWidget';
+import { GamificationBar } from './GamificationBar';
 
 interface DocumentBatchListProps {
     batches: FileBatch[];
     onUpdateBatches: (batches: FileBatch[]) => void;
     userRole: UserRole;
     requestId: string;
+    // Gamification Props (Optional, mainly for Client view)
+    clientGamification?: ClientGamification;
+    onComplianceAction?: (action: 'nothing_today' | 'upload_clicked') => void;
 }
 
 const CATEGORY_COLORS: Record<DocumentCategory, string> = {
@@ -21,10 +26,18 @@ const CATEGORY_COLORS: Record<DocumentCategory, string> = {
     'Other': 'bg-gray-100 text-gray-600 border-gray-200',
 };
 
+const STATUS_COLORS: Record<FileStatus, string> = {
+    'PENDING': 'bg-gray-100 text-gray-600 border-gray-200',
+    'IN_PROGRESS': 'bg-blue-50 text-blue-600 border-blue-200',
+    'COMPLETED': 'bg-green-50 text-green-600 border-green-200',
+};
+
 export const DocumentBatchList: React.FC<DocumentBatchListProps> = ({
     batches,
     onUpdateBatches,
-    userRole
+    userRole,
+    clientGamification,
+    onComplianceAction
 }) => {
     const [expandedBatchId, setExpandedBatchId] = useState<string | null>(batches.length > 0 ? batches[0].id : null);
     const [filterCategory, setFilterCategory] = useState<string>('All');
@@ -55,7 +68,21 @@ export const DocumentBatchList: React.FC<DocumentBatchListProps> = ({
             return b;
         });
         onUpdateBatches(updated);
-        setEditingFileId(null);
+        // Don't close editing immediately to allow status edit if needed, or close it? 
+        // Let's keep editing mode active or handle separately. For now, specific field edit.
+    };
+
+    const handleUpdateStatus = (batchId: string, fileId: string, newStatus: FileStatus) => {
+        const updated = batches.map(b => {
+            if (b.id === batchId) {
+                return {
+                    ...b,
+                    files: b.files.map(f => f.id === fileId ? { ...f, status: newStatus } : f)
+                };
+            }
+            return b;
+        });
+        onUpdateBatches(updated);
     };
 
     const getFilteredFiles = (files: UploadedFile[]) => {
@@ -63,27 +90,53 @@ export const DocumentBatchList: React.FC<DocumentBatchListProps> = ({
         return files.filter(f => f.category === filterCategory);
     };
 
+    const isClient = userRole === 'CLIENT';
+    const canEdit = userRole === 'ADMIN' || userRole === 'EXPERT';
+    const today = new Date().toISOString().split('T')[0];
+    const todaysBatch = batches.find(b => b.date === today);
+    const hasUploadsToday = !!todaysBatch && todaysBatch.files.length > 0;
+
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <Folder className="text-blue-600" size={20} /> Document Batches
-                </h3>
+            {/* Compliance Widget for Clients */}
+            {isClient && clientGamification && onComplianceAction && (
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <Folder className="text-blue-600" size={20} /> Document Batches
+                        </h3>
+                        <GamificationBar gamification={clientGamification} />
+                    </div>
 
-                <div className="flex items-center gap-2">
-                    <Filter size={14} className="text-gray-400" />
-                    <select
-                        value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
-                        className="text-sm border-none bg-gray-50 rounded-lg px-2 py-1 font-medium focus:ring-0 cursor-pointer"
-                    >
-                        <option value="All">All Categories</option>
-                        {Object.keys(CATEGORY_COLORS).map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
+                    <ComplianceWidget
+                        date={today}
+                        hasUploads={hasUploadsToday}
+                        onUploadClick={() => onComplianceAction('upload_clicked')}
+                        onNothingTodayClick={() => onComplianceAction('nothing_today')}
+                    />
                 </div>
-            </div>
+            )}
+
+            {!isClient && (
+                <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <Folder className="text-blue-600" size={20} /> Document Batches
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        <Filter size={14} className="text-gray-400" />
+                        <select
+                            value={filterCategory}
+                            onChange={(e) => setFilterCategory(e.target.value)}
+                            className="text-sm border-none bg-gray-50 rounded-lg px-2 py-1 font-medium focus:ring-0 cursor-pointer"
+                        >
+                            <option value="All">All Categories</option>
+                            {Object.keys(CATEGORY_COLORS).map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-4">
                 {batches.length === 0 && (
@@ -141,9 +194,10 @@ export const DocumentBatchList: React.FC<DocumentBatchListProps> = ({
                                         <thead className="bg-gray-50/50 text-gray-500 border-b border-gray-100">
                                             <tr>
                                                 <th className="px-6 py-3 font-medium w-1/3">File Name</th>
-                                                <th className="px-6 py-3 font-medium w-1/3">Category (AI Detected)</th>
-                                                <th className="px-6 py-3 font-medium w-1/6">Uploaded At</th>
-                                                <th className="px-6 py-3 font-medium text-right w-1/6">Actions</th>
+                                                <th className="px-6 py-3 font-medium w-fit">Category (AI Detected)</th>
+                                                <th className="px-6 py-3 font-medium w-fit">Status</th>
+                                                <th className="px-6 py-3 font-medium w-fit">Uploaded At</th>
+                                                <th className="px-6 py-3 font-medium text-right w-fit">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
@@ -161,32 +215,50 @@ export const DocumentBatchList: React.FC<DocumentBatchListProps> = ({
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        {editingFileId === file.id ? (
-                                                            <select
-                                                                autoFocus
-                                                                className="w-full bg-white border border-blue-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-100 outline-none text-xs font-medium"
-                                                                value={file.category || 'Other'}
-                                                                onChange={(e) => handleUpdateCategory(batch.id, file.id, e.target.value as DocumentCategory)}
-                                                                onBlur={() => setEditingFileId(null)}
-                                                            >
-                                                                {Object.keys(CATEGORY_COLORS).map(cat => (
-                                                                    <option key={cat} value={cat}>{cat}</option>
-                                                                ))}
-                                                            </select>
+                                                        {canEdit ? (
+                                                            <div className="relative group/edit">
+                                                                <select
+                                                                    className={`min-w-[140px] appearance-none bg-transparent pl-3 pr-8 py-1.5 rounded-full text-xs font-bold border cursor-pointer hover:shadow-sm transition-all outline-none focus:ring-2 focus:ring-blue-100 ${CATEGORY_COLORS[file.category || 'Other']}`}
+                                                                    value={file.category || 'Other'}
+                                                                    onChange={(e) => handleUpdateCategory(batch.id, file.id, e.target.value as DocumentCategory)}
+                                                                >
+                                                                    {Object.keys(CATEGORY_COLORS).map(cat => (
+                                                                        <option key={cat} value={cat}>{cat}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <Edit2 size={10} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+                                                            </div>
                                                         ) : (
                                                             <div
-                                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border cursor-pointer hover:shadow-sm transition-all ${CATEGORY_COLORS[file.category || 'Other']}`}
-                                                                onClick={() => setEditingFileId(file.id)}
-                                                                title="Click to edit category"
+                                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${CATEGORY_COLORS[file.category || 'Other']}`}
                                                             >
                                                                 {file.category || 'Other'}
-                                                                <Edit2 size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                                                             </div>
                                                         )}
-                                                        {!file.category && (
-                                                            <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-500 font-medium">
-                                                                <AlertCircle size={10} /> Needs review
+                                                        {file.originalCategory && file.originalCategory !== file.category && (
+                                                            <div className="text-[9px] text-gray-400 mt-1 italic">
+                                                                Was: {file.originalCategory}
                                                             </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {canEdit ? (
+                                                            <select
+                                                                className={`min-w-[100px] appearance-none cursor-pointer text-xs font-bold px-3 py-1.5 rounded-full border outline-none focus:ring-2 focus:ring-offset-1 ${STATUS_COLORS[file.status || 'PENDING']}`}
+                                                                value={file.status || 'PENDING'}
+                                                                onChange={(e) => handleUpdateStatus(batch.id, file.id, e.target.value as FileStatus)}
+                                                            >
+                                                                <option value="PENDING">Pending</option>
+                                                                <option value="IN_PROGRESS">In Progress</option>
+                                                                <option value="COMPLETED">Completed</option>
+                                                            </select>
+                                                        ) : (
+                                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${STATUS_COLORS[file.status || 'PENDING']}`}>
+                                                                {file.status === 'COMPLETED' && <CheckCircle size={10} />}
+                                                                {file.status === 'IN_PROGRESS' && <PlayCircle size={10} />}
+                                                                {file.status === 'PENDING' && <Clock size={10} />}
+                                                                {file.status?.replace('_', ' ') || 'PENDING'}
+                                                            </span>
                                                         )}
                                                     </td>
                                                     <td className="px-6 py-4 text-gray-500 font-mono text-xs">
@@ -197,12 +269,14 @@ export const DocumentBatchList: React.FC<DocumentBatchListProps> = ({
                                                             <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                                                                 <Download size={16} />
                                                             </button>
-                                                            <button
-                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                                onClick={() => handleDeleteFile(batch.id, file.id)}
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
+                                                            {isClient && (
+                                                                <button
+                                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                                    onClick={() => handleDeleteFile(batch.id, file.id)}
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>

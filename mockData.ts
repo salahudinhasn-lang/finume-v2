@@ -101,7 +101,13 @@ export const generateClients = (count: number): Client[] => {
     industry: industries[i % industries.length],
     totalSpent: Math.floor(Math.random() * 50000),
     zatcaStatus: zatcaStatuses[Math.floor(Math.random() * zatcaStatuses.length)],
-    avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=C${i}&backgroundColor=e0f2fe`
+    avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=C${i}&backgroundColor=e0f2fe`,
+    gamification: {
+      totalPoints: Math.floor(Math.random() * 500),
+      totalStars: Math.floor(Math.random() * 50),
+      currentStreak: Math.floor(Math.random() * 10),
+      level: ['Bronze', 'Silver', 'Gold', 'Platinum'][Math.floor(Math.random() * 4)] as any
+    }
   }));
 };
 

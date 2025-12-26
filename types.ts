@@ -15,6 +15,7 @@ export interface Client extends User {
   industry: string;
   totalSpent: number;
   zatcaStatus: 'GREEN' | 'YELLOW' | 'RED';
+  gamification?: ClientGamification;
 }
 
 export interface Expert extends User {
@@ -93,6 +94,15 @@ export interface Review {
   date: string;
 }
 
+export interface ClientGamification {
+  totalPoints: number;
+  totalStars: number;
+  currentStreak: number;
+  level: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+}
+
+export type FileStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+
 export interface UploadedFile {
   id: string;
   name: string;
@@ -103,6 +113,8 @@ export interface UploadedFile {
   uploadedAt: string; // ISO string including time
   source?: 'WHATSAPP' | 'DESKTOP' | 'MOBILE_WEB' | 'APP';
   category?: DocumentCategory;
+  originalCategory?: DocumentCategory; // AI Detected category
+  status?: FileStatus;
 }
 
 export type DocumentCategory =

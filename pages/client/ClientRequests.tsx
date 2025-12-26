@@ -9,7 +9,7 @@ import { DocumentBatchList } from '../../components/DocumentBatchList';
 import { SmartUploadWidget } from '../../components/SmartUploadWidget';
 
 const ClientRequests = () => {
-    const { user, requests, updateRequestStatus, submitReview, updateRequest } = useAppContext();
+    const { user, requests, updateRequestStatus, submitReview, updateRequest, updateClient, clients } = useAppContext();
     const navigate = useNavigate();
     const [filter, setFilter] = useState('All');
     const [search, setSearch] = useState('');
@@ -25,6 +25,9 @@ const ClientRequests = () => {
     });
 
     const myRequests = requests.filter(r => r.clientId === user?.id);
+    // Get full client object to access gamification
+    const currentClient = clients.find(c => c.id === user?.id);
+    const clientGamification = currentClient?.gamification;
 
     const filteredRequests = myRequests.filter(req => {
         const matchesFilter = filter === 'All' ? true : req.status === filter;
@@ -72,6 +75,26 @@ const ClientRequests = () => {
         }
     };
 
+    const handleComplianceAction = (action: 'nothing_today' | 'upload_clicked') => {
+        if (!currentClient || !clientGamification) return;
+
+        // Logic for "Nothing for Today"
+        if (action === 'nothing_today') {
+            const newPoints = clientGamification.totalPoints + 3;
+            const newStreak = clientGamification.currentStreak + 1; // Simplification (check dates in real app)
+
+            updateClient(currentClient.id, {
+                gamification: {
+                    ...clientGamification,
+                    totalPoints: newPoints,
+                    currentStreak: newStreak
+                }
+            });
+            // Toast notification can be added here if toast is available
+            // alert(`Checked off! +3 Points. Streak: ${newStreak} Days`); 
+        }
+    };
+
     const handleSmartUpload = (files: File[], requestId: string) => {
         // Find existing request or use selectedRequest if matches
         const req = requests.find(r => r.id === requestId);
@@ -88,7 +111,8 @@ const ClientRequests = () => {
             uploadedBy: 'CLIENT',
             uploadedAt: new Date().toISOString(),
             source: 'DESKTOP',
-            category: categories[Math.floor(Math.random() * categories.length)] // Simulating AI
+            category: categories[Math.floor(Math.random() * categories.length)], // Simulating AI
+            status: 'PENDING'
         }));
 
         const today = new Date().toISOString().split('T')[0];
@@ -110,6 +134,26 @@ const ClientRequests = () => {
         }
 
         updateRequest(req.id, { batches: currentBatches });
+
+        // Gamification Update
+        if (currentClient && clientGamification) {
+            const pointsEarned = 10 + (files.length > 10 ? 5 : 0);
+            const newPoints = clientGamification.totalPoints + pointsEarned;
+            const newStars = clientGamification.totalStars + 1; // +1 star per upload batch for demo
+            const newStreak = clientGamification.currentStreak + 1; // Simplification
+
+            updateClient(currentClient.id, {
+                gamification: {
+                    ...clientGamification,
+                    totalPoints: newPoints,
+                    totalStars: newStars,
+                    currentStreak: newStreak,
+                    // Simple Level Logic
+                    level: newPoints > 1500 ? 'Platinum' : newPoints > 700 ? 'Gold' : newPoints > 300 ? 'Silver' : 'Bronze'
+                }
+            });
+            // alert(`Uploaded! +${pointsEarned} Points. +1 Star!`);
+        }
 
         // Update local state if currently viewing this request
         if (selectedRequest && selectedRequest.id === req.id) {
@@ -278,6 +322,8 @@ const ClientRequests = () => {
                                     onUpdateBatches={handleUpdateBatches}
                                     userRole="CLIENT"
                                     requestId={selectedRequest.id}
+                                    clientGamification={clientGamification}
+                                    onComplianceAction={handleComplianceAction}
                                 />
                             </div>
                         </div>

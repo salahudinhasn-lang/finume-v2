@@ -48,6 +48,8 @@ model User {
   clientRequests   Request[]     @relation("ClientRequests")
   expertRequests   Request[]     @relation("ExpertRequests")
   uploadedFiles    UploadedFile[]
+  gamification     GamificationProfile?
+  complianceLogs   ComplianceLog[]
   payouts          PayoutRequest[]
   permissions      ClientFeaturePermissions?
 }
@@ -111,6 +113,31 @@ model FileBatch {
   files            UploadedFile[]
 }
 
+
+
+model GamificationProfile {
+  id              String         @id @default(uuid())
+  userId          String         @unique
+  user            User           @relation(fields: [userId], references: [id])
+  totalPoints     Int            @default(0)
+  totalStars      Int            @default(0)
+  currentStreak   Int            @default(0)
+  lastActivityDate DateTime?     // To track streaks
+  level           String         @default("Bronze") // Enum: Bronze, Silver, Gold, Platinum
+}
+
+model ComplianceLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  date      String   // YYYY-MM-DD
+  action    String   // Enum: 'UPLOAD', 'NOTHING_FOR_TODAY'
+  pointsEarned Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date]) // One log per day per user mainly, though uploads vary
+}
+
 model UploadedFile {
   id          String   @id @default(uuid())
   name        String
@@ -123,6 +150,8 @@ model UploadedFile {
   batch       FileBatch? @relation(fields: [batchId], references: [id])
   source      String? // Enum mapped to string
   category    String? // Enum: SALES_INVOICE, PURCHASE_INVOICE, etc.
+  originalCategory String? // The AI detected category before manual override
+  status      String   @default("PENDING") // Enum: PENDING, IN_PROGRESS, COMPLETED
   createdAt   DateTime @default(now())
 }
 
