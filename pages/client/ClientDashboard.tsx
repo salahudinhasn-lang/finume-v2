@@ -73,16 +73,19 @@ const ClientDashboard = () => {
         <div className="space-y-8 animate-in fade-in duration-700 max-w-6xl mx-auto pb-12">
 
             {/* 1. Modern Glassy Header & Status Section */}
-            <div className={`relative overflow-hidden rounded-[2.5rem] p-8 md:p-12 transition-all duration-500 shadow-2xl ${isSafe
+            <div className={`relative overflow-hidden rounded-[2.5rem] p-8 md:p-12 transition-all duration-500 shadow-2xl group ${isSafe
                 ? 'bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 text-white'
                 : 'bg-gradient-to-br from-red-600 via-red-500 to-orange-600 text-white'
                 }`}>
 
-                {/* Abstract Background Shapes */}
-                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-white opacity-[0.08] rounded-full blur-3xl pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-black opacity-[0.05] rounded-full blur-3xl pointer-events-none"></div>
+                {/* Abstract Background Shapes (Animated) */}
+                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-white opacity-[0.08] rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-black opacity-[0.05] rounded-full blur-3xl pointer-events-none animate-[bounce_10s_infinite]"></div>
 
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
+                {/* Pattern Overlay */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
+
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-10">
                     <div className="space-y-4">
                         <div className="flex flex-wrap gap-4 items-center">
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-sm font-medium">
@@ -98,11 +101,13 @@ const ClientDashboard = () => {
                         </div>
 
                         <div>
-                            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
-                                {t('client.welcome')} {user?.name.split(' ')[0]}
+                            <p className="text-emerald-50 font-medium mb-1 opacity-90">{new Date().toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                            <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-3 drop-shadow-sm leading-tight">
+                                {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening'}, <br />
+                                <span className="opacity-90">{user?.name.split(' ')[0]}</span>
                             </h1>
-                            <p className={`text-lg md:text-xl opacity-90 max-w-xl leading-relaxed`}>
-                                {isSafe ? t('client.safeDesc') : t('client.dangerDesc')}
+                            <p className={`text-lg md:text-xl opacity-90 max-w-xl leading-relaxed font-medium text-emerald-50`}>
+                                {isSafe ? "You are fully compliant with ZATCA regulations." : t('client.dangerDesc')}
                             </p>
                         </div>
 
@@ -121,13 +126,13 @@ const ClientDashboard = () => {
                     </div>
 
                     <div className="flex flex-col gap-4 w-full md:w-auto">
-                        <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/10 w-full md:w-auto min-w-[240px]">
-                            <p className="text-sm opacity-80 uppercase tracking-wider font-bold mb-1">{t('client.actionNeeded')}</p>
-                            <div className="flex items-center gap-4">
-                                <span className="text-5xl font-black">{needsAction ? '1' : '0'}</span>
-                                <div className="flex flex-col text-sm font-medium opacity-80 leading-tight">
-                                    <span>{needsAction ? 'Urgent Items' : 'All Clear'}</span>
-                                    <span>{needsAction ? 'Review Now' : 'Relax & Focus'}</span>
+                        <div className="group/card bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20 w-full md:w-auto min-w-[260px] hover:bg-white/15 transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-xl">
+                            <p className="text-xs text-emerald-100 opacity-80 uppercase tracking-widest font-bold mb-3">{t('client.actionNeeded')}</p>
+                            <div className="flex items-center gap-5">
+                                <span className="text-6xl font-black tracking-tighter drop-shadow-md">{needsAction ? '1' : '0'}</span>
+                                <div className="flex flex-col text-sm font-bold opacity-90 leading-snug">
+                                    <span className="text-lg">{needsAction ? 'Urgent Items' : 'All Clear'}</span>
+                                    <span className="opacity-75 font-medium">{needsAction ? 'Review Now' : 'Relax & Focus'}</span>
                                 </div>
                             </div>
                         </div>
