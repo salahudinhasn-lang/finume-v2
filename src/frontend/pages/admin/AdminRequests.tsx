@@ -20,7 +20,7 @@ const AdminRequests = () => {
         const matchesSearch =
             r.id.toLowerCase().includes(search.toLowerCase()) ||
             r.clientName.toLowerCase().includes(search.toLowerCase()) ||
-            r.serviceName?.toLowerCase().includes(search.toLowerCase());
+            (r.serviceName || '').toLowerCase().includes(search.toLowerCase());
 
         const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter;
 
