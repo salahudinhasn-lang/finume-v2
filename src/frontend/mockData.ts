@@ -8,16 +8,16 @@ const statuses = ['NEW', 'MATCHED', 'IN_PROGRESS', 'REVIEW_CLIENT', 'REVIEW_ADMI
 const zatcaStatuses = ['GREEN', 'YELLOW', 'RED'] as const;
 
 export const SERVICES: Service[] = [
-  { id: 'S1', nameEn: 'VAT Filing', nameAr: 'إقرار ضريبة القيمة المضافة', price: 500, description: 'Complete VAT return filing with ZATCA' },
-  { id: 'S2', nameEn: 'Bookkeeping (Monthly)', nameAr: 'مسك الدفاتر (شهري)', price: 2500, description: 'Monthly financial record keeping' },
-  { id: 'S3', nameEn: 'Financial Audit', nameAr: 'تدقيق مالي', price: 15000, description: 'Full annual financial audit' },
-  { id: 'S4', nameEn: 'Zakat Advisory', nameAr: 'استشارات الزكاة', price: 1000, description: 'Consultation on Zakat calculation' },
-  { id: 'S5', nameEn: 'CFO Advisory', nameAr: 'استشارات المدير المالي', price: 5000, description: 'Strategic financial planning' },
+  { id: 'SERV-00001', nameEn: 'VAT Filing', nameAr: 'إقرار ضريبة القيمة المضافة', price: 500, description: 'Complete VAT return filing with ZATCA' },
+  { id: 'SERV-00002', nameEn: 'Bookkeeping (Monthly)', nameAr: 'مسك الدفاتر (شهري)', price: 2500, description: 'Monthly financial record keeping' },
+  { id: 'SERV-00003', nameEn: 'Financial Audit', nameAr: 'تدقيق مالي', price: 15000, description: 'Full annual financial audit' },
+  { id: 'SERV-00004', nameEn: 'Zakat Advisory', nameAr: 'استشارات الزكاة', price: 1000, description: 'Consultation on Zakat calculation' },
+  { id: 'SERV-00005', nameEn: 'CFO Advisory', nameAr: 'استشارات المدير المالي', price: 5000, description: 'Strategic financial planning' },
 ];
 
 export const MOCK_PLANS: PricingPlan[] = [
   {
-    id: 'basic',
+    id: 'PLAN-00001',
     name: 'CR Guard',
     price: 500,
     description: 'Dormant or pre-revenue CRs',
@@ -36,7 +36,7 @@ export const MOCK_PLANS: PricingPlan[] = [
     }
   },
   {
-    id: 'standard',
+    id: 'PLAN-00002',
     name: 'ZATCA Shield',
     price: 1750,
     description: 'Active shops, cafes, and service businesses',
@@ -56,7 +56,7 @@ export const MOCK_PLANS: PricingPlan[] = [
     }
   },
   {
-    id: 'pro',
+    id: 'PLAN-00003',
     name: 'Audit Proof',
     price: 5000,
     description: 'Funded startups & Government contractors',

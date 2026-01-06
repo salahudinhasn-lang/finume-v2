@@ -7,7 +7,7 @@ import { Logo } from './Logo';
 import { Globe, Twitter, Linkedin, Instagram, Mail, Phone, Menu, X, ChevronRight } from 'lucide-react';
 
 const PublicLayout = () => {
-  const { language, setLanguage, t, settings } = useAppContext();
+  const { language, setLanguage, t, settings, user } = useAppContext();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -84,16 +84,29 @@ const PublicLayout = () => {
 
               <div className="h-6 w-px bg-gray-200 mx-1"></div>
 
-              <Link to="/login">
-                <Button variant="outline" size="sm" className="border-gray-200 hover:border-gray-300 text-gray-700">
-                  {t('nav.login')}
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white shadow-lg shadow-gray-900/20">
-                  {t('nav.getStarted')}
-                </Button>
-              </Link>
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-gray-900">{user.name}</span>
+                  <Link to={user.role === 'ADMIN' ? '/admin' : user.role === 'EXPERT' ? '/expert' : '/client'}>
+                    <Button size="sm" className="bg-primary-50 text-primary-700 hover:bg-primary-100 font-bold">
+                      {t('sidebar.dashboard')}
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <Link to="/login">
+                    <Button variant="outline" size="sm" className="border-gray-200 hover:border-gray-300 text-gray-700">
+                      {t('nav.login')}
+                    </Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white shadow-lg shadow-gray-900/20">
+                      {t('nav.getStarted')}
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -125,12 +138,25 @@ const PublicLayout = () => {
               </Link>
             ))}
             <div className="border-t border-gray-100 my-2 pt-4 flex flex-col gap-3">
-              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="outline" className="w-full justify-center">{t('nav.login')}</Button>
-              </Link>
-              <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button className="w-full justify-center bg-primary-600">{t('nav.getStarted')}</Button>
-              </Link>
+              {user ? (
+                <>
+                  <div className="px-4 py-2 text-sm font-bold text-gray-900 border-b border-gray-50 mb-2">
+                    {t('common.welcome')}, {user.name}
+                  </div>
+                  <Link to={user.role === 'ADMIN' ? '/admin' : user.role === 'EXPERT' ? '/expert' : '/client'} onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full justify-center bg-primary-600">{t('sidebar.dashboard')}</Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full justify-center">{t('nav.login')}</Button>
+                  </Link>
+                  <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full justify-center bg-primary-600">{t('nav.getStarted')}</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

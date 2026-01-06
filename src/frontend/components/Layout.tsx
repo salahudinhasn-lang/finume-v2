@@ -37,7 +37,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
     if (user?.role === 'CLIENT') {
       return [
         { icon: LayoutDashboard, label: t('sidebar.dashboard'), path: '/client', visible: true },
-        { icon: Tag, label: 'Services & Pricing', path: '/client/services', visible: getVisibility('services') },
+
         { icon: Search, label: t('sidebar.browseExperts'), path: '/client/experts', visible: getVisibility('experts') },
         { icon: FileText, label: t('sidebar.myRequests'), path: '/client/requests', visible: true },
         { icon: DollarSign, label: t('sidebar.payments'), path: '/client/payments', visible: true },

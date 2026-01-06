@@ -156,9 +156,9 @@ export const PricingPage = () => {
 
     const handleSelectPlan = (planId: string) => {
         if (user) {
-            navigate('/client', { state: { action: 'subscribe_plan', planId } });
+            navigate('/client', { state: { action: 'subscribe_plan', planId, billing } });
         } else {
-            navigate(`/login?redirect=/client&action=subscribe_plan&planId=${planId}`);
+            navigate(`/login?redirect=/client&action=subscribe_plan&planId=${planId}&billing=${billing}`);
         }
     };
 
