@@ -1,0 +1,240 @@
+import React, { useState, useRef } from 'react';
+import { useAppContext } from '../../context/AppContext';
+import { Card, Button, Badge } from '../../components/UI';
+import { Plus, Clock, CheckCircle, Search, Eye, X, Check, UploadCloud, ShieldAlert, ShieldCheck, Zap, FileText, ChevronRight, AlertTriangle, Sparkles, Loader2, ArrowRight, File } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Request, UploadedFile, DocumentCategory } from '../../types';
+import { matchServiceWithAI } from '../../services/geminiService';
+import { SmartUploadWidget } from '../../components/SmartUploadWidget';
+import { GamificationBar } from '../../components/GamificationBar';
+
+const ClientDashboard = () => {
+    const { user, requests, t, language, services, plans, addRequest, updateRequest, clients } = useAppContext();
+    const navigate = useNavigate();
+
+    // Get updated gamification stats
+    const currentClient = clients.find(c => c.id === user?.id);
+    const clientGamification = currentClient?.gamification;
+
+    const handleSmartUpload = (files: File[], requestId: string) => {
+        const req = requests.find(r => r.id === requestId);
+        if (!req) return;
+
+        const categories: DocumentCategory[] = ['Sales Invoice', 'Purchase Invoice', 'Contract', 'Expense', 'Petty Cash', 'Bank Statement', 'VAT Return', 'Other'];
+
+        const newFiles: UploadedFile[] = files.map((f, idx) => ({
+            id: `f-${Date.now()}-${idx}`,
+            name: f.name,
+            size: (f.size / 1024 / 1024).toFixed(2) + ' MB',
+            type: f.type,
+            url: '#',
+            uploadedBy: 'CLIENT',
+            uploadedAt: new Date().toISOString(),
+            source: 'DESKTOP',
+            category: categories[Math.floor(Math.random() * categories.length)], // Simulating AI Logic
+            status: 'PENDING'
+        }));
+
+        const today = new Date().toISOString().split('T')[0];
+        let currentBatches = req.batches || [];
+        const existingBatchIndex = currentBatches.findIndex(b => b.id === today);
+
+        if (existingBatchIndex >= 0) {
+            currentBatches[existingBatchIndex] = {
+                ...currentBatches[existingBatchIndex],
+                files: [...currentBatches[existingBatchIndex].files, ...newFiles]
+            };
+        } else {
+            currentBatches = [{
+                id: today,
+                date: today,
+                files: newFiles,
+                status: 'PENDING'
+            }, ...currentBatches];
+        }
+
+        updateRequest(req.id, { batches: currentBatches });
+        navigate('/client/requests');
+    };
+
+
+
+    // "Lazy" Status Logic
+    const isSafe = (user as any)?.zatcaStatus !== 'RED';
+    const finesSaved = (user as any)?.zatcaStatus === 'GREEN' ? 15000 : 0;
+
+    const myRequests = requests.filter(r => r.clientId === user?.id);
+    const activeRequests = myRequests.filter(r => ['NEW', 'MATCHED', 'IN_PROGRESS', 'REVIEW_CLIENT', 'REVIEW_ADMIN'].includes(r.status));
+    const needsAction = activeRequests.some(r => r.status === 'REVIEW_CLIENT');
+
+
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-700 max-w-6xl mx-auto pb-12">
+
+            {/* 1. Modern Glassy Header & Status Section */}
+            <div className={`relative overflow-hidden rounded-[2.5rem] p-8 md:p-12 transition-all duration-500 shadow-2xl group ${isSafe
+                ? 'bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 text-white'
+                : 'bg-gradient-to-br from-red-600 via-red-500 to-orange-600 text-white'
+                }`}>
+
+                {/* Abstract Background Shapes (Animated) */}
+                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-white opacity-[0.08] rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-black opacity-[0.05] rounded-full blur-3xl pointer-events-none animate-[bounce_10s_infinite]"></div>
+
+                {/* Pattern Overlay */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
+
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-10">
+                    <div className="space-y-4">
+                        <div className="flex flex-wrap gap-4 items-center">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-sm font-medium">
+                                {isSafe ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+                                {isSafe ? t('client.safeTitle') : t('client.dangerTitle')}
+                            </div>
+                            {/* Gamification Bar Integrated Here */}
+                            {clientGamification && (
+                                <div className="hidden md:block">
+                                    <GamificationBar gamification={clientGamification} className="bg-white/10 backdrop-blur-md border border-white/20 p-1.5 rounded-full text-white" />
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <p className="text-emerald-50 font-medium mb-1 opacity-90">{new Date().toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                            <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-3 drop-shadow-sm leading-tight">
+                                {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening'}, <br />
+                                <span className="opacity-90">{user?.name.split(' ')[0]}</span>
+                            </h1>
+                            <p className={`text-lg md:text-xl opacity-90 max-w-xl leading-relaxed font-medium text-emerald-50`}>
+                                {isSafe ? "You are fully compliant with ZATCA regulations." : t('client.dangerDesc')}
+                            </p>
+                        </div>
+
+                        {/* Status Stats Inline */}
+                        <div className="flex gap-6 pt-2">
+                            <div className="flex flex-col">
+                                <span className="text-sm opacity-70 uppercase tracking-wider font-semibold">ZATCA Status</span>
+                                <span className="text-2xl font-bold flex items-center gap-2">{isSafe ? 'Compliant' : 'At Risk'} {isSafe && <Check size={20} />}</span>
+                            </div>
+                            <div className="w-px bg-white/20"></div>
+                            <div className="flex flex-col">
+                                <span className="text-sm opacity-70 uppercase tracking-wider font-semibold">{t('client.finesAvoided')}</span>
+                                <span className="text-2xl font-bold">{finesSaved.toLocaleString()} SAR</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-4 w-full md:w-auto">
+                        <div className="group/card bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20 w-full md:w-auto min-w-[260px] hover:bg-white/15 transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-xl">
+                            <p className="text-xs text-emerald-100 opacity-80 uppercase tracking-widest font-bold mb-3">{t('client.actionNeeded')}</p>
+                            <div className="flex items-center gap-5">
+                                <span className="text-6xl font-black tracking-tighter drop-shadow-md">{needsAction ? '1' : '0'}</span>
+                                <div className="flex flex-col text-sm font-bold opacity-90 leading-snug">
+                                    <span className="text-lg">{needsAction ? 'Urgent Items' : 'All Clear'}</span>
+                                    <span className="opacity-75 font-medium">{needsAction ? 'Review Now' : 'Relax & Focus'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Mobile Gamification Bar */}
+                        {clientGamification && (
+                            <div className="md:hidden">
+                                <GamificationBar gamification={clientGamification} className="bg-white/10 backdrop-blur-md border border-white/20 p-2 rounded-xl text-white w-fit" />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+                {/* 2. Main Action Area: Smart Upload (Span 7 cols) */}
+                <div className="lg:col-span-7 space-y-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                            <Zap className="fill-yellow-400 text-yellow-500" /> Quick Actions
+                        </h2>
+                    </div>
+
+                    <SmartUploadWidget
+                        activeRequests={activeRequests}
+                        onUploadComplete={handleSmartUpload}
+                        className="shadow-xl hover:shadow-2xl h-full"
+                    />
+                </div>
+
+                {/* 3. Sidebar: Recent Activity (Span 5 cols) */}
+                <div className="lg:col-span-5 space-y-8">
+                    <div className="flex items-center justify-between px-1">
+                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            Activity Feed
+                        </h2>
+                        <button onClick={() => navigate('/client/requests')} className="text-sm font-bold text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1 group">
+                            View All <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4">
+                        {myRequests.slice(0, 4).map((req, idx) => (
+                            <div key={req.id}
+                                className="group bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-100 hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer relative overflow-hidden"
+                                onClick={() => navigate('/client/requests')}
+                            >
+                                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-gray-50 to-transparent rounded-bl-full -mr-10 -mt-10 opacity-50 group-hover:from-indigo-50 group-hover:opacity-100 transition-all"></div>
+
+                                <div className="flex items-center gap-5 relative z-10">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold transition-all shadow-sm group-hover:shadow-md ${req.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-600 rotate-0' : 'bg-gray-50 text-gray-400 group-hover:bg-indigo-600 group-hover:text-white group-hover:rotate-6'
+                                        }`}>
+                                        {req.status === 'COMPLETED' ? <Check size={24} strokeWidth={3} /> : (idx + 1)}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900 text-lg group-hover:text-indigo-600 transition-colors">{req.serviceName}</h4>
+                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">{req.dateCreated}</p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col items-end gap-1.5 relative z-10">
+                                    <span className="font-extrabold text-gray-900 text-base">{req.amount.toLocaleString()} <span className="text-xs text-gray-400">SAR</span></span>
+                                    <Badge status={req.status} />
+                                </div>
+                            </div>
+                        ))}
+
+                        {myRequests.length === 0 && (
+                            <div className="bg-white rounded-3xl p-10 text-center border-2 border-dashed border-gray-100/80">
+                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 grayscale opacity-50">
+                                    <FileText className="text-gray-400" size={32} />
+                                </div>
+                                <p className="text-gray-400 font-bold text-sm">{t('client.noRequests')}</p>
+                            </div>
+                        )}
+
+                        {/* Promo Card */}
+                        <div className="bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 rounded-[2rem] p-8 text-white text-center shadow-2xl relative overflow-hidden group cursor-pointer hover:shadow-indigo-500/30 transition-all duration-500">
+                            {/* Animated Background */}
+                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-25 transition-opacity duration-700 animate-[spin_20s_linear_infinite]">
+                                <Sparkles size={140} />
+                            </div>
+                            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+
+                            <div className="relative z-10">
+                                <h4 className="font-black text-2xl mb-2 tracking-tight">Need a dedicated expert?</h4>
+                                <p className="text-indigo-100 mb-6 font-medium max-w-xs mx-auto">Get a full-time CFO or accountant today.</p>
+                                <button className="bg-white text-indigo-900 px-8 py-3 rounded-xl text-sm font-bold hover:bg-indigo-50 transition-all hover:scale-105 shadow-lg flex items-center gap-2 mx-auto">
+                                    Browse Experts <ArrowRight size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+
+
+        </div>
+    );
+};
+
+export default ClientDashboard;
