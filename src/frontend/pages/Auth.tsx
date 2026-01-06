@@ -26,32 +26,36 @@ const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // MOCK LOGIN BYPASS: Directly call login() which falls back to mock data
-    // Simulate a small network delay for UX
-    setTimeout(() => {
-      login(email, role);
+    try {
+      // Pass 'undefined' for newUser (3rd arg) to reach password (4th arg)
+      const user = await login(email, role, undefined, password);
 
-      // Navigation Logic
-      const searchParams = new URLSearchParams(location.search);
-      const redirect = searchParams.get('redirect');
+      if (user) {
+        // Navigation Logic
+        const searchParams = new URLSearchParams(location.search);
+        const redirect = searchParams.get('redirect');
 
-      if (role === 'CLIENT') {
-        if (redirect) {
-          const action = searchParams.get('action');
-          const serviceId = searchParams.get('serviceId');
-          const planId = searchParams.get('planId');
-          const billing = searchParams.get('billing');
-          navigate(redirect, { state: { action, serviceId, planId, billing } });
-        } else {
-          navigate('/client');
+        if (user.role === 'CLIENT') {
+          if (redirect) {
+            const action = searchParams.get('action');
+            const serviceId = searchParams.get('serviceId');
+            const planId = searchParams.get('planId');
+            const billing = searchParams.get('billing');
+            navigate(redirect, { state: { action, serviceId, planId, billing } });
+          } else {
+            navigate('/client');
+          }
+        } else if (user.role === 'EXPERT') {
+          navigate('/expert');
+        } else if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+          navigate('/admin');
         }
-      } else if (role === 'EXPERT') {
-        navigate('/expert');
-      } else {
-        navigate('/admin');
       }
+    } catch (error) {
+      console.error("Login failed", error);
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (
