@@ -23,7 +23,7 @@ const ClientPayments = () => {
             return {
                 id: isCreditNote ? `CN-${r.id.split('-')[1]}` : `INV-${r.id.split('-')[1]}`,
                 requestId: r.id,
-                description: r.serviceName,
+                description: r.serviceName || 'Service',
                 date: r.dateCreated,
                 subtotal: isCreditNote ? -subtotal : subtotal,
                 vat: isCreditNote ? -vatAmount : vatAmount,
