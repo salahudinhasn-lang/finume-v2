@@ -31,8 +31,8 @@ const ClientRequests = () => {
 
     const filteredRequests = myRequests.filter(req => {
         const matchesFilter = filter === 'All' ? true : req.status === filter;
-        const matchesSearch = req.serviceName.toLowerCase().includes(search.toLowerCase()) ||
-            req.id.toLowerCase().includes(search.toLowerCase());
+        const matchesSearch = (req.serviceName?.toLowerCase() || '').includes(search.toLowerCase()) ||
+            (req.id?.toLowerCase() || '').includes(search.toLowerCase());
         return matchesFilter && matchesSearch;
     });
 
