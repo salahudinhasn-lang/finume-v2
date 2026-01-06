@@ -58,8 +58,24 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing Required Fields' }, { status: 400, headers: corsHeaders });
         }
 
+        // Generate Custom Sequential ID (REQ-0000000001)
+        // 1. Find last request with REQ- prefix
+        const lastRequest = await prisma.request.findFirst({
+            where: { id: { startsWith: 'REQ-' } },
+            orderBy: { id: 'desc' } // String sort works for fixed length padding
+        });
+
+        let nextId = 'REQ-0000000001';
+        if (lastRequest) {
+            const currentNum = parseInt(lastRequest.id.replace('REQ-', ''), 10);
+            if (!isNaN(currentNum)) {
+                nextId = `REQ-${String(currentNum + 1).padStart(10, '0')}`;
+            }
+        }
+
         const newRequest = await prisma.request.create({
             data: {
+                id: nextId,
                 clientId,
                 serviceId,
                 amount,
