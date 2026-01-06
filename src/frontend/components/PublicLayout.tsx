@@ -4,10 +4,10 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Button } from './UI';
 import { useAppContext } from '../context/AppContext';
 import { Logo } from './Logo';
-import { Globe, Twitter, Linkedin, Instagram, Mail, Phone, Menu, X, ChevronRight } from 'lucide-react';
+import { Globe, Twitter, Linkedin, Instagram, Mail, Phone, Menu, X, ChevronRight, LogOut } from 'lucide-react';
 
 const PublicLayout = () => {
-  const { language, setLanguage, t, settings, user } = useAppContext();
+  const { language, setLanguage, t, settings, user, logout } = useAppContext();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -92,6 +92,13 @@ const PublicLayout = () => {
                       {t('sidebar.dashboard')}
                     </Button>
                   </Link>
+                  <button
+                    onClick={logout}
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                    title={t('sidebar.logout')}
+                  >
+                    <LogOut size={20} />
+                  </button>
                 </div>
               ) : (
                 <>
