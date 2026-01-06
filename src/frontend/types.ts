@@ -171,10 +171,11 @@ export interface Request {
   clientId: string;
   clientName: string; // Denormalized for ease
   serviceId: string;
-  serviceName: string;
+  serviceName?: string;
   status: 'PENDING_PAYMENT' | 'NEW' | 'MATCHED' | 'IN_PROGRESS' | 'REVIEW_CLIENT' | 'REVIEW_ADMIN' | 'COMPLETED' | 'CANCELLED';
   amount: number;
   dateCreated: string;
+  createdAt?: string; // Backend compatibility
   assignedExpertId?: string;
   expertName?: string;
   description: string;
