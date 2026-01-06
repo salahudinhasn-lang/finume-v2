@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -49,6 +50,20 @@ export async function GET() {
                 create: e
             });
         }
+
+        // 4. Admin User
+        const adminPassword = await bcrypt.hash('admin123', 10);
+        await prisma.user.upsert({
+            where: { email: 'admin@finume.com' },
+            update: {},
+            create: {
+                name: 'Finume Admin',
+                email: 'admin@finume.com',
+                password: adminPassword,
+                role: 'ADMIN',
+                adminRole: 'SUPER_ADMIN'
+            }
+        });
 
         return NextResponse.json({ success: true, message: 'Database seeded successfully' });
     } catch (error) {
