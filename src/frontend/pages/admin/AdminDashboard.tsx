@@ -138,7 +138,8 @@ const AdminDashboard = () => {
     // Service Distribution (Pie Chart)
     const pieData = useMemo(() => {
         const dist = requests.reduce((acc, req) => {
-            acc[req.serviceName] = (Number(acc[req.serviceName]) || 0) + 1;
+            const name = req.serviceName || 'Unknown';
+            acc[name] = (Number(acc[name]) || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
 
