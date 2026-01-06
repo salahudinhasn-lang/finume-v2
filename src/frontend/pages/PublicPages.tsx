@@ -117,9 +117,13 @@ const PlanCalculator = ({ plans, onRecommend }: { plans: any[], onRecommend: (id
                         </div>
 
                         <div className="flex items-center justify-between mt-auto pt-6 border-t border-slate-200">
-                            <Button onClick={() => onRecommend(recommended.id)} className="bg-slate-900 text-white px-8 py-3 rounded-xl hover:bg-slate-800 shadow-lg font-bold">
+                            <button
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); onRecommend(recommended.id); }}
+                                className="bg-slate-900 text-white px-8 py-3 rounded-xl hover:bg-slate-800 shadow-lg font-bold flex items-center transition-all hover:scale-105"
+                            >
                                 Get Started <ArrowRight size={16} className="ml-2" />
-                            </Button>
+                            </button>
                             <div className="text-right">
                                 <p className="text-2xl font-black text-slate-900">{recommended.price.toLocaleString()} <span className="text-sm font-normal text-slate-500">SAR</span></p>
                                 <p className="text-[10px] text-slate-400 uppercase font-bold">Per Month</p>
@@ -410,6 +414,21 @@ export const PricingPage = () => {
                                     </tr>
                                 ))}
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td className="p-6"></td>
+                                    {plans.map(p => (
+                                        <td key={p.id} className="p-6 text-center">
+                                            <Button
+                                                onClick={() => handleSelectPlan(p.id)}
+                                                className={`w-full py-3 rounded-xl font-bold transition-all ${highlightedPlan === p.id ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}
+                                            >
+                                                Choose {p.name.split(' ')[0]}
+                                            </Button>
+                                        </td>
+                                    ))}
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
