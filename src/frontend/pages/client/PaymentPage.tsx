@@ -8,7 +8,7 @@ import { Request } from '../../types';
 import { MOCK_PLANS } from '../../mockData';
 
 const PaymentPage = () => {
-    const { user, addRequest, updateRequestStatus, requests, t, language } = useAppContext();
+    const { user, addRequest, updateRequestStatus, requests, services, t, language } = useAppContext();
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
@@ -16,39 +16,59 @@ const PaymentPage = () => {
     // 1. Get State from navigation (priority) OR Params (fallback)
     const stateRequest = location.state?.pendingRequest;
     const planId = searchParams.get('planId') || location.state?.planId;
+    const serviceId = searchParams.get('serviceId') || location.state?.serviceId;
     const billingCycle = searchParams.get('billing') || location.state?.billing || 'monthly';
 
     // 2. Derive Request Data
     const [pendingRequest, setPendingRequest] = useState<Request | null>(stateRequest || null);
+    // services is already destructured from context above
 
     useEffect(() => {
-        if (!pendingRequest && planId && user) {
-            const plan = MOCK_PLANS.find(p => p.id === planId);
-            if (plan) {
-                // Calculate Price (Monthly vs Yearly -20%)
-                const isYearly = billingCycle === 'yearly';
-                const basePrice = plan.price; // Monthly price
-                const finalAmount = isYearly
-                    ? Math.floor(basePrice * 12 * 0.8)
-                    : basePrice;
+        if (pendingRequest) return;
 
-                // Create Temporary Request Object
-                const newReq: Request = {
-                    id: `REQ-${Date.now()}`,
-                    clientId: user.id,
-                    clientName: user.name,
-                    serviceId: plan.id,
-                    serviceName: `${plan.name} (${isYearly ? 'Yearly' : 'Monthly'})`,
-                    status: 'PENDING_PAYMENT',
-                    amount: finalAmount,
-                    dateCreated: new Date().toISOString(),
-                    description: `Subscription to ${plan.name} - ${isYearly ? 'Yearly Plan (Save 20%)' : 'Monthly Plan'}`,
-                    batches: []
-                };
-                setPendingRequest(newReq);
+        if (user) {
+            // Handle Plan Subscription
+            if (planId) {
+                const plan = MOCK_PLANS.find(p => p.id === planId);
+                if (plan) {
+                    const isYearly = billingCycle === 'yearly';
+                    const basePrice = plan.price;
+                    const finalAmount = isYearly ? Math.floor(basePrice * 12 * 0.8) : basePrice;
+
+                    setPendingRequest({
+                        id: `REQ-${Date.now()}`,
+                        clientId: user.id,
+                        clientName: user.name,
+                        serviceId: plan.id,
+                        serviceName: `${plan.name} (${isYearly ? 'Yearly' : 'Monthly'})`,
+                        status: 'PENDING_PAYMENT',
+                        amount: finalAmount,
+                        dateCreated: new Date().toISOString(),
+                        description: `Subscription to ${plan.name} - ${isYearly ? 'Yearly Plan (Save 20%)' : 'Monthly Plan'}`,
+                        batches: []
+                    } as Request);
+                }
+            }
+            // Handle Single Service Booking
+            else if (serviceId) {
+                const service = services.find(s => s.id === serviceId);
+                if (service) {
+                    setPendingRequest({
+                        id: `REQ-${Date.now()}`,
+                        clientId: user.id,
+                        clientName: user.name,
+                        serviceId: service.id,
+                        serviceName: service.nameEn,
+                        status: 'PENDING_PAYMENT',
+                        amount: service.price,
+                        dateCreated: new Date().toISOString(),
+                        description: `Booking for ${service.nameEn}`,
+                        batches: []
+                    } as Request);
+                }
             }
         }
-    }, [planId, billingCycle, user, pendingRequest]);
+    }, [planId, serviceId, billingCycle, user, pendingRequest, services]);
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);

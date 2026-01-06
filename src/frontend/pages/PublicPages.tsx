@@ -12,6 +12,126 @@ import { useAppContext } from '../context/AppContext';
 
 // --- Shared Components for Consistent UI ---
 
+// --- Shared Components for Consistent UI ---
+
+const PlanCalculator = ({ plans, onRecommend }: { plans: any[], onRecommend: (id: string) => void }) => {
+    const [revenue, setRevenue] = useState(200000);
+    const [txns, setTxns] = useState('< 50');
+    const [employees, setEmployees] = useState('None');
+
+    // Logic to determine recommended plan
+    const getRecommendedPlan = () => {
+        // CR Guard: Rev < 375k, Tx < 50, Emp None/1-10
+        if (revenue < 375000 && txns === '< 50' && (employees === 'None' || employees === '1-10')) {
+            return plans.find(p => p.name.includes('CR')) || plans[0];
+        }
+        // ZATCA Shield: Rev < 5M, Tx < 300, Emp < 50
+        if (revenue < 5000000 && (txns === '< 50' || txns === '50-300') && employees !== '50+') {
+            return plans.find(p => p.name.includes('ZATCA')) || plans[1];
+        }
+        // Audit Proof: Unlimited
+        return plans.find(p => p.name.includes('Audit')) || plans[2];
+    };
+
+    const recommended = getRecommendedPlan();
+
+    return (
+        <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100 flex flex-col md:flex-row gap-12 items-center relative overflow-hidden mb-24">
+            {/* Left: Inputs */}
+            <div className="flex-1 w-full space-y-8 relative z-10">
+                <div>
+                    <h3 className="text-3xl font-black text-slate-900 mb-2">Configure Your Needs</h3>
+                    <p className="text-slate-500">Answer 3 simple questions to find the perfect compliance package.</p>
+                </div>
+
+                {/* Revenue Slider */}
+                <div>
+                    <div className="flex justify-between mb-4">
+                        <label className="font-bold text-slate-700">Annual Revenue</label>
+                        <span className="font-black text-2xl text-slate-900">{revenue.toLocaleString()} <span className="text-sm font-medium text-slate-400">SAR</span></span>
+                    </div>
+                    <input
+                        type="range"
+                        min="0"
+                        max="10000000"
+                        step="50000"
+                        value={revenue}
+                        onChange={(e) => setRevenue(parseInt(e.target.value))}
+                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    />
+                    <div className="flex justify-between mt-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        <span>Startup</span>
+                        <span>Growth</span>
+                        <span>Enterprise</span>
+                    </div>
+                </div>
+
+                {/* Transactions */}
+                <div>
+                    <label className="font-bold text-slate-700 block mb-3">Monthly Transactions</label>
+                    <div className="grid grid-cols-3 gap-3">
+                        {['< 50', '50-300', '300+'].map(opt => (
+                            <button
+                                key={opt}
+                                onClick={() => setTxns(opt)}
+                                className={`py-3 rounded-xl font-bold text-sm transition-all border ${txns === opt ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' : 'bg-slate-50 border-slate-100 text-slate-500 hover:bg-slate-100'}`}
+                            >
+                                {opt}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Employees */}
+                <div>
+                    <label className="font-bold text-slate-700 block mb-3">Employees</label>
+                    <div className="grid grid-cols-3 gap-3">
+                        {['None', '1-10', '10+'].map(opt => (
+                            <button
+                                key={opt}
+                                onClick={() => setEmployees(opt)}
+                                className={`py-3 rounded-xl font-bold text-sm transition-all border ${employees === opt ? 'bg-purple-50 border-purple-200 text-purple-600 shadow-sm' : 'bg-slate-50 border-slate-100 text-slate-500 hover:bg-slate-100'}`}
+                            >
+                                {opt}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Right: Recommendation Card */}
+            <div className="flex-1 w-full bg-slate-50 rounded-3xl p-8 border border-slate-100 relative">
+                <div className="absolute top-0 right-0 p-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                {recommended && (
+                    <div className="relative z-10 animate-in fade-in zoom-in duration-300">
+                        <div className="uppercase tracking-widest text-xs font-bold text-blue-600 mb-2 bg-blue-100 w-fit px-2 py-1 rounded">Recommended Plan</div>
+                        <h3 className="text-4xl font-black text-slate-900 mb-2">{recommended.name}</h3>
+                        <p className="text-slate-500 mb-6">{recommended.description}</p>
+
+                        <div className="space-y-3 mb-8">
+                            {recommended.features.slice(0, 3).map((f: string, i: number) => (
+                                <div key={i} className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                    <CheckCircle size={16} className="text-green-500" /> {f}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center justify-between mt-auto pt-6 border-t border-slate-200">
+                            <Button onClick={() => onRecommend(recommended.id)} className="bg-slate-900 text-white px-8 py-3 rounded-xl hover:bg-slate-800 shadow-lg font-bold">
+                                Get Started <ArrowRight size={16} className="ml-2" />
+                            </Button>
+                            <div className="text-right">
+                                <p className="text-2xl font-black text-slate-900">{recommended.price.toLocaleString()} <span className="text-sm font-normal text-slate-500">SAR</span></p>
+                                <p className="text-[10px] text-slate-400 uppercase font-bold">Per Month</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 const PageHeader = ({ title, subtitle, icon: Icon, color = 'blue' }: { title: string, subtitle?: string, icon: any, color?: string }) => (
     <div className={`relative overflow-hidden py-24 sm:py-32 bg-slate-900`}>
         {/* Background Effects */}
@@ -52,9 +172,10 @@ export const ServicesPage = () => {
 
     const handleBookService = (serviceId: string) => {
         if (user) {
-            navigate('/client', { state: { action: 'book_service', serviceId } });
+            // Direct to checkout if logged in
+            navigate(`/client/checkout?serviceId=${serviceId}`);
         } else {
-            navigate(`/login?redirect=/client&action=book_service&serviceId=${serviceId}`);
+            navigate(`/login?redirect=/client/checkout&serviceId=${serviceId}`);
         }
     };
 
@@ -153,12 +274,21 @@ export const PricingPage = () => {
     const { plans, user, t } = useAppContext();
     const navigate = useNavigate();
     const [billing, setBilling] = useState<'MONTHLY' | 'YEARLY'>('YEARLY');
+    const [highlightedPlan, setHighlightedPlan] = useState<string | null>(null);
+    const comparisonRef = React.useRef<HTMLDivElement>(null);
+
+    // Scroll to comparison logic
+    const handleCalculatorRecommend = (planId: string) => {
+        setHighlightedPlan(planId);
+        comparisonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
 
     const handleSelectPlan = (planId: string) => {
         if (user) {
-            navigate('/client', { state: { action: 'subscribe_plan', planId, billing } });
+            // Direct to checkout if logged in
+            navigate(`/client/checkout?planId=${planId}&billing=${billing}`);
         } else {
-            navigate(`/login?redirect=/client&action=subscribe_plan&planId=${planId}&billing=${billing}`);
+            navigate(`/login?redirect=/client/checkout&planId=${planId}&billing=${billing}`);
         }
     };
 
@@ -172,6 +302,9 @@ export const PricingPage = () => {
             />
 
             <Section className="-mt-32 relative z-20">
+                {/* Calculator */}
+                <PlanCalculator plans={plans} onRecommend={handleCalculatorRecommend} />
+
                 <div className="flex justify-center mb-12">
                     <div className="bg-slate-900/5 backdrop-blur-sm p-1.5 rounded-2xl border border-white/20 inline-flex relative shadow-lg">
                         <button
@@ -235,7 +368,7 @@ export const PricingPage = () => {
                 </div>
 
                 {/* Comparison Table (Enhanced) */}
-                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden mt-20">
+                <div ref={comparisonRef} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden mt-20">
                     <div className="p-10 border-b border-slate-100 bg-slate-50/50 text-center">
                         <h3 className="text-2xl font-black text-slate-900">{t('public.comparePlans')}</h3>
                         <p className="text-slate-500 mt-2">Detailed feature breakdown</p>
@@ -245,7 +378,11 @@ export const PricingPage = () => {
                             <thead>
                                 <tr className="bg-white">
                                     <th className="p-6 pl-10 text-slate-400 font-bold uppercase tracking-wider text-xs w-1/3">Features</th>
-                                    {plans.map(p => <th key={p.id} className="p-6 text-center font-bold text-slate-900 text-lg">{p.name.split('(')[0]}</th>)}
+                                    {plans.map(p => (
+                                        <th key={p.id} className={`p-6 text-center font-bold text-lg transition-colors duration-500 ${highlightedPlan === p.id ? 'bg-blue-50 text-blue-700' : 'text-slate-900'}`}>
+                                            {p.name.split('(')[0]}
+                                        </th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -261,13 +398,13 @@ export const PricingPage = () => {
                                 ].map((row, i) => (
                                     <tr key={i} className="hover:bg-slate-50 transition-colors">
                                         <td className="p-5 pl-10 font-bold text-slate-700">{row.name}</td>
-                                        <td className="p-5 text-center">
+                                        <td className={`p-5 text-center transition-colors duration-500 ${highlightedPlan === plans[0].id ? 'bg-blue-50' : ''}`}>
                                             {row.basic === true ? <CheckCircle className="mx-auto text-green-500" size={20} fill="#dcfce7" /> : row.basic === false ? <Minus className="mx-auto text-slate-300" size={20} /> : <span className="text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full text-xs">{row.basic}</span>}
                                         </td>
-                                        <td className="p-5 text-center">
+                                        <td className={`p-5 text-center transition-colors duration-500 ${highlightedPlan === plans[1].id ? 'bg-blue-50' : ''}`}>
                                             {row.std === true ? <CheckCircle className="mx-auto text-green-500" size={20} fill="#dcfce7" /> : row.std === false ? <Minus className="mx-auto text-slate-300" size={20} /> : <span className="text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full text-xs">{row.std}</span>}
                                         </td>
-                                        <td className="p-5 text-center">
+                                        <td className={`p-5 text-center transition-colors duration-500 ${highlightedPlan === plans[2].id ? 'bg-blue-50' : ''}`}>
                                             {row.pro === true ? <CheckCircle className="mx-auto text-green-500" size={20} fill="#dcfce7" /> : row.pro === false ? <Minus className="mx-auto text-slate-300" size={20} /> : <span className="text-slate-900 font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs">{row.pro}</span>}
                                         </td>
                                     </tr>
