@@ -52,10 +52,12 @@ export async function GET() {
         }
 
         // 4. Admin User
-        const adminPassword = await bcrypt.hash('admin123', 10);
+        const adminPassword = await bcrypt.hash('FinumeAdmin2026!', 10);
         await prisma.user.upsert({
             where: { email: 'admin@finume.com' },
-            update: {},
+            update: {
+                password: adminPassword, // Ensure update uses new password if exists
+            },
             create: {
                 name: 'Finume Admin',
                 email: 'admin@finume.com',
