@@ -194,7 +194,7 @@ export const ServicesPage = () => {
 
             <Section>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {services.map(service => {
+                    {services.filter(s => s.id !== 'SERV-SUBSCRIPTION').map(service => {
                         const Icon = getIcon(service.nameEn);
                         return (
                             <div key={service.id} className="group flex flex-col bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-300 hover:-translate-y-1">
