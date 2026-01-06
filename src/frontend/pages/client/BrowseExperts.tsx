@@ -4,7 +4,7 @@ import { useAppContext } from '../../context/AppContext';
 import { Card, Button, Badge } from '../../components/UI';
 import { Star, MapPin, Briefcase, CheckCircle, Crown, Award, Search, Sparkles, Filter, X, ArrowRight, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Expert, Service } from '../../types';
+import { Expert, Service, Request } from '../../types';
 import { generateAIResponse } from '../../services/geminiService';
 
 const BrowseExperts = () => {
@@ -107,18 +107,19 @@ const BrowseExperts = () => {
 
         if (user) {
             // Logged in: Create Request directly
-            addRequest({
+            const req: Request = {
                 id: `REQ-${Math.floor(Math.random() * 100000)}`,
                 clientId: user.id,
                 clientName: user.name,
                 serviceId: matchedService.id,
                 serviceName: matchedService.nameEn,
-                status: 'NEW', // Admin will assign
+                status: 'PENDING_PAYMENT',
                 amount: matchedService.price,
                 dateCreated: new Date().toISOString().split('T')[0],
                 description: `AI Matched Request based on: "${matchInput}". Client requested admin assignment.`
-            });
-            navigate('/client/requests');
+            };
+            addRequest(req);
+            navigate('/client/checkout', { state: { pendingRequest: req } });
         } else {
             // Not logged in: Redirect to register with params
             navigate(`/register?redirect=/client&action=book_service&serviceId=${matchedService.id}`);
@@ -133,20 +134,21 @@ const BrowseExperts = () => {
         const service = services.find(s => s.id === selectedServiceId);
 
         if (expert && service) {
-            addRequest({
+            const req: Request = {
                 id: `REQ-${Math.floor(Math.random() * 100000)}`,
                 clientId: user.id,
                 clientName: user.name,
                 serviceId: service.id,
                 serviceName: service.nameEn,
-                status: 'MATCHED', // Directly matched
+                status: 'PENDING_PAYMENT',
                 amount: service.price,
                 dateCreated: new Date().toISOString().split('T')[0],
                 assignedExpertId: expert.id,
                 expertName: expert.name,
                 description: `Direct hire request for ${service.nameEn}`
-            });
-            navigate('/client/requests');
+            };
+            addRequest(req);
+            navigate('/client/checkout', { state: { pendingRequest: req } });
         }
     };
 

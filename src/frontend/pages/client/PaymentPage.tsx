@@ -8,7 +8,7 @@ import { Request } from '../../types';
 import { MOCK_PLANS } from '../../mockData';
 
 const PaymentPage = () => {
-    const { user, addRequest, updateRequestStatus, t, language } = useAppContext();
+    const { user, addRequest, updateRequestStatus, requests, t, language } = useAppContext();
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
@@ -71,15 +71,33 @@ const PaymentPage = () => {
 
         // Simulate API call
         setTimeout(() => {
-            // Check if this is a new request (from Plan Selection) or existing (Retry)
-            // We can check if it exists in the 'requests' list from context, but we need to import 'requests'
-            // For now, simpler heuristic: If it was generated in this component (has REQ-DATE), it's likely new.
-            // BUT, to be safe, let's just use addRequest if it's new.
+            if (pendingRequest) {
+                // Check if request already exists in 'requests' (need to import requests from context)
+                // Since we don't have 'requests' in scope, we can rely on ID convention or just try to update first.
+                // But updateRequest only updates state if ID matches.
+                // Best approach: Try to update. If it's a new plan subscription (generated here), add it.
+                // If it came from navigation state (ClientServices), it was likely already added as PENDING.
 
-            // Actually, let's import requests from context to be sure.
-            // For this patch, I will just call addRequest if the ID is not found in existing requests (I need to add requests to destructuring)
-            addRequest({ ...pendingRequest, status: 'NEW' });
+                // However, ClientServices DOES add it.
+                // So we should Update.
+                // But PaymentPage also handles "New Plan" directly from URL params?
+                // In that case (useEffect logic), we generated a new ID but didn't add it to context yet.
 
+                // Let's assume: If it came from state (ClientServices), it's in DB.
+                // If constructed here (Plan), it's not.
+
+                // Better yet: we can check 'requests' if we import it.
+                // Let's add 'requests' to the destructuring at the top.
+
+                // For now, let's implement the logic assuming we have 'requests' available (will add to destructuring).
+                const isExisting = requests.some(r => r.id === pendingRequest.id);
+
+                if (isExisting) {
+                    updateRequestStatus(pendingRequest.id, 'NEW');
+                } else {
+                    addRequest({ ...pendingRequest, status: 'NEW' });
+                }
+            }
             setIsProcessing(false);
             setIsSuccess(true);
         }, 2000);
