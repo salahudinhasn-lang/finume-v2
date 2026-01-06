@@ -267,8 +267,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // 1. Optimistic UI Update
     setRequests(prev => [req, ...prev]);
 
-    // 2. Persist to Backend (Disabled)
-    /*
+    // 2. Persist to Backend
     try {
       const payload = {
         clientId: req.clientId,
@@ -277,21 +276,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         amount: req.amount,
         batches: req.batches
       };
-  
+
       const res = await fetch(`${API_BASE_URL}/api/requests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-  
+
       if (res.ok) {
         const savedReq = await res.json();
-        setRequests(prev => prev.map(r => r.id === req.id ? { ...r, id: savedReq.id, status: savedReq.status } : r));
+        // Update the temporary ID with the real one from DB
+        setRequests(prev => prev.map(r => r.id === req.id ? { ...savedReq, status: r.status } : r));
       }
     } catch (error) {
       console.error('Failed to save request to DB', error);
     }
-    */
   };
 
   const updateRequestStatus = (id: string, status: Request['status']) => {
@@ -302,6 +301,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const expert = experts.find(e => e.id === expertId);
     if (!expert) return;
 
+    // Optimistic Update
     setRequests(prev => prev.map(r => {
       if (r.id === requestId) {
         return {
@@ -313,6 +313,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return r;
     }));
+
+    // Persist to Backend
+    try {
+      fetch(`${API_BASE_URL}/api/requests/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignedExpertId: expertId, status: 'MATCHED' })
+      }).catch(err => console.error("Failed to assign expert DB", err));
+    } catch (e) {
+      console.error("Assign request error", e);
+    }
   };
 
   const updateExpertStatus = (expertId: string, status: Expert['status']) => {

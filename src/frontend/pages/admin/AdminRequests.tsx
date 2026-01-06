@@ -31,7 +31,7 @@ const AdminRequests = () => {
 
     // Logic to recommend experts
     const recommendedExperts = formData.serviceName
-        ? activeExperts.filter(e => e.specializations.some(s => s.toLowerCase().includes(formData.serviceName!.toLowerCase()) || formData.serviceName!.toLowerCase().includes(s.toLowerCase())))
+        ? activeExperts.filter(e => e.specializations?.some(s => s?.toLowerCase().includes(formData.serviceName!.toLowerCase()) || formData.serviceName!.toLowerCase().includes(s?.toLowerCase())))
         : [];
 
     const recommendedIds = new Set(recommendedExperts.map(e => e.id));
