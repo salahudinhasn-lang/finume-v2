@@ -216,8 +216,8 @@ const ClientRequests = () => {
                                 <tr key={req.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 font-mono font-medium text-gray-500">{req.id}</td>
                                     <td className="px-6 py-4">
-                                        <p className="font-bold text-gray-900">{req.serviceName}</p>
-                                        <p className="text-xs text-gray-500">{req.dateCreated}</p>
+                                        <p className="font-bold text-gray-900">{req.serviceName || (req as any).service?.nameEn || 'Unknown Service'}</p>
+                                        <p className="text-xs text-gray-500">{new Date(req.createdAt || req.dateCreated).toLocaleDateString()}</p>
                                     </td>
                                     <td className="px-6 py-4">
                                         {req.expertName ? (
