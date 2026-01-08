@@ -31,7 +31,7 @@ const PaymentPage = () => {
             if (planId) {
                 const plan = MOCK_PLANS.find(p => p.id === planId);
                 if (plan) {
-                    const isYearly = billingCycle === 'yearly';
+                    const isYearly = (billingCycle || '').toUpperCase() === 'YEARLY';
                     const basePrice = plan.price;
                     const discount = (settings?.yearlyDiscountPercentage || 20) / 100;
                     const finalAmount = isYearly ? Math.floor(basePrice * 12 * (1 - discount)) : basePrice;
