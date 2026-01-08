@@ -2,11 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MOCK_PLANS } from '../mockData';
 import { Check, X, HelpCircle, AlertTriangle } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 
 const PricingTable = () => {
     const navigate = useNavigate();
+    const { settings } = useAppContext();
     const [showOverage, setShowOverage] = useState(false);
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+
+    const discountPercent = settings?.yearlyDiscountPercentage || 20;
+    const discountMultiplier = 1 - (discountPercent / 100);
 
     const toggleBilling = () => {
         setBillingCycle(prev => prev === 'monthly' ? 'yearly' : 'monthly');
@@ -14,8 +19,8 @@ const PricingTable = () => {
 
     const calculatePrice = (basePrice: number) => {
         if (billingCycle === 'yearly') {
-            // Show monthly equivalent (20% off)
-            return Math.floor(basePrice * 0.8).toLocaleString();
+            // Show monthly equivalent (Dynamic discount off)
+            return Math.floor(basePrice * discountMultiplier).toLocaleString();
         }
         return basePrice.toLocaleString();
     };
@@ -43,7 +48,7 @@ const PricingTable = () => {
                         >
                             Yearly
                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors ${billingCycle === 'yearly' ? 'bg-green-500 text-white' : 'bg-green-900/30 text-green-400'}`}>
-                                -20%
+                                -{discountPercent}%
                             </span>
                         </div>
                     </div>
@@ -66,14 +71,14 @@ const PricingTable = () => {
                                         </div>
                                         {billingCycle === 'yearly' && (
                                             <div className="text-xs text-slate-400 font-medium mt-1">
-                                                Billed {(plan.price * 12 * 0.8).toLocaleString()} SAR yearly
+                                                Billed {Math.round(plan.price * 12 * discountMultiplier).toLocaleString()} SAR yearly
                                             </div>
                                         )}
                                     </div>
                                     <p className="text-xs font-medium text-gray-500 mt-1">{plan.tagline}</p>
                                     {billingCycle === 'yearly' && (
                                         <p className="text-xs text-green-600 font-bold mt-2">
-                                            Save {(plan.price * 12 * 0.2).toLocaleString()} SAR
+                                            Save {Math.round(plan.price * 12 * (discountPercent / 100)).toLocaleString()} SAR
                                         </p>
                                     )}
                                 </th>
