@@ -275,7 +275,7 @@ export const ServicesPage = () => {
 };
 
 export const PricingPage = () => {
-    const { plans, user, t } = useAppContext();
+    const { plans, user, t, settings } = useAppContext();
     const navigate = useNavigate();
     const [billing, setBilling] = useState<'MONTHLY' | 'YEARLY'>('YEARLY');
     const [highlightedPlan, setHighlightedPlan] = useState<string | null>(null);
@@ -321,14 +321,15 @@ export const PricingPage = () => {
                             onClick={() => setBilling('YEARLY')}
                             className={`px-8 py-3 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${billing === 'YEARLY' ? 'bg-white shadow-md text-slate-900 transform scale-105' : 'text-slate-300 hover:text-white'}`}
                         >
-                            {t('public.yearly')} <span className="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm">-20%</span>
+                            {t('public.yearly')} <span className="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm">-{settings?.yearlyDiscountPercentage || 20}%</span>
                         </button>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
                     {plans.map(plan => {
-                        const price = billing === 'YEARLY' ? Math.round(plan.price * 0.8) : plan.price;
+                        const discount = (settings?.yearlyDiscountPercentage || 20) / 100;
+                        const price = billing === 'YEARLY' ? Math.round(plan.price * (1 - discount)) : plan.price;
                         return (
                             <div key={plan.id} className={`group relative p-10 bg-white rounded-[2.5rem] flex flex-col transition-all duration-300 ${plan.isPopular ? 'border-2 border-slate-900 shadow-2xl scale-105 z-10' : 'border border-slate-200 shadow-xl hover:translate-y-[-5px]'}`}>
                                 {plan.isPopular && (

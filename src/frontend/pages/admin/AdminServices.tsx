@@ -273,6 +273,40 @@ const AdminServices = () => {
                         </div>
                     </Card>
 
+                    {/* Pricing Settings */}
+                    <Card className="p-6 border border-gray-200 shadow-sm">
+                        <div className="mb-6">
+                            <h3 className="text-lg font-bold text-gray-900">Pricing Configuration</h3>
+                            <p className="text-gray-500 text-sm">Manage global pricing rules and discounts.</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Yearly Plan Discount (%)</label>
+                                <div className="flex items-center gap-4">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={settings.yearlyDiscountPercentage ?? 20}
+                                        onChange={(e) => updateSettings({ yearlyDiscountPercentage: Number(e.target.value) })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <span className="text-gray-500 font-bold">%</span>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Applies to all plans when "Yearly" billing is selected.
+                                    (e.g. 20% off = 0.8 multipliers)
+                                </p>
+                            </div>
+                            <div className="pt-2 flex justify-end">
+                                <Button size="sm" onClick={() => updateSettings({})}>
+                                    <Save size={16} className="mr-2" /> Save Settings
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+
                     {/* Public Pages Visibility */}
                     <Card className="p-6 border border-gray-200 shadow-sm">
                         <div className="mb-6">

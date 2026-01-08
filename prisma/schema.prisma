@@ -196,6 +196,7 @@ model PlatformSettings {
   careersSubtitle  String?
   pageVisibility   String? // JSON string for { [pageKey]: { public: boolean, client: boolean } }
   sitePages        String? // JSON string: List of SitePage objects
+  yearlyDiscountPercentage Int @default(20)
 }
 
 model ClientFeaturePermissions {

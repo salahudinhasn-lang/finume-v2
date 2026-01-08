@@ -102,6 +102,7 @@ export interface PlatformSettings {
   careersSubtitle?: string;
   pageVisibility?: string; // JSON string
   sitePages?: string; // JSON string
+  yearlyDiscountPercentage?: number;
 }
 
 export interface ClientFeaturePermissions {
