@@ -7,7 +7,7 @@ import { Service, PricingPlan } from '../../types';
 
 const AdminServices = () => {
     const { services, plans, updateService, addService, deleteService, updatePlan, settings, updateSettings } = useAppContext();
-    const [activeTab, setActiveTab] = useState<'SERVICES' | 'PRICING' | 'SETTINGS'>('SERVICES');
+    const [activeTab, setActiveTab] = useState<'SERVICES' | 'PRICING' | 'SETTINGS' | 'TABLE_ROWS'>('SERVICES');
 
     // Service Modal
     const [showServiceModal, setShowServiceModal] = useState(false);
@@ -125,6 +125,12 @@ const AdminServices = () => {
                         <Tag size={16} /> Pricing Plans
                     </button>
                     <button
+                        onClick={() => setActiveTab('TABLE_ROWS')}
+                        className={`px-4 py-2 text-sm font-bold rounded-md transition-colors flex items-center gap-2 ${activeTab === 'TABLE_ROWS' ? 'bg-white shadow-sm text-primary-700' : 'text-gray-500 hover:text-gray-900'}`}
+                    >
+                        <LayoutList size={16} /> Table Rows
+                    </button>
+                    <button
                         onClick={() => setActiveTab('SETTINGS')}
                         className={`px-4 py-2 text-sm font-bold rounded-md transition-colors flex items-center gap-2 ${activeTab === 'SETTINGS' ? 'bg-white shadow-sm text-primary-700' : 'text-gray-500 hover:text-gray-900'}`}
                     >
@@ -219,6 +225,99 @@ const AdminServices = () => {
                         </Card>
                     ))}
                 </div>
+            )}
+
+            {/* --- Table Rows Config Tab --- */}
+            {activeTab === 'TABLE_ROWS' && (
+                <Card className="p-0 overflow-hidden border border-gray-200 shadow-sm">
+                    <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                        <div>
+                            <h3 className="font-bold text-gray-700">Comparison Table Rows</h3>
+                            <p className="text-xs text-gray-500">Define criteria rows for the pricing table.</p>
+                        </div>
+                        <Button size="sm" onClick={() => {
+                            const currentConfig = settings.pricingTableConfig ? JSON.parse(settings.pricingTableConfig) : [];
+                            const newRow = { id: `row_${Date.now()}`, label: 'New Criteria', section: 'Features', type: 'boolean' };
+                            updateSettings({ pricingTableConfig: JSON.stringify([...currentConfig, newRow]) });
+                        }} className="shadow-sm">
+                            <Plus size={16} /> Add Row
+                        </Button>
+                    </div>
+                    <div className="p-4">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
+                                <tr>
+                                    <th className="px-4 py-3">Label</th>
+                                    <th className="px-4 py-3">Section</th>
+                                    <th className="px-4 py-3">Value Type</th>
+                                    <th className="px-4 py-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {(settings.pricingTableConfig ? JSON.parse(settings.pricingTableConfig) : []).map((row: any, idx: number) => (
+                                    <tr key={row.id} className="hover:bg-gray-50">
+                                        <td className="px-4 py-3">
+                                            <input
+                                                type="text"
+                                                value={row.label}
+                                                onChange={(e) => {
+                                                    const config = JSON.parse(settings.pricingTableConfig || '[]');
+                                                    config[idx].label = e.target.value;
+                                                    updateSettings({ pricingTableConfig: JSON.stringify(config) });
+                                                }}
+                                                className="border-gray-300 rounded-md text-sm px-2 py-1 w-full"
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <select
+                                                value={row.section}
+                                                onChange={(e) => {
+                                                    const config = JSON.parse(settings.pricingTableConfig || '[]');
+                                                    config[idx].section = e.target.value;
+                                                    updateSettings({ pricingTableConfig: JSON.stringify(config) });
+                                                }}
+                                                className="border-gray-300 rounded-md text-sm px-2 py-1"
+                                            >
+                                                <option value="Features">Features</option>
+                                                <option value="Financial Limits">Financial Limits</option>
+                                                <option value="Operational Limits">Operational Limits</option>
+                                                <option value="Advanced Features">Advanced Features</option>
+                                            </select>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <select
+                                                value={row.type}
+                                                onChange={(e) => {
+                                                    const config = JSON.parse(settings.pricingTableConfig || '[]');
+                                                    config[idx].type = e.target.value;
+                                                    updateSettings({ pricingTableConfig: JSON.stringify(config) });
+                                                }}
+                                                className="border-gray-300 rounded-md text-sm px-2 py-1"
+                                            >
+                                                <option value="boolean">Checkbox (Yes/No)</option>
+                                                <option value="text">Text / Number</option>
+                                            </select>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <button
+                                                onClick={() => {
+                                                    if (window.confirm('Delete this row?')) {
+                                                        const config = JSON.parse(settings.pricingTableConfig || '[]');
+                                                        const newConfig = config.filter((_: any, i: number) => i !== idx);
+                                                        updateSettings({ pricingTableConfig: JSON.stringify(newConfig) });
+                                                    }
+                                                }}
+                                                className="text-red-500 hover:bg-red-50 p-1 rounded"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
             )}
 
             {/* --- Site Settings Tab --- */}
@@ -433,7 +532,52 @@ const AdminServices = () => {
                                 <input type="text" value={planForm.tagline} onChange={e => setPlanForm({ ...planForm, tagline: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500" />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Features (Comma separated)</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Detailed Features</label>
+                                <div className="space-y-3 max-h-60 overflow-y-auto p-2 border border-gray-100 rounded-lg">
+                                    {(settings.pricingTableConfig ? JSON.parse(settings.pricingTableConfig) : []).map((row: any) => {
+                                        const currentVal = planForm.attributes?.[row.id];
+                                        return (
+                                            <div key={row.id} className="flex items-center gap-3">
+                                                <span className="text-sm font-medium text-gray-600 w-1/3 truncate" title={row.label}>{row.label}</span>
+                                                <div className="flex-1">
+                                                    {row.type === 'boolean' ? (
+                                                        <select
+                                                            value={currentVal === true ? 'true' : currentVal === false ? 'false' : String(currentVal || 'false')}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value === 'true';
+                                                                setPlanForm(prev => ({
+                                                                    ...prev,
+                                                                    attributes: { ...prev.attributes, [row.id]: val }
+                                                                }));
+                                                            }}
+                                                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                                                        >
+                                                            <option value="true">Included (Check)</option>
+                                                            <option value="false">Not Included (X)</option>
+                                                            <option value="Basic">Partial/Text...</option>
+                                                        </select>
+                                                    ) : (
+                                                        <input
+                                                            type="text"
+                                                            value={typeof currentVal === 'object' ? '' : currentVal || ''}
+                                                            onChange={(e) => {
+                                                                setPlanForm(prev => ({
+                                                                    ...prev,
+                                                                    attributes: { ...prev.attributes, [row.id]: e.target.value }
+                                                                }));
+                                                            }}
+                                                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                                                            placeholder="Value (e.g. 5 Users)"
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            <div className="hidden">
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Legacy Features (Comma separated)</label>
                                 <textarea
                                     rows={4}
                                     value={planForm.features?.join(', ')}

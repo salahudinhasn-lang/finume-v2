@@ -53,6 +53,7 @@ export interface PricingPlan {
   description: string;
   tagline: string;
   features: string[];
+  attributes?: Record<string, any>; // Dynamic attributes matching table config
   guarantee: string;
   isPopular?: boolean;
   color?: string;
@@ -102,6 +103,7 @@ export interface PlatformSettings {
   careersSubtitle?: string;
   pageVisibility?: string; // JSON string
   sitePages?: string; // JSON string
+  pricingTableConfig?: string; // JSON string for table rows
   yearlyDiscountPercentage?: number;
 }
 

@@ -70,6 +70,7 @@ model PricingPlan {
   description String
   tagline     String
   features    String // JSON string
+  attributes  String? // JSON string for dynamic table usage (e.g. { "vat_reg": true, "employees": "10" })
   guarantee   String
   isPopular   Boolean @default(false)
   color       String?
@@ -196,6 +197,7 @@ model PlatformSettings {
   careersSubtitle  String?
   pageVisibility   String? // JSON string for { [pageKey]: { public: boolean, client: boolean } }
   sitePages        String? // JSON string: List of SitePage objects
+  pricingTableConfig String? // JSON string: List of { id, label, section, type }
   yearlyDiscountPercentage Int @default(20)
 }
 

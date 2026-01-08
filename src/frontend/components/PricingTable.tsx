@@ -6,7 +6,7 @@ import { useAppContext } from '../context/AppContext';
 
 const PricingTable = () => {
     const navigate = useNavigate();
-    const { settings } = useAppContext();
+    const { settings, plans } = useAppContext();
     const [showOverage, setShowOverage] = useState(false);
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
@@ -25,7 +25,7 @@ const PricingTable = () => {
         return basePrice.toLocaleString();
     };
 
-    if (!MOCK_PLANS || MOCK_PLANS.length === 0) return null;
+    if (!plans || plans.length === 0) return null;
 
     return (
         <div className="w-full max-w-7xl mx-auto px-4 py-12">
@@ -62,7 +62,7 @@ const PricingTable = () => {
                             <th className="p-6 text-left w-1/4">
                                 <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">Criteria</span>
                             </th>
-                            {MOCK_PLANS.map(plan => (
+                            {plans.map(plan => (
                                 <th key={plan.id} className={`p-6 text-center w-1/4 border-l border-gray-100 ${plan.isPopular ? 'bg-indigo-50/50' : ''}`}>
                                     <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
                                     <div className="mt-2 flex flex-col items-center">
@@ -86,100 +86,52 @@ const PricingTable = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {/* Financial Thresholds */}
-                        <tr className="bg-gray-50/50"><td colSpan={4} className="p-3 px-6 text-xs font-bold text-gray-500 uppercase tracking-widest">Financial Thresholds</td></tr>
+                        {/* Dynamic Sections */}
+                        {(() => {
+                            const config = settings?.pricingTableConfig ? JSON.parse(settings.pricingTableConfig) : [];
+                            // Group by section
+                            const sections: Record<string, any[]> = {};
+                            config.forEach((row: any) => {
+                                if (!sections[row.section]) sections[row.section] = [];
+                                sections[row.section].push(row);
+                            });
 
-                        <tr>
-                            <td className="p-4 px-6 font-bold text-gray-700">Annual Revenue</td>
-                            {MOCK_PLANS.map(plan => (
-                                <td key={plan.id} className="p-4 text-center font-bold text-gray-900 border-l border-gray-100">
-                                    {plan.limits?.revenue.label}
-                                </td>
-                            ))}
-                        </tr>
-                        <tr>
-                            <td className="p-4 px-6 font-bold text-gray-700">Monthly Transactions</td>
-                            {MOCK_PLANS.map(plan => (
-                                <td key={plan.id} className="p-4 text-center text-gray-700 border-l border-gray-100">
-                                    {plan.limits?.transactions.label}
-                                </td>
-                            ))}
-                        </tr>
-                        <tr>
-                            <td className="p-4 px-6 text-gray-600">Monthly Invoices (Sales)</td>
-                            {MOCK_PLANS.map(plan => (
-                                <td key={plan.id} className="p-4 text-center text-gray-600 border-l border-gray-100">
-                                    {plan.limits?.invoices.label}
-                                </td>
-                            ))}
-                        </tr>
-                        <tr>
-                            <td className="p-4 px-6 text-gray-600">Monthly Bills (Purchases)</td>
-                            {MOCK_PLANS.map(plan => (
-                                <td key={plan.id} className="p-4 text-center text-gray-600 border-l border-gray-100">
-                                    {plan.limits?.bills.label}
-                                </td>
-                            ))}
-                        </tr>
-
-                        {/* Operational Limits */}
-                        <tr className="bg-gray-50/50"><td colSpan={4} className="p-3 px-6 text-xs font-bold text-gray-500 uppercase tracking-widest">Operational Limits</td></tr>
-
-                        <tr>
-                            <td className="p-4 px-6 font-bold text-gray-700">Bank Accounts</td>
-                            {MOCK_PLANS.map(plan => (
-                                <td key={plan.id} className="p-4 text-center text-gray-900 border-l border-gray-100">
-                                    {plan.limits?.bankAccounts.label}
-                                </td>
-                            ))}
-                        </tr>
-                        <tr>
-                            <td className="p-4 px-6 text-gray-600">Employees (Payroll)</td>
-                            {MOCK_PLANS.map(plan => (
-                                <td key={plan.id} className="p-4 text-center text-gray-600 border-l border-gray-100">
-                                    {plan.limits?.employees.label}
-                                </td>
-                            ))}
-                        </tr>
-
-                        {/* Features */}
-                        <tr className="bg-gray-50/50"><td colSpan={4} className="p-3 px-6 text-xs font-bold text-gray-500 uppercase tracking-widest">Advanced Features</td></tr>
-
-                        <tr>
-                            <td className="p-4 px-6 text-gray-600">International Transactions</td>
-                            {MOCK_PLANS.map(plan => (
-                                <td key={plan.id} className="p-4 text-center border-l border-gray-100">
-                                    {plan.limits?.features.international === true ? <Check className="mx-auto text-emerald-500" size={20} /> :
-                                        plan.limits?.features.international === 'Basic' ? <span className="text-orange-500 text-sm font-bold">Limit 10/mo</span> :
-                                            <X className="mx-auto text-gray-300" size={20} />}
-                                </td>
-                            ))}
-                        </tr>
-                        <tr>
-                            <td className="p-4 px-6 text-gray-600">Stock / Inventory</td>
-                            {MOCK_PLANS.map(plan => (
-                                <td key={plan.id} className="p-4 text-center border-l border-gray-100">
-                                    {plan.limits?.features.stock === 'Full' ? <span className="text-emerald-600 font-bold text-sm">Full ERP</span> :
-                                        plan.limits?.features.stock === 'Basic' ? <span className="text-orange-500 text-sm font-bold">20 SKUs</span> :
-                                            <X className="mx-auto text-gray-300" size={20} />}
-                                </td>
-                            ))}
-                        </tr>
-                        <tr>
-                            <td className="p-4 px-6 text-gray-600">Recurring Contracts</td>
-                            {MOCK_PLANS.map(plan => (
-                                <td key={plan.id} className="p-4 text-center border-l border-gray-100">
-                                    {plan.limits?.features.contracts === true ? <span className="text-emerald-600 font-bold text-sm">Unlimited</span> :
-                                        plan.limits?.features.contracts === 'Basic' ? <span className="text-orange-500 text-sm font-bold">Up to 5</span> :
-                                            <X className="mx-auto text-gray-300" size={20} />}
-                                </td>
-                            ))}
-                        </tr>
+                            return Object.keys(sections).map(section => (
+                                <React.Fragment key={section}>
+                                    <tr className="bg-gray-50/50">
+                                        <td colSpan={plans.length + 1} className="p-3 px-6 text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                            {section}
+                                        </td>
+                                    </tr>
+                                    {sections[section].map((row: any) => (
+                                        <tr key={row.id}>
+                                            <td className="p-4 px-6 text-gray-600 font-medium">{row.label}</td>
+                                            {plans.map(plan => {
+                                                const val = plan.attributes?.[row.id];
+                                                return (
+                                                    <td key={plan.id} className="p-4 text-center border-l border-gray-100">
+                                                        {row.type === 'boolean' || typeof val === 'boolean' ? (
+                                                            val === true ? <Check className="mx-auto text-emerald-500" size={20} /> :
+                                                                val === false ? <X className="mx-auto text-gray-300" size={20} /> :
+                                                                    <span className="text-sm font-bold text-gray-700">{val}</span>
+                                                        ) : (
+                                                            <span className={`text-sm font-bold ${val === '-' || !val ? 'text-gray-300' : 'text-gray-900'}`}>
+                                                                {val || '-'}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </React.Fragment>
+                            ));
+                        })()}
 
                         {/* Guarantee */}
                         <tr className="bg-emerald-50">
                             <td className="p-4 px-6 font-bold text-emerald-800">Fine Protection Guarantee</td>
-                            {MOCK_PLANS.map(plan => (
+                            {plans.map(plan => (
                                 <td key={plan.id} className="p-4 text-center font-bold text-emerald-700 border-l border-emerald-100">
                                     {plan.guarantee}
                                 </td>
@@ -188,7 +140,7 @@ const PricingTable = () => {
 
                         <tr className="bg-gray-50 border-t border-gray-200">
                             <td className="p-4 px-6"></td>
-                            {MOCK_PLANS.map(plan => (
+                            {plans.map(plan => (
                                 <td key={plan.id} className="p-4 border-l border-gray-200">
                                     <button
                                         onClick={() => navigate(`/login?redirect=/client/checkout&planId=${plan.id}&billing=${billingCycle}`)}
@@ -197,7 +149,7 @@ const PricingTable = () => {
                                             : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300'
                                             }`}
                                     >
-                                        Choose {plan.name.split(' ')[0]}
+                                        Choose {plan.name?.split(' ')[0]}
                                     </button>
                                 </td>
                             ))}

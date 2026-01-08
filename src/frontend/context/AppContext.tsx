@@ -173,6 +173,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         // Fetch Requests
         await fetchRequests();
+
+        // Fetch Services
+        const servicesRes = await fetch(`${API_BASE_URL}/api/services`);
+        if (servicesRes.ok) {
+          setServices(await servicesRes.json());
+        }
+
+        // Fetch Plans
+        const plansRes = await fetch(`${API_BASE_URL}/api/plans`);
+        if (plansRes.ok) {
+          const plansData = await plansRes.json();
+          // Parse features/attributes if they are strings (from DB)
+          const parsedPlans = plansData.map((p: any) => ({
+            ...p,
+            features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
+            attributes: typeof p.attributes === 'string' ? JSON.parse(p.attributes) : p.attributes
+          }));
+          setPlans(parsedPlans);
+        }
       } catch (e) {
         console.warn('Backend not available:', e);
       }
@@ -406,20 +425,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Service & Pricing Actions
-  const updateService = (id: string, updates: Partial<Service>) => {
+  const updateService = async (id: string, updates: Partial<Service>) => {
     setServices(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    try {
+      await fetch(`${API_BASE_URL}/api/services`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates })
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const addService = (service: Service) => {
+  const addService = async (service: Service) => {
     setServices(prev => [...prev, service]);
+    try {
+      await fetch(`${API_BASE_URL}/api/services`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(service)
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const deleteService = (id: string) => {
+  const deleteService = async (id: string) => {
     setServices(prev => prev.filter(s => s.id !== id));
+    try {
+      await fetch(`${API_BASE_URL}/api/services?id=${id}`, { method: 'DELETE' });
+    } catch (e) { console.error(e); }
   };
 
-  const updatePlan = (id: string, updates: Partial<PricingPlan>) => {
+  const updatePlan = async (id: string, updates: Partial<PricingPlan>) => {
     setPlans(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    try {
+      await fetch(`${API_BASE_URL}/api/plans`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates })
+      });
+    } catch (e) { console.error(e); }
   };
 
   const submitReview = (requestId: string, review: Review) => {
