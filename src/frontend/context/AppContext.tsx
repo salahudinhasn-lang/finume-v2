@@ -120,9 +120,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const usersRes = await fetch(`${API_BASE_URL}/api/users`);
         if (usersRes.ok) {
           const usersData = await usersRes.json();
-          // Update only if DB has data, otherwise keep mocks for demo
-          if (usersData.clients?.length > 0) setClients(usersData.clients);
-          if (usersData.experts?.length > 0) setExperts(usersData.experts);
+
+          // Sanitize Experts
+          if (usersData.experts?.length > 0) {
+            const sanitizedExperts: Expert[] = usersData.experts.map((e: any) => ({
+              ...e,
+              specializations: Array.isArray(e.specializations) ? e.specializations : [],
+              rating: typeof e.rating === 'number' ? e.rating : 0,
+              totalEarned: typeof e.totalEarned === 'number' ? e.totalEarned : 0,
+              status: e.status || 'VETTING',
+              bio: e.bio || '',
+              yearsExperience: typeof e.yearsExperience === 'number' ? e.yearsExperience : 0,
+              hourlyRate: typeof e.hourlyRate === 'number' ? e.hourlyRate : 0,
+              isPremium: !!e.isPremium,
+              isFeatured: !!e.isFeatured,
+              name: e.name || 'Unknown Expert',
+              email: e.email || '',
+              role: 'EXPERT',
+              avatarUrl: e.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.id || Math.random()}`
+            }));
+            setExperts(sanitizedExperts);
+          }
+
+          // Sanitize Clients
+          if (usersData.clients?.length > 0) {
+            const sanitizedClients: Client[] = usersData.clients.map((c: any) => ({
+              ...c,
+              role: 'CLIENT',
+              companyName: c.companyName || 'Unknown Company',
+              industry: c.industry || 'Other',
+              totalSpent: typeof c.totalSpent === 'number' ? c.totalSpent : 0,
+              zatcaStatus: c.zatcaStatus || 'GREEN',
+              name: c.name || 'Unknown Client',
+              email: c.email || '',
+              avatarUrl: c.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${c.id || Math.random()}`
+            }));
+            setClients(sanitizedClients);
+          }
+
           if (usersData.admins?.length > 0) setAdmins(usersData.admins);
 
           // Hydrate client permissions map
