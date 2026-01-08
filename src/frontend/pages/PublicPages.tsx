@@ -9,6 +9,7 @@ import {
 import { Button } from '../components/UI';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
+import PricingTable from '../components/PricingTable';
 
 // --- Shared Components for Consistent UI ---
 
@@ -373,65 +374,13 @@ export const PricingPage = () => {
                 </div>
 
                 {/* Comparison Table (Enhanced) */}
-                <div ref={comparisonRef} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden mt-20">
-                    <div className="p-10 border-b border-slate-100 bg-slate-50/50 text-center">
+                <div ref={comparisonRef} className="mt-20">
+                    <div className="p-10 border-b border-slate-100 bg-slate-50/50 text-center rounded-t-[2.5rem] border-x border-t border-slate-200">
                         <h3 className="text-2xl font-black text-slate-900">{t('public.comparePlans')}</h3>
                         <p className="text-slate-500 mt-2">Detailed feature breakdown</p>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead>
-                                <tr className="bg-white">
-                                    <th className="p-6 pl-10 text-slate-400 font-bold uppercase tracking-wider text-xs w-1/3">Features</th>
-                                    {plans.map(p => (
-                                        <th key={p.id} className={`p-6 text-center font-bold text-lg transition-colors duration-500 ${highlightedPlan === p.id ? 'bg-blue-50 text-blue-700' : 'text-slate-900'}`}>
-                                            {p.name.split('(')[0]}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {[
-                                    { name: 'VAT Registration', basic: true, std: true, pro: true },
-                                    { name: 'Quarterly Filing', basic: false, std: true, pro: true },
-                                    { name: 'Monthly Bookkeeping', basic: false, std: true, pro: true },
-                                    { name: 'Dedicated Accountant', basic: false, std: 'Shared Team', pro: 'Dedicated Expert' },
-                                    { name: 'Zakat Filing', basic: 'Estimated', std: true, pro: true },
-                                    { name: 'Audit Support', basic: false, std: false, pro: true },
-                                    { name: 'CFO Consultation', basic: false, std: false, pro: 'Monthly Call' },
-                                    { name: 'Fine Guarantee', basic: 'Basic', std: 'Full Coverage', pro: 'Full + Legal' },
-                                ].map((row, i) => (
-                                    <tr key={i} className="hover:bg-slate-50 transition-colors">
-                                        <td className="p-5 pl-10 font-bold text-slate-700">{row.name}</td>
-                                        <td className={`p-5 text-center transition-colors duration-500 ${highlightedPlan === plans[0].id ? 'bg-blue-50' : ''}`}>
-                                            {row.basic === true ? <CheckCircle className="mx-auto text-green-500" size={20} fill="#dcfce7" /> : row.basic === false ? <Minus className="mx-auto text-slate-300" size={20} /> : <span className="text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full text-xs">{row.basic}</span>}
-                                        </td>
-                                        <td className={`p-5 text-center transition-colors duration-500 ${highlightedPlan === plans[1].id ? 'bg-blue-50' : ''}`}>
-                                            {row.std === true ? <CheckCircle className="mx-auto text-green-500" size={20} fill="#dcfce7" /> : row.std === false ? <Minus className="mx-auto text-slate-300" size={20} /> : <span className="text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full text-xs">{row.std}</span>}
-                                        </td>
-                                        <td className={`p-5 text-center transition-colors duration-500 ${highlightedPlan === plans[2].id ? 'bg-blue-50' : ''}`}>
-                                            {row.pro === true ? <CheckCircle className="mx-auto text-green-500" size={20} fill="#dcfce7" /> : row.pro === false ? <Minus className="mx-auto text-slate-300" size={20} /> : <span className="text-slate-900 font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs">{row.pro}</span>}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td className="p-6"></td>
-                                    {plans.map(p => (
-                                        <td key={p.id} className="p-6 text-center">
-                                            <Button
-                                                onClick={() => handleSelectPlan(p.id)}
-                                                className={`w-full py-3 rounded-xl font-bold transition-all ${highlightedPlan === p.id ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}
-                                            >
-                                                Choose {p.name.split(' ')[0]}
-                                            </Button>
-                                        </td>
-                                    ))}
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                    {/* Use Dynamic PricingTable Component */}
+                    <PricingTable billingCycle={billing === 'YEARLY' ? 'yearly' : 'monthly'} />
                 </div>
 
             </Section>

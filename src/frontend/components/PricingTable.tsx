@@ -4,17 +4,23 @@ import { MOCK_PLANS } from '../mockData';
 import { Check, X, HelpCircle, AlertTriangle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
-const PricingTable = () => {
+interface PricingTableProps {
+    billingCycle?: 'monthly' | 'yearly';
+}
+
+const PricingTable = ({ billingCycle: externalBilling }: PricingTableProps) => {
     const navigate = useNavigate();
     const { settings, plans } = useAppContext();
+    const [internalBilling, setInternalBilling] = useState<'monthly' | 'yearly'>('monthly');
     const [showOverage, setShowOverage] = useState(false);
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+
+    const billingCycle = externalBilling || internalBilling;
 
     const discountPercent = settings?.yearlyDiscountPercentage || 20;
     const discountMultiplier = 1 - (discountPercent / 100);
 
     const toggleBilling = () => {
-        setBillingCycle(prev => prev === 'monthly' ? 'yearly' : 'monthly');
+        setInternalBilling(prev => prev === 'monthly' ? 'yearly' : 'monthly');
     };
 
     const calculatePrice = (basePrice: number) => {
@@ -35,24 +41,26 @@ const PricingTable = () => {
                     Choose the plan that fits your current business scale. Upgrade anytime as you grow.
                 </p>
 
-                {/* Billing Toggle */}
-                <div className="flex justify-center items-center gap-4">
-                    <div className="relative bg-slate-800 p-1 rounded-full flex items-center cursor-pointer select-none border border-slate-700" onClick={toggleBilling}>
-                        <div
-                            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 z-10 ${billingCycle === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
-                        >
-                            Monthly
-                        </div>
-                        <div
-                            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 z-10 flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
-                        >
-                            Yearly
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors ${billingCycle === 'yearly' ? 'bg-green-500 text-white' : 'bg-green-900/30 text-green-400'}`}>
-                                -{discountPercent}%
-                            </span>
+                {/* Billing Toggle - Only show if not controlled externally */}
+                {!externalBilling && (
+                    <div className="flex justify-center items-center gap-4">
+                        <div className="relative bg-slate-800 p-1 rounded-full flex items-center cursor-pointer select-none border border-slate-700" onClick={toggleBilling}>
+                            <div
+                                className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 z-10 ${billingCycle === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                                Monthly
+                            </div>
+                            <div
+                                className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 z-10 flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                                Yearly
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors ${billingCycle === 'yearly' ? 'bg-green-500 text-white' : 'bg-green-900/30 text-green-400'}`}>
+                                    -{discountPercent}%
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
 
             <div className="overflow-x-auto rounded-3xl border border-gray-200 shadow-xl bg-white">
