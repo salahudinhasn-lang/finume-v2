@@ -120,13 +120,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const usersRes = await fetch(`${API_BASE_URL}/api/users`);
         if (usersRes.ok) {
           const usersData = await usersRes.json();
-          setClients(usersData.clients || []);
-          setExperts(usersData.experts || []);
-          setAdmins(usersData.admins || []);
+          // Update only if DB has data, otherwise keep mocks for demo
+          if (usersData.clients?.length > 0) setClients(usersData.clients);
+          if (usersData.experts?.length > 0) setExperts(usersData.experts);
+          if (usersData.admins?.length > 0) setAdmins(usersData.admins);
 
           // Hydrate client permissions map
           const permsMap: Record<string, ClientFeaturePermissions> = {};
-          (usersData.clients as Client[]).forEach((c: any) => {
+          (usersData.clients as Client[] || []).forEach((c: any) => {
             if (c.permissions) {
               permsMap[c.id] = c.permissions;
             }
