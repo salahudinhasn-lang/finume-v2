@@ -8,7 +8,7 @@ import { Request } from '../../types';
 import { MOCK_PLANS } from '../../mockData';
 
 const PaymentPage = () => {
-    const { user, addRequest, updateRequestStatus, requests, services, t, language } = useAppContext();
+    const { user, addRequest, updateRequestStatus, requests, services, t, language, settings } = useAppContext();
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
@@ -33,7 +33,8 @@ const PaymentPage = () => {
                 if (plan) {
                     const isYearly = billingCycle === 'yearly';
                     const basePrice = plan.price;
-                    const finalAmount = isYearly ? Math.floor(basePrice * 12 * 0.8) : basePrice;
+                    const discount = (settings?.yearlyDiscountPercentage || 20) / 100;
+                    const finalAmount = isYearly ? Math.floor(basePrice * 12 * (1 - discount)) : basePrice;
 
                     setPendingRequest({
                         id: `REQ-${Date.now()}`,
@@ -44,7 +45,7 @@ const PaymentPage = () => {
                         status: 'PENDING_PAYMENT',
                         amount: finalAmount,
                         dateCreated: new Date().toISOString(),
-                        description: `Subscription to ${plan.name} - ${isYearly ? 'Yearly Plan (Save 20%)' : 'Monthly Plan'}`,
+                        description: `Subscription to ${plan.name} - ${isYearly ? `Yearly Plan (Save ${settings?.yearlyDiscountPercentage || 20}%)` : 'Monthly Plan'}`,
                         batches: []
                     } as Request);
                 }
@@ -68,7 +69,7 @@ const PaymentPage = () => {
                 }
             }
         }
-    }, [planId, serviceId, billingCycle, user, pendingRequest, services]);
+    }, [planId, serviceId, billingCycle, user, pendingRequest, services, settings]);
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
