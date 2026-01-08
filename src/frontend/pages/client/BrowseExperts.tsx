@@ -28,11 +28,11 @@ const BrowseExperts = () => {
 
     // Advanced Filtering and Sorting
     const filteredExperts = activeExperts.filter(e => {
-        const matchesFilter = filter === 'All' || e.specializations.includes(filter);
+        const matchesFilter = filter === 'All' || (e.specializations || []).includes(filter);
         const matchesSearch =
-            e.name.toLowerCase().includes(search.toLowerCase()) ||
-            e.specializations.some(s => s.toLowerCase().includes(search.toLowerCase())) ||
-            e.bio.toLowerCase().includes(search.toLowerCase());
+            (e.name || '').toLowerCase().includes(search.toLowerCase()) ||
+            (e.specializations || []).some(s => (s || '').toLowerCase().includes(search.toLowerCase())) ||
+            (e.bio || '').toLowerCase().includes(search.toLowerCase());
         return matchesFilter && matchesSearch;
     }).sort((a, b) => {
         // Sort Priority: Premium > Rating > ID

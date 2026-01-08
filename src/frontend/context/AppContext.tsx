@@ -125,7 +125,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (usersData.experts?.length > 0) {
             const sanitizedExperts: Expert[] = usersData.experts.map((e: any) => ({
               ...e,
-              specializations: Array.isArray(e.specializations) ? e.specializations : [],
+              specializations: (Array.isArray(e.specializations) ? e.specializations : [])
+                .filter((s: any) => typeof s === 'string'),
               rating: typeof e.rating === 'number' ? e.rating : 0,
               totalEarned: typeof e.totalEarned === 'number' ? e.totalEarned : 0,
               status: e.status || 'VETTING',
