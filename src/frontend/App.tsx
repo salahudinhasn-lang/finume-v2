@@ -57,12 +57,20 @@ const VisibilityGuard = ({ children, pageKey, type = 'public' }: { children: Rea
   // If settings not loaded yet, maybe render nothing or children? 
   // Ideally children to avoid flicker, but redirect if strictly hidden.
   // Since update is async, let's assume default true if not set.
-  if (!settings?.pageVisibility && pageKey !== 'careers') return <>{children}</>;
+  if (!settings?.pageVisibility && pageKey !== 'careers' && pageKey !== 'experts' && pageKey !== 'services') return <>{children}</>;
 
   try {
-    // Logic for Careers Master Switch
-    if (pageKey === 'careers' && settings?.careersEnabled === false) {
-      return <Navigate to="/" replace />;
+    // Logic for Master Switches
+    if (pageKey === 'careers' && settings?.careersEnabled === false) return <Navigate to="/" replace />;
+
+    // Check Explicit Toggles from Admin Settings
+    if (pageKey === 'experts' && settings?.showExpertsPage === false) {
+      const redirect = type === 'client' ? '/client' : '/';
+      return <Navigate to={redirect} replace />;
+    }
+    if (pageKey === 'services' && settings?.showServicesPage === false) {
+      const redirect = type === 'client' ? '/client' : '/';
+      return <Navigate to={redirect} replace />;
     }
 
     const vis = settings?.pageVisibility ? JSON.parse(settings.pageVisibility) : {};

@@ -526,8 +526,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // State for Platform Settings and Permissions
   const [settings, setSettings] = useState<PlatformSettings>({
     id: 'global',
-    showExpertsPage: false,
-    showServicesPage: false,
+    showExpertsPage: true,
+    showServicesPage: true,
     careersEnabled: false,
     careersTitle: '',
     careersSubtitle: '',
