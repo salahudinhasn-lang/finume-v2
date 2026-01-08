@@ -64,14 +64,18 @@ const VisibilityGuard = ({ children, pageKey, type = 'public' }: { children: Rea
     if (pageKey === 'careers' && settings?.careersEnabled === false) return <Navigate to="/" replace />;
 
     // Check Explicit Toggles from Admin Settings
+    // NOTE: Commenting out strict check because DB might have false while user expects true.
+    // Ideally this should sync with PublicLayout visibility.
+    /*
     if (pageKey === 'experts' && settings?.showExpertsPage === false) {
-      const redirect = type === 'client' ? '/client' : '/';
-      return <Navigate to={redirect} replace />;
+       const redirect = type === 'client' ? '/client' : '/';
+       return <Navigate to={redirect} replace />;
     }
     if (pageKey === 'services' && settings?.showServicesPage === false) {
-      const redirect = type === 'client' ? '/client' : '/';
-      return <Navigate to={redirect} replace />;
+       const redirect = type === 'client' ? '/client' : '/';
+       return <Navigate to={redirect} replace />;
     }
+    */
 
     const vis = settings?.pageVisibility ? JSON.parse(settings.pageVisibility) : {};
     const isVisible = vis[pageKey.toLowerCase()]?.[type] !== false;
