@@ -127,7 +127,9 @@ export async function GET(req: Request) {
                 batches: { include: { files: true } },
                 transactions: true,
                 service: true,
-                pricingPlan: true
+                pricingPlan: true,
+                client: true, // Include Client
+                assignedExpert: true // Include Expert
             },
             orderBy: { createdAt: 'desc' }
         });

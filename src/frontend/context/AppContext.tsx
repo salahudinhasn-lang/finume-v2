@@ -324,6 +324,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           })) || [],
           // Prioritize Pricing Plan Name if available, then Service Name
           serviceName: d.pricingPlan ? d.pricingPlan.name : (d.service ? (language === 'en' ? d.service.nameEn : d.service.nameAr) : d.serviceName),
+
+          // Map Relations to flat fields used by UI
+          clientName: d.client ? d.client.name : 'Unknown Client',
+          expertName: d.assignedExpert ? d.assignedExpert.name : (d.expertName || ''),
+
+          // Format Date (DB is ISO DateTime, UI expects YYYY-MM-DD or similar string)
+          dateCreated: d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-CA') : (d.dateCreated || new Date().toISOString().split('T')[0]),
+
           // Parse requiredSkills JSON string to array if needed
           requiredSkills: typeof d.requiredSkills === 'string' ? JSON.parse(d.requiredSkills) : (d.requiredSkills || [])
         }));

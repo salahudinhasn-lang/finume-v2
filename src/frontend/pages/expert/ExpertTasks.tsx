@@ -140,7 +140,7 @@ const ExpertTasks = () => {
                                     </div>
                                     <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{req.serviceName}</h3>
                                     <div className="flex items-center gap-4 text-sm text-gray-500">
-                                        <span className="flex items-center gap-1"><User size={14} /> {req.clientName}</span>
+                                        <span className="flex items-center gap-1"><User size={14} /> {req.clientName || 'Unknown'}</span>
                                         <span className="flex items-center gap-1"><Calendar size={14} /> {req.dateCreated}</span>
                                     </div>
                                     <p className="text-gray-600 bg-gray-50 p-3 rounded-lg text-sm mt-2 line-clamp-2">{req.description}</p>

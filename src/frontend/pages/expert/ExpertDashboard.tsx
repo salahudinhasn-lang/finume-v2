@@ -208,8 +208,8 @@ const ExpertDashboard = () => {
                                                 </div>
                                                 <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors">{task.serviceName}</h3>
                                                 <p className="text-sm text-gray-600 flex items-center gap-2">
-                                                    <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">{task.clientName.charAt(0)}</span>
-                                                    {task.clientName}
+                                                    <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">{(task.clientName || '?').charAt(0)}</span>
+                                                    {task.clientName || 'Unknown Client'}
                                                 </p>
                                             </div>
 
