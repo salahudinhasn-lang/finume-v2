@@ -323,7 +323,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             files: b.files || []
           })) || [],
           // Prioritize Pricing Plan Name if available, then Service Name
-          serviceName: d.pricingPlan ? d.pricingPlan.name : (d.service ? (language === 'en' ? d.service.nameEn : d.service.nameAr) : d.serviceName)
+          serviceName: d.pricingPlan ? d.pricingPlan.name : (d.service ? (language === 'en' ? d.service.nameEn : d.service.nameAr) : d.serviceName),
+          // Parse requiredSkills JSON string to array if needed
+          requiredSkills: typeof d.requiredSkills === 'string' ? JSON.parse(d.requiredSkills) : (d.requiredSkills || [])
         }));
 
         if (Array.isArray(parsedData) && parsedData.length > 0) {
@@ -403,7 +405,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       fetch(`${API_BASE_URL}/api/requests/${requestId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignedExpertId: expertId, status: 'MATCHED' })
+        body: JSON.stringify({ assignedExpertId: expertId, status: 'MATCHED', visibility: 'ASSIGNED' })
       }).catch(err => console.error("Failed to assign expert DB", err));
     } catch (e) {
       console.error("Assign request error", e);
@@ -430,8 +432,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateRequest = (id: string, updates: Partial<Request>) => {
+  const updateRequest = async (id: string, updates: Partial<Request>) => {
+    // 1. Optimistic Update
     setRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+
+    // 2. Persist
+    try {
+      // Map frontend fields (like objects) to what API expects if needed, 
+      // but our API route handles JSON.stringify for requiredSkills if passed as object.
+      await fetch(`${API_BASE_URL}/api/requests/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+    } catch (e) {
+      console.error('Failed to update request DB', e);
+    }
   };
 
   const updateClient = async (id: string, updates: Partial<Client>) => {
