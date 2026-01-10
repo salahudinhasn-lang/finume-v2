@@ -7,7 +7,7 @@ import { Request, FileBatch } from '../../types';
 import { FileBatchManager } from '../../components/FileBatchManager';
 
 const AdminRequests = () => {
-    const { requests, experts, updateRequest } = useAppContext();
+    const { requests, experts, updateRequest, settings } = useAppContext();
     const [viewMode, setViewMode] = useState<'LIST' | 'BOARD'>('LIST');
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
@@ -404,52 +404,103 @@ const AdminRequests = () => {
                                     </p>
                                 </div>
 
-                                {/* Expert Management Section */}
-                                <div className={`p-4 rounded-xl border-2 ${!formData.assignedExpertId ? 'border-orange-200 bg-orange-50' : 'border-gray-200 bg-white'}`}>
+                                {/* Assignment & Visibility Control */}
+                                <div className={`p-4 rounded-xl border-2 ${!formData.assignedExpertId && formData.visibility !== 'OPEN' ? 'border-orange-200 bg-orange-50' : 'border-gray-200 bg-white'}`}>
                                     <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-4">
                                         <Briefcase size={18} className="text-gray-500" />
-                                        Expert Assignment
-                                        {!formData.assignedExpertId && <Badge status="NEW" />}
+                                        Distribution Mode
                                     </label>
 
-                                    {formData.assignedExpertId ? (
-                                        <div className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
-                                                    {formData.expertName?.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-sm text-gray-900">{formData.expertName}</p>
-                                                    <p className="text-xs text-green-600 flex items-center gap-1">Assigned</p>
-                                                </div>
+                                    <div className="flex bg-white rounded-lg border border-gray-200 p-1 mb-4 shadow-sm">
+                                        <button
+                                            onClick={() => handleChange('visibility', 'ASSIGNED')}
+                                            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${formData.visibility === 'ASSIGNED' || (!formData.visibility && formData.assignedExpertId) ? 'bg-blue-100 text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            Direct Assignment
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                handleChange('visibility', 'OPEN');
+                                                handleChange('assignedExpertId', null); // Clear assignment if opening
+                                            }}
+                                            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${formData.visibility === 'OPEN' ? 'bg-purple-100 text-purple-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            Open Pool
+                                        </button>
+                                    </div>
+
+                                    {formData.visibility === 'OPEN' ? (
+                                        <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <label className="block text-xs font-bold text-gray-600 mb-2">Required Skills (Filter Experts)</label>
+                                            <div className="bg-white p-3 rounded-lg border border-gray-200 max-h-48 overflow-y-auto">
+                                                {settings?.expertSkills ? (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {JSON.parse(settings.expertSkills).map((skill: string) => {
+                                                            const isSelected = (formData.requiredSkills || []).includes(skill);
+                                                            return (
+                                                                <button
+                                                                    key={skill}
+                                                                    onClick={() => {
+                                                                        const current = formData.requiredSkills || [];
+                                                                        const updated = isSelected ? current.filter(s => s !== skill) : [...current, skill];
+                                                                        handleChange('requiredSkills', updated);
+                                                                    }}
+                                                                    className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${isSelected ? 'bg-purple-600 text-white border-purple-600' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300'}`}
+                                                                >
+                                                                    {skill}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-gray-400 italic">No skills configured in Expert Settings.</p>
+                                                )}
                                             </div>
-                                            <Button size="sm" variant="danger" onClick={() => handleChange('assignedExpertId', undefined)} className="text-xs h-7 px-2">
-                                                Change
-                                            </Button>
+                                            <p className="text-xs text-gray-500 mt-2">Only experts with these skills will see this request.</p>
                                         </div>
                                     ) : (
-                                        <div>
-                                            <div className="flex gap-2">
-                                                <select
-                                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                                    onChange={(e) => handleExpertChange(e.target.value)}
-                                                    value=""
-                                                >
-                                                    <option value="" disabled>Select an Expert...</option>
-                                                    {recommendedExperts.length > 0 && (
-                                                        <optgroup label="Recommended">
-                                                            {recommendedExperts.map(ex => (
-                                                                <option key={ex.id} value={ex.id}>{ex.name} — {ex.rating}★</option>
+                                        <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                            {formData.assignedExpertId ? (
+                                                <div className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
+                                                            {formData.expertName?.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-sm text-gray-900">{formData.expertName}</p>
+                                                            <p className="text-xs text-green-600 flex items-center gap-1">Assigned</p>
+                                                        </div>
+                                                    </div>
+                                                    <Button size="sm" variant="danger" onClick={() => handleChange('assignedExpertId', undefined)} className="text-xs h-7 px-2">
+                                                        Change
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <select
+                                                        className="w-full px-4 py-2 border border-blue-200 rounded-lg text-sm bg-blue-50/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                        onChange={(e) => {
+                                                            handleExpertChange(e.target.value);
+                                                            handleChange('visibility', 'ASSIGNED'); // Ensure visibility is set
+                                                        }}
+                                                        value=""
+                                                    >
+                                                        <option value="" disabled>Select an Expert...</option>
+                                                        {recommendedExperts.length > 0 && (
+                                                            <optgroup label="Recommended">
+                                                                {recommendedExperts.map(ex => (
+                                                                    <option key={ex.id} value={ex.id}>{ex.name} — {ex.rating}★</option>
+                                                                ))}
+                                                            </optgroup>
+                                                        )}
+                                                        <optgroup label="All Experts">
+                                                            {otherExperts.map(ex => (
+                                                                <option key={ex.id} value={ex.id}>{ex.name}</option>
                                                             ))}
                                                         </optgroup>
-                                                    )}
-                                                    <optgroup label="All Experts">
-                                                        {otherExperts.map(ex => (
-                                                            <option key={ex.id} value={ex.id}>{ex.name}</option>
-                                                        ))}
-                                                    </optgroup>
-                                                </select>
-                                            </div>
+                                                    </select>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

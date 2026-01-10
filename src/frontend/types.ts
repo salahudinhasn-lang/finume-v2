@@ -7,6 +7,7 @@ export interface User {
   name: string;
   role: UserRole;
   avatarUrl?: string;
+  specializations?: string[];
 }
 
 export interface Client extends User {
@@ -104,6 +105,7 @@ export interface PlatformSettings {
   pageVisibility?: string; // JSON string
   sitePages?: string; // JSON string
   pricingTableConfig?: string; // JSON string for table rows
+  expertSkills?: string; // JSON string for list of skills
   yearlyDiscountPercentage?: number;
 }
 
@@ -176,6 +178,8 @@ export interface Request {
   serviceId: string;
   serviceName?: string;
   status: 'PENDING_PAYMENT' | 'NEW' | 'MATCHED' | 'IN_PROGRESS' | 'REVIEW_CLIENT' | 'REVIEW_ADMIN' | 'COMPLETED' | 'CANCELLED';
+  visibility?: 'ADMIN' | 'ASSIGNED' | 'OPEN'; // New
+  requiredSkills?: string[]; // New
   amount: number;
   dateCreated: string;
   createdAt?: string; // Backend compatibility

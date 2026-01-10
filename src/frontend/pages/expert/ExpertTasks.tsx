@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/UI';
-import { Check, Play, Filter, Search, Send, LayoutGrid, List, Clock, User, Calendar, Paperclip, MoreVertical, FileText, AlertCircle, MessageSquare, X, Layers } from 'lucide-react';
+import { Check, Play, Filter, Search, Send, LayoutGrid, List, Clock, User, Calendar, Paperclip, MoreVertical, FileText, AlertCircle, MessageSquare, X, Layers, Briefcase } from 'lucide-react';
 import { Request, FileBatch } from '../../types';
 import { FileBatchManager } from '../../components/FileBatchManager';
 
@@ -14,11 +14,19 @@ const ExpertTasks = () => {
     // Detail Modal State
     const [selectedTask, setSelectedTask] = useState<Request | null>(null);
 
-    // Filter tasks: Either assigned directly OR assigned a sub-task (batch)
-    const myRequests = requests.filter(r =>
-        r.assignedExpertId === user?.id ||
-        (r.batches && r.batches.some(b => b.assignedExpertId === user?.id))
-    );
+    // Filter tasks: Assigned directly OR sub-task OR Open and matching skills
+    const myRequests = requests.filter(r => {
+        const isAssignedToMe = r.assignedExpertId === user?.id;
+        const isSubTask = r.batches && r.batches.some(b => b.assignedExpertId === user?.id);
+
+        // Open requests: Must be OPEN AND (no skills required OR user has at least one matching skill)
+        // If requiredSkills is empty, we assume it's open to all experts if visibility is OPEN.
+        const userSkills = user?.specializations || [];
+        const matchesSkills = !r.requiredSkills || r.requiredSkills.length === 0 || r.requiredSkills.some(s => userSkills.includes(s));
+        const isOpenForMe = r.visibility === 'OPEN' && matchesSkills && !r.assignedExpertId;
+
+        return isAssignedToMe || isSubTask || isOpenForMe;
+    });
 
     const filteredRequests = myRequests.filter(req => {
         const searchMatch =
@@ -35,15 +43,28 @@ const ExpertTasks = () => {
         { id: 'COMPLETED', label: 'Done', color: 'bg-green-100 text-green-700' }
     ];
 
-    const getColumnId = (status: string) => {
+    const getColumnId = (status: string, visibility?: string) => {
+        if (visibility === 'OPEN') return 'MATCHED'; // Open requests go to To Do
         if (['REVIEW_CLIENT', 'REVIEW_ADMIN'].includes(status)) return 'REVIEW';
-        if (['NEW', 'CANCELLED'].includes(status)) return 'OTHER'; // Should filter out NEW usually
+        if (['NEW', 'CANCELLED'].includes(status)) return 'OTHER';
         return status;
     };
 
     const handleStart = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         updateRequestStatus(id, 'IN_PROGRESS');
+    };
+
+    const handleClaim = (e: React.MouseEvent, req: Request) => {
+        e.stopPropagation();
+        if (user) {
+            updateRequest(req.id, {
+                assignedExpertId: user.id,
+                expertName: user.name,
+                status: 'MATCHED',
+                visibility: 'ASSIGNED'
+            });
+        }
     };
 
     const handleSubmit = (e: React.MouseEvent, id: string) => {
@@ -102,14 +123,15 @@ const ExpertTasks = () => {
             {viewMode === 'LIST' && (
                 <div className="grid grid-cols-1 gap-4">
                     {filteredRequests.map(req => {
-                        const isSubTaskAssignee = req.assignedExpertId !== user?.id;
+                        const isSubTaskAssignee = req.batches && req.batches.some(b => b.assignedExpertId === user?.id) && req.assignedExpertId !== user?.id;
+                        const isOpen = req.visibility === 'OPEN' && !req.assignedExpertId;
 
                         return (
-                            <Card key={req.id} className="flex flex-col md:flex-row justify-between gap-6 transition-all hover:shadow-md cursor-pointer group" onClick={() => setSelectedTask(req)}>
+                            <Card key={req.id} className={`flex flex-col md:flex-row justify-between gap-6 transition-all hover:shadow-md cursor-pointer group ${isOpen ? 'border-purple-200 bg-purple-50/10' : ''}`} onClick={() => setSelectedTask(req)}>
                                 <div className="flex-1 space-y-2">
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-0.5 rounded">{req.id}</span>
-                                        <Badge status={req.status} />
+                                        {isOpen ? <Badge status="NEW" label="Available Request" /> : <Badge status={req.status} />}
                                         {isSubTaskAssignee && (
                                             <span className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold border border-indigo-100">
                                                 <Layers size={10} /> Sub-task
@@ -127,17 +149,24 @@ const ExpertTasks = () => {
                                 <div className="flex flex-col justify-center items-end gap-3 min-w-[150px] border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
                                     {!isSubTaskAssignee && <span className="text-xl font-bold text-gray-900">{req.amount.toLocaleString()} SAR</span>}
 
-                                    {!isSubTaskAssignee && req.status === 'MATCHED' && (
+                                    {isOpen && (
+                                        <Button size="sm" onClick={(e) => handleClaim(e, req)} className="w-full bg-purple-600 hover:bg-purple-700 shadow-md">
+                                            <Briefcase size={16} /> Claim Request
+                                        </Button>
+                                    )}
+
+                                    {!isSubTaskAssignee && !isOpen && req.status === 'MATCHED' && (
                                         <Button size="sm" onClick={(e) => handleStart(e, req.id)} className="w-full bg-blue-600 hover:bg-blue-700">
                                             <Play size={16} /> Start Work
                                         </Button>
                                     )}
 
-                                    {!isSubTaskAssignee && req.status === 'IN_PROGRESS' && (
+                                    {!isSubTaskAssignee && !isOpen && req.status === 'IN_PROGRESS' && (
                                         <Button size="sm" onClick={(e) => handleSubmit(e, req.id)} className="w-full bg-purple-600 hover:bg-purple-700">
                                             <Send size={16} /> Submit
                                         </Button>
                                     )}
+
 
                                     {['REVIEW_CLIENT', 'REVIEW_ADMIN'].includes(req.status) && (
                                         <div className="flex items-center gap-2 text-orange-600 text-sm font-medium bg-orange-50 px-3 py-1.5 rounded-lg">
@@ -165,7 +194,7 @@ const ExpertTasks = () => {
                 <div className="flex-1 overflow-x-auto pb-4">
                     <div className="flex gap-6 min-w-[1000px] h-full">
                         {columns.map(col => {
-                            const colTasks = filteredRequests.filter(r => getColumnId(r.status) === col.id);
+                            const colTasks = filteredRequests.filter(r => getColumnId(r.status, r.visibility) === col.id);
 
                             return (
                                 <div key={col.id} className="flex-1 flex flex-col bg-gray-50 rounded-xl border border-gray-200 h-full max-h-[calc(100vh-200px)]">
@@ -179,15 +208,18 @@ const ExpertTasks = () => {
 
                                     <div className="p-3 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
                                         {colTasks.map(req => {
-                                            const isSubTaskAssignee = req.assignedExpertId !== user?.id;
+                                            const isSubTaskAssignee = req.batches && req.batches.some(b => b.assignedExpertId === user?.id) && req.assignedExpertId !== user?.id;
+                                            const isOpen = req.visibility === 'OPEN' && !req.assignedExpertId;
+
                                             return (
                                                 <div
                                                     key={req.id}
                                                     onClick={() => setSelectedTask(req)}
-                                                    className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md cursor-pointer transition-all group relative"
+                                                    className={`bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md cursor-pointer transition-all group relative ${isOpen ? 'ring-2 ring-purple-100' : ''}`}
                                                 >
                                                     <div className="flex justify-between items-start mb-2">
                                                         <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{req.id}</span>
+                                                        {isOpen && <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">OPEN</span>}
                                                         {/* Context Menu Mock */}
                                                         <button className="text-gray-300 hover:text-gray-500"><MoreVertical size={14} /></button>
                                                     </div>
@@ -200,12 +232,18 @@ const ExpertTasks = () => {
                                                     <div className="flex items-center justify-between pt-3 border-t border-gray-50">
                                                         {!isSubTaskAssignee && <span className="font-bold text-gray-900 text-xs">{req.amount.toLocaleString()} SAR</span>}
 
-                                                        {!isSubTaskAssignee && col.id === 'MATCHED' && (
+                                                        {isOpen && (
+                                                            <button onClick={(e) => handleClaim(e, req)} className="p-1 px-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-xs font-bold">
+                                                                Claim
+                                                            </button>
+                                                        )}
+
+                                                        {!isSubTaskAssignee && !isOpen && col.id === 'MATCHED' && (
                                                             <button onClick={(e) => handleStart(e, req.id)} className="p-1.5 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 transition-colors" title="Start">
                                                                 <Play size={14} fill="currentColor" />
                                                             </button>
                                                         )}
-                                                        {!isSubTaskAssignee && col.id === 'IN_PROGRESS' && (
+                                                        {!isSubTaskAssignee && !isOpen && col.id === 'IN_PROGRESS' && (
                                                             <button onClick={(e) => handleSubmit(e, req.id)} className="p-1.5 bg-purple-100 text-purple-600 rounded-md hover:bg-purple-200 transition-colors" title="Submit">
                                                                 <Send size={14} />
                                                             </button>
@@ -302,26 +340,34 @@ const ExpertTasks = () => {
                                 )}
                             </div>
 
-                            {/* Actions only for Main Expert */}
-                            {selectedTask.assignedExpertId === user?.id && (
-                                <div className="flex gap-3">
-                                    {selectedTask.status === 'MATCHED' && (
-                                        <Button onClick={() => updateRequestStatus(selectedTask.id, 'IN_PROGRESS')} className="bg-blue-600 hover:bg-blue-700">
-                                            Start Project
-                                        </Button>
-                                    )}
-                                    {selectedTask.status === 'IN_PROGRESS' && (
-                                        <Button onClick={() => updateRequestStatus(selectedTask.id, 'REVIEW_CLIENT')} className="bg-purple-600 hover:bg-purple-700 shadow-lg">
-                                            Submit for Approval
-                                        </Button>
-                                    )}
-                                    {['REVIEW_CLIENT', 'REVIEW_ADMIN'].includes(selectedTask.status) && (
-                                        <div className="flex items-center gap-2 text-orange-600 font-bold text-sm">
-                                            <AlertCircle size={18} /> Approval Pending
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                            {/* Actions only for Main Expert or OPEN request */}
+                            <div className="flex gap-3">
+                                {selectedTask.visibility === 'OPEN' && !selectedTask.assignedExpertId && (
+                                    <Button onClick={(e) => { handleClaim(e, selectedTask); setSelectedTask(null); }} className="bg-purple-600 hover:bg-purple-700 shadow-md">
+                                        <Briefcase size={16} /> Claim This Request
+                                    </Button>
+                                )}
+
+                                {selectedTask.assignedExpertId === user?.id && (
+                                    <>
+                                        {selectedTask.status === 'MATCHED' && (
+                                            <Button onClick={() => updateRequestStatus(selectedTask.id, 'IN_PROGRESS')} className="bg-blue-600 hover:bg-blue-700">
+                                                Start Project
+                                            </Button>
+                                        )}
+                                        {selectedTask.status === 'IN_PROGRESS' && (
+                                            <Button onClick={() => updateRequestStatus(selectedTask.id, 'REVIEW_CLIENT')} className="bg-purple-600 hover:bg-purple-700 shadow-lg">
+                                                Submit for Approval
+                                            </Button>
+                                        )}
+                                        {['REVIEW_CLIENT', 'REVIEW_ADMIN'].includes(selectedTask.status) && (
+                                            <div className="flex items-center gap-2 text-orange-600 font-bold text-sm">
+                                                <AlertCircle size={18} /> Approval Pending
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

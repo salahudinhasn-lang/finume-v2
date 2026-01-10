@@ -7,10 +7,26 @@ import { useLocation } from 'react-router-dom';
 import { Expert } from '../../types';
 
 const AdminExperts = () => {
-  const { experts, updateExpertStatus, updateExpert } = useAppContext();
+  const { experts, updateExpertStatus, updateExpert, settings, updateSettings } = useAppContext();
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'EXPERTS' | 'SKILLS'>('EXPERTS');
+  const [newSkill, setNewSkill] = useState('');
   const location = useLocation();
+
+  const availableSkills: string[] = settings?.expertSkills ? JSON.parse(settings.expertSkills) : [];
+
+  const handleAddSkill = () => {
+    if (!newSkill.trim()) return;
+    const updated = [...availableSkills, newSkill.trim()];
+    updateSettings({ ...settings, expertSkills: JSON.stringify(updated) });
+    setNewSkill('');
+  };
+
+  const handleDeleteSkill = (skill: string) => {
+    const updated = availableSkills.filter(s => s !== skill);
+    updateSettings({ ...settings, expertSkills: JSON.stringify(updated) });
+  };
 
   // Deep link filtering
   useEffect(() => {
@@ -80,169 +96,213 @@ const AdminExperts = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
 
-      {/* --- Expert Journey Funnel Visual --- */}
-      <div>
-        <div className="flex justify-between items-end mb-6">
+      {/* --- Tab Navigation --- */}
+      <div className="flex gap-4 border-b border-gray-200 mb-8">
+        <button
+          onClick={() => setActiveTab('EXPERTS')}
+          className={`pb-4 px-2 text-sm font-bold uppercase tracking-wider transition-all ${activeTab === 'EXPERTS' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+        >
+          Experts Directory
+        </button>
+        <button
+          onClick={() => setActiveTab('SKILLS')}
+          className={`pb-4 px-2 text-sm font-bold uppercase tracking-wider transition-all ${activeTab === 'SKILLS' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+        >
+          Skills Configuration
+        </button>
+      </div>
+
+      {activeTab === 'EXPERTS' ? (
+        <>
+          {/* --- Expert Journey Funnel Visual --- */}
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Expert Management</h1>
-            <p className="text-gray-500 mt-1">Lifecycle management from vetting to activation.</p>
+            <div className="flex justify-between items-end mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Expert Management</h1>
+                <p className="text-gray-500 mt-1">Lifecycle management from vetting to activation.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-4 mb-8">
+              <FunnelStep
+                label="Registered"
+                count={totalRegistered}
+                icon={Users}
+                isActive={filter === 'ALL'}
+                onClick={() => setFilter('ALL')}
+                color="blue"
+              />
+              <FunnelStep
+                label="Profile Ready"
+                count={profileCompleted}
+                icon={UserCheck}
+                isActive={false}
+                onClick={() => { }}
+                color="indigo"
+              />
+              <FunnelStep
+                label="In Vetting"
+                count={inVetting}
+                icon={ShieldCheck}
+                isActive={filter === 'VETTING'}
+                onClick={() => setFilter('VETTING')}
+                color="orange"
+              />
+              <FunnelStep
+                label="Active Experts"
+                count={activeExperts}
+                icon={Briefcase}
+                isActive={filter === 'ACTIVE'}
+                onClick={() => setFilter('ACTIVE')}
+                color="green"
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <FunnelStep
-            label="Registered"
-            count={totalRegistered}
-            icon={Users}
-            isActive={filter === 'ALL'}
-            onClick={() => setFilter('ALL')}
-            color="blue"
-          />
-          <FunnelStep
-            label="Profile Ready"
-            count={profileCompleted}
-            icon={UserCheck}
-            isActive={false}
-            onClick={() => { }}
-            color="indigo"
-          />
-          <FunnelStep
-            label="In Vetting"
-            count={inVetting}
-            icon={ShieldCheck}
-            isActive={filter === 'VETTING'}
-            onClick={() => setFilter('VETTING')}
-            color="orange"
-          />
-          <FunnelStep
-            label="Active Experts"
-            count={activeExperts}
-            icon={Briefcase}
-            isActive={filter === 'ACTIVE'}
-            onClick={() => setFilter('ACTIVE')}
-            color="green"
-          />
-        </div>
-      </div>
-
-      {/* --- Controls --- */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
-        <div className="flex gap-1 overflow-x-auto w-full md:w-auto p-1">
-          {['ALL', 'ACTIVE', 'VETTING', 'SUSPENDED'].map(status => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${filter === status ? 'bg-gray-900 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
-            >
-              {status === 'ALL' ? 'View All' : status.charAt(0) + status.slice(1).toLowerCase()}
-            </button>
-          ))}
-        </div>
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input
-            type="text"
-            placeholder="Search by name, email or skill..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all"
-          />
-        </div>
-      </div>
-
-      <Card className="p-0 overflow-hidden border-none shadow-md">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 font-semibold uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Expert Profile</th>
-                <th className="px-6 py-4">Specialization</th>
-                <th className="px-6 py-4">Performance</th>
-                <th className="px-6 py-4">Financials</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredExperts.map(expert => (
-                <tr key={expert.id} className="hover:bg-blue-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-4 cursor-pointer" onClick={() => handleEdit(expert)}>
-                      <div className="relative">
-                        <img src={expert.avatarUrl} alt="" className="w-10 h-10 rounded-full bg-gray-200 object-cover ring-2 ring-white shadow-sm" />
-                        <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${expert.status === 'ACTIVE' ? 'bg-green-500' : expert.status === 'VETTING' ? 'bg-orange-500' : 'bg-red-500'}`}></span>
-                      </div>
-                      <div>
-                        <p className="font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{expert.name}</p>
-                        <p className="text-xs text-gray-500">{expert.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {expert.specializations.slice(0, 2).map((s, i) => (
-                        <span key={i} className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-md border border-gray-200">{s}</span>
-                      ))}
-                      {expert.specializations.length > 2 && <span className="text-xs text-gray-400 px-1">+{expert.specializations.length - 2}</span>}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1 font-medium text-gray-700">
-                      <Star size={16} className="text-yellow-400 fill-current" />
-                      <span>{expert.rating.toFixed(1)}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-mono text-gray-600 font-medium">{expert.totalEarned.toLocaleString()} SAR</td>
-                  <td className="px-6 py-4"><Badge status={expert.status} /></td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); handleEdit(expert); }}
-                        className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                        title="Edit Profile"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); handleSupport(expert); }}
-                        className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Contact Support"
-                      >
-                        <LifeBuoy size={18} />
-                      </button>
-                      {expert.status === 'VETTING' && (
-                        <div className="flex gap-1 ml-2">
-                          <Button size="sm" variant="outline" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-xs h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">Reject</Button>
-                          <Button size="sm" onClick={() => updateExpertStatus(expert.id, 'ACTIVE')} className="text-xs h-8 px-2 bg-green-600 hover:bg-green-700 shadow-sm">Approve</Button>
-                        </div>
-                      )}
-                      {expert.status === 'ACTIVE' && (
-                        <Button size="sm" variant="danger" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-xs h-8 px-2">Suspend</Button>
-                      )}
-                      {expert.status === 'SUSPENDED' && (
-                        <Button size="sm" variant="secondary" onClick={() => updateExpertStatus(expert.id, 'ACTIVE')} className="text-xs h-8 px-2">Reactivate</Button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+          {/* --- Controls --- */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
+            <div className="flex gap-1 overflow-x-auto w-full md:w-auto p-1">
+              {['ALL', 'ACTIVE', 'VETTING', 'SUSPENDED'].map(status => (
+                <button
+                  key={status}
+                  onClick={() => setFilter(status)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${filter === status ? 'bg-gray-900 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+                >
+                  {status === 'ALL' ? 'View All' : status.charAt(0) + status.slice(1).toLowerCase()}
+                </button>
               ))}
-              {filteredExperts.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="text-center py-12">
-                    <div className="flex flex-col items-center justify-center text-gray-400">
-                      <Search size={48} className="mb-4 opacity-20" />
-                      <p className="text-lg font-medium">No experts found</p>
-                      <p className="text-sm">Try adjusting your filters or search terms.</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+            </div>
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search by name, email or skill..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all"
+              />
+            </div>
+          </div>
+
+          <Card className="p-0 overflow-hidden border-none shadow-md">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 font-semibold uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4">Expert Profile</th>
+                    <th className="px-6 py-4">Specialization</th>
+                    <th className="px-6 py-4">Performance</th>
+                    <th className="px-6 py-4">Financials</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredExperts.map(expert => (
+                    <tr key={expert.id} className="hover:bg-blue-50/50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => handleEdit(expert)}>
+                          <div className="relative">
+                            <img src={expert.avatarUrl} alt="" className="w-10 h-10 rounded-full bg-gray-200 object-cover ring-2 ring-white shadow-sm" />
+                            <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${expert.status === 'ACTIVE' ? 'bg-green-500' : expert.status === 'VETTING' ? 'bg-orange-500' : 'bg-red-500'}`}></span>
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{expert.name}</p>
+                            <p className="text-xs text-gray-500">{expert.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {expert.specializations.slice(0, 2).map((s, i) => (
+                            <span key={i} className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-md border border-gray-200">{s}</span>
+                          ))}
+                          {expert.specializations.length > 2 && <span className="text-xs text-gray-400 px-1">+{expert.specializations.length - 2}</span>}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1 font-medium text-gray-700">
+                          <Star size={16} className="text-yellow-400 fill-current" />
+                          <span>{expert.rating.toFixed(1)}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-mono text-gray-600 font-medium">{expert.totalEarned.toLocaleString()} SAR</td>
+                      <td className="px-6 py-4"><Badge status={expert.status} /></td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleEdit(expert); }}
+                            className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                            title="Edit Profile"
+                          >
+                            <Edit size={18} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleSupport(expert); }}
+                            className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Contact Support"
+                          >
+                            <LifeBuoy size={18} />
+                          </button>
+                          {expert.status === 'VETTING' && (
+                            <div className="flex gap-1 ml-2">
+                              <Button size="sm" variant="outline" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-xs h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">Reject</Button>
+                              <Button size="sm" onClick={() => updateExpertStatus(expert.id, 'ACTIVE')} className="text-xs h-8 px-2 bg-green-600 hover:bg-green-700 shadow-sm">Approve</Button>
+                            </div>
+                          )}
+                          {expert.status === 'ACTIVE' && (
+                            <Button size="sm" variant="danger" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-xs h-8 px-2">Suspend</Button>
+                          )}
+                          {expert.status === 'SUSPENDED' && (
+                            <Button size="sm" variant="secondary" onClick={() => updateExpertStatus(expert.id, 'ACTIVE')} className="text-xs h-8 px-2">Reactivate</Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
+      ) : (
+        /* --- SKILLS CONFIGURATION --- */
+        <div className="max-w-2xl">
+          <Card>
+            <div className="p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Manage Available Skills</h3>
+              <div className="flex gap-2 mb-6">
+                <input
+                  type="text"
+                  placeholder="Enter new skill name..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={newSkill}
+                  onChange={(e) => setNewSkill(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
+                />
+                <Button onClick={handleAddSkill}>Add Skill</Button>
+              </div>
+
+              <div className="space-y-2">
+                {availableSkills.length === 0 && <p className="text-gray-400 text-center py-4">No skills configured yet.</p>}
+                {availableSkills.map((skill, idx) => (
+                  <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100 group hover:border-blue-200 transition-colors">
+                    <span className="font-medium text-gray-700">{skill}</span>
+                    <button
+                      onClick={() => handleDeleteSkill(skill)}
+                      className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
         </div>
-      </Card>
+      )}
 
       {/* Edit Expert Modal */}
       {editingExpert && (
@@ -267,6 +327,29 @@ const AdminExperts = () => {
                   value={expertFormData.name || ''}
                   onChange={e => setExpertFormData({ ...expertFormData, name: e.target.value })}
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Skills</label>
+                <div className="flex flex-wrap gap-2 mb-2 p-3 bg-gray-50 rounded-lg border border-gray-100 max-h-40 overflow-y-auto">
+                  {availableSkills.map((skill) => {
+                    const isSelected = (expertFormData.specializations || []).includes(skill);
+                    return (
+                      <button
+                        key={skill}
+                        onClick={() => {
+                          const current = expertFormData.specializations || [];
+                          const updated = isSelected
+                            ? current.filter(s => s !== skill)
+                            : [...current, skill];
+                          setExpertFormData({ ...expertFormData, specializations: updated });
+                        }}
+                        className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${isSelected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
+                      >
+                        {skill}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Hourly Rate (SAR)</label>

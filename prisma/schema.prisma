@@ -83,6 +83,8 @@ model Request {
   serviceId       String
   service         Service       @relation(fields: [serviceId], references: [id])
   status          String        @default("NEW") // Enum: NEW, MATCHED, etc.
+  visibility      String        @default("ADMIN") // Enum: ADMIN, OPEN, ASSIGNED
+  requiredSkills  String?       // JSON string: List of skills required to view this request
   amount          Float
   assignedExpertId String?
   assignedExpert   User?        @relation("ExpertRequests", fields: [assignedExpertId], references: [id])
@@ -198,6 +200,7 @@ model PlatformSettings {
   pageVisibility   String? // JSON string for { [pageKey]: { public: boolean, client: boolean } }
   sitePages        String? // JSON string: List of SitePage objects
   pricingTableConfig String? // JSON string: List of { id, label, section, type }
+  expertSkills     String? // JSON string: List of available skills for experts
   yearlyDiscountPercentage Int @default(20)
 }
 

@@ -39,7 +39,7 @@ export const Button = ({
   );
 };
 
-export const Badge = ({ status }: { status: string }) => {
+export const Badge = ({ status, label }: { status: string, label?: string }) => {
   const styles: Record<string, string> = {
     PENDING_PAYMENT: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
     NEW: 'bg-blue-100 text-blue-800',
@@ -58,8 +58,8 @@ export const Badge = ({ status }: { status: string }) => {
   };
 
   return (
-    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${styles[status] || 'bg-gray-100 text-gray-800'}`}>
-      {status.replace('_', ' ')}
+    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${styles[status] || styles['NEW']}`}>
+      {label || status.replace('_', ' ')}
     </span>
   );
 };
