@@ -187,9 +187,9 @@ const AdminRequests = () => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
-                                                        {req.clientName.charAt(0)}
+                                                        {(req.clientName || '?').charAt(0)}
                                                     </div>
-                                                    {req.clientName}
+                                                    {req.clientName || 'Unknown Client'}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -280,8 +280,8 @@ const AdminRequests = () => {
                                                     <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{req.id}</span>
                                                     <span className="font-bold text-gray-900 text-xs">{req.amount.toLocaleString()} SAR</span>
                                                 </div>
-                                                <h4 className="font-bold text-gray-800 text-sm mb-1 leading-tight">{req.serviceName}</h4>
-                                                <p className="text-xs text-gray-500 mb-3 truncate">{req.clientName}</p>
+                                                <h4 className="font-bold text-gray-800 text-sm mb-1 leading-tight">{req.serviceName || 'Unnamed Service'}</h4>
+                                                <p className="text-xs text-gray-500 mb-3 truncate">{req.clientName || 'Unknown Client'}</p>
 
                                                 <div className="flex justify-between items-center pt-2 border-t border-gray-50">
                                                     {req.assignedExpertId ? (

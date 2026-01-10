@@ -252,9 +252,15 @@ const LoginPage = () => {
           <div className="mt-10 text-center">
             <p className="text-sm text-gray-500">
               {t('auth.noAccount')} {' '}
-              <Link to="/register" className="font-bold text-primary-600 hover:text-primary-700 transition-colors">
-                {t('auth.registerNow')}
-              </Link>
+              {role === 'EXPERT' ? (
+                <Link to="/join-expert" className="font-bold text-primary-600 hover:text-primary-700 transition-colors">
+                  Join as Expert
+                </Link>
+              ) : (
+                <Link to="/register" className="font-bold text-primary-600 hover:text-primary-700 transition-colors">
+                  {t('auth.registerNow')}
+                </Link>
+              )}
             </p>
           </div>
 
