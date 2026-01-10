@@ -260,7 +260,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return data.user;
       } else {
         const err = await res.json();
-        alert(err.error || 'Registration failed');
+        console.error('Registration failed:', err);
+
+        // Format Zod validation errors if available
+        let errorMessage = err.error || 'Registration failed';
+        if (err.details && typeof err.details === 'object') {
+          // Zod format returns { field: { _errors: [] } }
+          const details = Object.entries(err.details)
+            .map(([key, value]: [string, any]) => {
+              if (value._errors && value._errors.length > 0) {
+                return `${key}: ${value._errors.join(', ')}`;
+              }
+              return '';
+            })
+            .filter(Boolean)
+            .join('\n');
+          if (details) errorMessage += `:\n${details}`;
+        }
+
+        alert(errorMessage);
         return null;
       }
     } catch (e) {
