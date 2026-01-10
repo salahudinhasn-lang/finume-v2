@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { Check, ArrowRight, AlertTriangle, Building2, Users, Receipt, TrendingUp, ChevronRight, ChevronLeft, RefreshCcw } from 'lucide-react';
 
-const TierCalculator: React.FC = () => {
+interface TierCalculatorProps {
+    onRecommend?: (planId: string) => void;
+}
+
+const TierCalculator: React.FC<TierCalculatorProps> = ({ onRecommend }) => {
     const navigate = useNavigate();
     const { plans, user } = useAppContext();
 
@@ -38,6 +42,11 @@ const TierCalculator: React.FC = () => {
     const { plan, reason } = recommendation;
 
     const handleGetStarted = () => {
+        if (onRecommend) {
+            onRecommend(plan.id);
+            return;
+        }
+
         if (user) {
             navigate(`/client/checkout?planId=${plan.id}&billing=YEARLY`);
         } else {

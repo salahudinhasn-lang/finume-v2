@@ -6,9 +6,10 @@ import { useAppContext } from '../context/AppContext';
 
 interface PricingTableProps {
     billingCycle?: 'monthly' | 'yearly';
+    highlightedPlanId?: string | null;
 }
 
-const PricingTable = ({ billingCycle: externalBilling }: PricingTableProps) => {
+const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: PricingTableProps) => {
     const navigate = useNavigate();
     const { settings, plans, user } = useAppContext();
     const [internalBilling, setInternalBilling] = useState<'monthly' | 'yearly'>('monthly');
@@ -70,27 +71,33 @@ const PricingTable = ({ billingCycle: externalBilling }: PricingTableProps) => {
                             <th className="p-6 text-left w-1/4">
                                 <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">Criteria</span>
                             </th>
-                            {plans.map(plan => (
-                                <th key={plan.id} className={`p-6 text-center w-1/4 border-l border-gray-100 ${plan.isPopular ? 'bg-indigo-50/50' : ''}`}>
-                                    <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                                    <div className="mt-2 flex flex-col items-center">
-                                        <div className="text-3xl font-black text-gray-900">
-                                            {calculatePrice(plan.price)} <span className="text-sm font-bold text-gray-500">SAR / mo</span>
-                                        </div>
-                                        {billingCycle === 'yearly' && (
-                                            <div className="text-xs text-slate-400 font-medium mt-1">
-                                                Billed {Math.round(plan.price * 12 * discountMultiplier).toLocaleString()} SAR yearly
-                                            </div>
+                            {plans.map(plan => {
+                                const isHighlighted = plan.id === highlightedPlanId;
+                                return (
+                                    <th key={plan.id} className={`p-6 text-center w-1/4 border-l border-gray-100 relative transition-all duration-500 ${plan.isPopular ? 'bg-indigo-50/50' : ''} ${isHighlighted ? 'bg-blue-50 !border-blue-200 shadow-inner' : ''}`}>
+                                        {isHighlighted && (
+                                            <div className="absolute top-0 inset-x-0 h-1 bg-blue-500 animate-in fade-in duration-500"></div>
                                         )}
-                                    </div>
-                                    <p className="text-xs font-medium text-gray-500 mt-1">{plan.tagline}</p>
-                                    {billingCycle === 'yearly' && (
-                                        <p className="text-xs text-green-600 font-bold mt-2">
-                                            Save {Math.round(plan.price * 12 * (discountPercent / 100)).toLocaleString()} SAR
-                                        </p>
-                                    )}
-                                </th>
-                            ))}
+                                        <h3 className={`text-xl font-bold ${isHighlighted ? 'text-blue-700' : 'text-gray-900'}`}>{plan.name}</h3>
+                                        <div className="mt-2 flex flex-col items-center">
+                                            <div className={`text-3xl font-black ${isHighlighted ? 'text-blue-900' : 'text-gray-900'}`}>
+                                                {calculatePrice(plan.price)} <span className="text-sm font-bold text-gray-500">SAR / mo</span>
+                                            </div>
+                                            {billingCycle === 'yearly' && (
+                                                <div className="text-xs text-slate-400 font-medium mt-1">
+                                                    Billed {Math.round(plan.price * 12 * discountMultiplier).toLocaleString()} SAR yearly
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-xs font-medium text-gray-500 mt-1">{plan.tagline}</p>
+                                        {billingCycle === 'yearly' && (
+                                            <p className="text-xs text-green-600 font-bold mt-2">
+                                                Save {Math.round(plan.price * 12 * (discountPercent / 100)).toLocaleString()} SAR
+                                            </p>
+                                        )}
+                                    </th>
+                                )
+                            })}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -116,8 +123,9 @@ const PricingTable = ({ billingCycle: externalBilling }: PricingTableProps) => {
                                             <td className="p-4 px-6 text-gray-600 font-medium">{row.label}</td>
                                             {plans.map(plan => {
                                                 const val = plan.attributes?.[row.id];
+                                                const isHighlighted = plan.id === highlightedPlanId;
                                                 return (
-                                                    <td key={plan.id} className="p-4 text-center border-l border-gray-100">
+                                                    <td key={plan.id} className={`p-4 text-center border-l border-gray-100 transition-colors duration-500 ${isHighlighted ? 'bg-blue-50/50' : ''}`}>
                                                         {row.type === 'boolean' || typeof val === 'boolean' ? (
                                                             val === true ? <Check className="mx-auto text-emerald-500" size={20} /> :
                                                                 val === false ? <X className="mx-auto text-gray-300" size={20} /> :
@@ -140,7 +148,7 @@ const PricingTable = ({ billingCycle: externalBilling }: PricingTableProps) => {
                         <tr className="bg-emerald-50">
                             <td className="p-4 px-6 font-bold text-emerald-800">Fine Protection Guarantee</td>
                             {plans.map(plan => (
-                                <td key={plan.id} className="p-4 text-center font-bold text-emerald-700 border-l border-emerald-100">
+                                <td key={plan.id} className={`p-4 text-center font-bold text-emerald-700 border-l border-emerald-100 ${plan.id === highlightedPlanId ? 'bg-emerald-100/50' : ''}`}>
                                     {plan.guarantee}
                                 </td>
                             ))}
@@ -148,26 +156,29 @@ const PricingTable = ({ billingCycle: externalBilling }: PricingTableProps) => {
 
                         <tr className="bg-gray-50 border-t border-gray-200">
                             <td className="p-4 px-6"></td>
-                            {plans.map(plan => (
-                                <td key={plan.id} className="p-4 border-l border-gray-200">
-                                    <button
-                                        onClick={() => {
-                                            const url = `/client/checkout?planId=${plan.id}&billing=${billingCycle}`;
-                                            if (user) {
-                                                navigate(url);
-                                            } else {
-                                                navigate(`/login?redirect=${url}`);
-                                            }
-                                        }}
-                                        className={`block w-full py-3 text-center rounded-xl font-bold transition-all shadow-sm hover:shadow-md ${plan.isPopular
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                            : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300'
-                                            }`}
-                                    >
-                                        Choose {plan.name?.split(' ')[0]}
-                                    </button>
-                                </td>
-                            ))}
+                            {plans.map(plan => {
+                                const isHighlighted = plan.id === highlightedPlanId;
+                                return (
+                                    <td key={plan.id} className={`p-4 border-l border-gray-200 ${isHighlighted ? 'bg-blue-50/50' : ''}`}>
+                                        <button
+                                            onClick={() => {
+                                                const url = `/client/checkout?planId=${plan.id}&billing=${billingCycle}`;
+                                                if (user) {
+                                                    navigate(url);
+                                                } else {
+                                                    navigate(`/login?redirect=${url}`);
+                                                }
+                                            }}
+                                            className={`block w-full py-3 text-center rounded-xl font-bold transition-all shadow-sm hover:shadow-md ${plan.isPopular || isHighlighted
+                                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
+                                                : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300'
+                                                } ${isHighlighted ? 'transform scale-105 ring-4 ring-blue-500/20' : ''}`}
+                                        >
+                                            Choose {plan.name?.split(' ')[0]}
+                                        </button>
+                                    </td>
+                                )
+                            })}
                         </tr>
                     </tbody>
                 </table>

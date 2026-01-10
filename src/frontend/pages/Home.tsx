@@ -9,6 +9,18 @@ import PricingTable from '../components/PricingTable';
 const HomePage = () => {
   const { t, language, experts, clients, requests } = useAppContext();
   const isRtl = language === 'ar';
+  const [highlightedPlan, setHighlightedPlan] = React.useState<string | null>(null);
+  const pricingRef = React.useRef<HTMLDivElement>(null);
+
+  const handleRecommendation = (planId: string) => {
+    setHighlightedPlan(planId);
+    if (pricingRef.current) {
+      // Small timeout to allow state update to propagate if needed, though usually instant
+      setTimeout(() => {
+        pricingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  };
 
   return (
     <div className="flex flex-col overflow-hidden bg-slate-950 text-slate-200">
@@ -89,15 +101,14 @@ const HomePage = () => {
           <p className="text-lg text-slate-400 max-w-2xl mx-auto">Answer 3 simple questions to find the perfect compliance package for your business.</p>
         </div>
         <div className="bg-slate-800/50 p-6 rounded-3xl border border-slate-700/50">
-          <TierCalculator />
+          <TierCalculator onRecommend={handleRecommendation} />
         </div>
       </div>
 
       {/* Pricing Section */}
-      <div id="pricing" className="py-24 bg-slate-950 border-t border-slate-900">
-        {/* Note: PricingTable might need internal CSS updates for Dark Mode, but container needs to be dark */}
+      <div id="pricing" className="py-24 bg-slate-950 border-t border-slate-900" ref={pricingRef}>
         <div className="bg-white rounded-3xl p-2 hidden"></div> {/* Placeholder to ensure I didn't break anything logic wise */}
-        <PricingTable />
+        <PricingTable highlightedPlanId={highlightedPlan} />
       </div>
 
       {/* Join As Expert Section */}
