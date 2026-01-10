@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_PLANS } from '../mockData';
+import { useAppContext } from '../context/AppContext';
 import { Check, ArrowRight, AlertTriangle, Building2, Users, Receipt, TrendingUp, ChevronRight, ChevronLeft, RefreshCcw } from 'lucide-react';
 
 const TierCalculator: React.FC = () => {
     const navigate = useNavigate();
+    const { plans, user } = useAppContext();
 
     // Inputs
     const [revenue, setRevenue] = useState(200000);
@@ -13,20 +14,36 @@ const TierCalculator: React.FC = () => {
 
     // Logic
     const getRecommendation = () => {
-        if (revenue > 5000000) return { plan: MOCK_PLANS[2], reason: 'Revenue > 5M SAR requires statutory Financial Audit' };
-        if (transactionTier === 2) return { plan: MOCK_PLANS[2], reason: 'High volume transactions require enterprise bookkeeping' };
-        if (employeeTier === 2) return { plan: MOCK_PLANS[2], reason: 'Large team requires advanced payroll & HR support' };
+        // Fallback plans if DB is empty to prevent crash, though usually not needed if seeded
+        const basicPlan = plans.find(p => p.name.includes('CR')) || plans[0];
+        const growthPlan = plans.find(p => p.name.includes('ZATCA')) || plans[1];
+        const enterprisePlan = plans.find(p => p.name.includes('Audit')) || plans[2];
 
-        if (revenue > 375000) return { plan: MOCK_PLANS[1], reason: 'Revenue > 375k SAR mandates full VAT compliance' };
-        if (transactionTier === 1) return { plan: MOCK_PLANS[1], reason: 'Active business requires monthly bookkeeping' };
-        if (employeeTier === 1) return { plan: MOCK_PLANS[1], reason: 'Employees require GOSI & Payroll management' };
+        if (!basicPlan) return null; // Wait for data load
 
-        return { plan: MOCK_PLANS[0], reason: 'Best for maintaining legal status with minimal activity' };
+        if (revenue > 5000000) return { plan: enterprisePlan || basicPlan, reason: 'Revenue > 5M SAR requires statutory Financial Audit' };
+        if (transactionTier === 2) return { plan: enterprisePlan || basicPlan, reason: 'High volume transactions require enterprise bookkeeping' };
+        if (employeeTier === 2) return { plan: enterprisePlan || basicPlan, reason: 'Large team requires advanced payroll & HR support' };
+
+        if (revenue > 375000) return { plan: growthPlan || basicPlan, reason: 'Revenue > 375k SAR mandates full VAT compliance' };
+        if (transactionTier === 1) return { plan: growthPlan || basicPlan, reason: 'Active business requires monthly bookkeeping' };
+        if (employeeTier === 1) return { plan: growthPlan || basicPlan, reason: 'Employees require GOSI & Payroll management' };
+
+        return { plan: basicPlan, reason: 'Best for maintaining legal status with minimal activity' };
     };
 
-    const { plan, reason } = getRecommendation();
+    const recommendation = getRecommendation();
 
-    if (!MOCK_PLANS || MOCK_PLANS.length < 3) return null;
+    if (!recommendation || !recommendation.plan) return null;
+    const { plan, reason } = recommendation;
+
+    const handleGetStarted = () => {
+        if (user) {
+            navigate(`/client/checkout?planId=${plan.id}&billing=YEARLY`);
+        } else {
+            navigate(`/login?redirect=/client/checkout&planId=${plan.id}&billing=YEARLY`);
+        }
+    };
 
     return (
         <div className="w-full max-w-6xl mx-auto px-4">
@@ -115,12 +132,12 @@ const TierCalculator: React.FC = () => {
 
                         <div className="relative z-10 animate-in fade-in slide-in-from-right-4 duration-500" key={plan.id}>
                             <div className="flex items-center gap-2 mb-4">
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${plan.id === 'pro' ? 'bg-purple-100 text-purple-700' : 'bg-blue-50 text-blue-700'}`}>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${plan.name.includes('Audit') ? 'bg-purple-100 text-purple-700' : 'bg-blue-50 text-blue-700'}`}>
                                     Recommended Plan
                                 </span>
                             </div>
 
-                            <h2 className={`text-4xl font-black mb-2 ${plan.id === 'pro' ? 'text-purple-600' : plan.id === 'standard' ? 'text-blue-600' : 'text-slate-900'}`}>
+                            <h2 className={`text-4xl font-black mb-2 ${plan.name.includes('Audit') ? 'text-purple-600' : plan.name.includes('ZATCA') ? 'text-blue-600' : 'text-slate-900'}`}>
                                 {plan.name}
                             </h2>
                             <p className="text-lg text-slate-500 mb-6">{plan.description}</p>
@@ -128,7 +145,7 @@ const TierCalculator: React.FC = () => {
                             <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-8">
                                 {plan.features.slice(0, 4).map((feat, i) => (
                                     <div key={i} className="flex items-start gap-2 text-sm font-medium text-slate-700">
-                                        <Check size={16} className={`mt-0.5 shrink-0 ${plan.id === 'pro' ? 'text-purple-500' : 'text-green-500'}`} strokeWidth={3} />
+                                        <Check size={16} className={`mt-0.5 shrink-0 ${plan.name.includes('Audit') ? 'text-purple-500' : 'text-green-500'}`} strokeWidth={3} />
                                         {feat}
                                     </div>
                                 ))}
@@ -142,8 +159,8 @@ const TierCalculator: React.FC = () => {
 
                             <div className="flex items-center gap-4">
                                 <button
-                                    onClick={() => navigate(`/login?redirect=/client/checkout&planId=${plan.id}`)}
-                                    className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg text-white shadow-lg transition-transform hover:-translate-y-1 flex items-center justify-center gap-2 ${plan.id === 'pro' ? 'bg-purple-600 hover:bg-purple-700 shadow-purple-200' : plan.id === 'standard' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-slate-900 hover:bg-slate-800 shadow-slate-200'}`}
+                                    onClick={handleGetStarted}
+                                    className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg text-white shadow-lg transition-transform hover:-translate-y-1 flex items-center justify-center gap-2 ${plan.name.includes('Audit') ? 'bg-purple-600 hover:bg-purple-700 shadow-purple-200' : plan.name.includes('ZATCA') ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-slate-900 hover:bg-slate-800 shadow-slate-200'}`}
                                 >
                                     Get Started <ChevronRight size={20} />
                                 </button>

@@ -19,8 +19,8 @@ const ExpertDashboard = () => {
     const activeTasks = myTasks.filter(r => ['MATCHED', 'IN_PROGRESS', 'REVIEW_CLIENT', 'REVIEW_ADMIN'].includes(r.status));
     const completedTasks = myTasks.filter(r => r.status === 'COMPLETED');
 
-    // Marketplace: Status is NEW and No Expert Assigned
-    const marketplaceRequests = requests.filter(r => r.status === 'NEW' && !r.assignedExpertId);
+    // Marketplace: Status is NEW and No Expert Assigned AND Visibility is OPEN
+    const marketplaceRequests = requests.filter(r => r.status === 'NEW' && !r.assignedExpertId && r.visibility === 'OPEN');
 
     // Earnings Calculation (Strictly based on requests)
     // Expert gets 80% of the request amount
