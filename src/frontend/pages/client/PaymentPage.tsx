@@ -8,7 +8,7 @@ import { Request } from '../../types';
 import { MOCK_PLANS } from '../../mockData';
 
 const PaymentPage = () => {
-    const { user, addRequest, updateRequestStatus, requests, services, t, language, settings } = useAppContext();
+    const { user, addRequest, updateRequestStatus, requests, services, plans, t, language, settings } = useAppContext();
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
@@ -29,7 +29,7 @@ const PaymentPage = () => {
         if (user) {
             // Handle Plan Subscription
             if (planId) {
-                const plan = MOCK_PLANS.find(p => p.id === planId);
+                const plan = plans.find(p => p.id === planId);
                 if (plan) {
                     const isYearly = (billingCycle || '').toUpperCase() === 'YEARLY';
                     const basePrice = plan.price;
@@ -40,7 +40,7 @@ const PaymentPage = () => {
                         id: `REQ-${Date.now()}`,
                         clientId: user.id,
                         clientName: user.name,
-                        serviceId: 'SERV-SUBSCRIPTION',
+                        serviceId: plan.id,
                         serviceName: `${plan.name} (${isYearly ? 'Yearly' : 'Monthly'})`,
                         status: 'PENDING_PAYMENT',
                         amount: finalAmount,
@@ -69,7 +69,7 @@ const PaymentPage = () => {
                 }
             }
         }
-    }, [planId, serviceId, billingCycle, user, pendingRequest, services, settings]);
+    }, [planId, serviceId, billingCycle, user, pendingRequest, services, plans, settings]);
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
