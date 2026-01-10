@@ -10,7 +10,7 @@ interface PricingTableProps {
 
 const PricingTable = ({ billingCycle: externalBilling }: PricingTableProps) => {
     const navigate = useNavigate();
-    const { settings, plans } = useAppContext();
+    const { settings, plans, user } = useAppContext();
     const [internalBilling, setInternalBilling] = useState<'monthly' | 'yearly'>('monthly');
     const [showOverage, setShowOverage] = useState(false);
 
@@ -151,7 +151,14 @@ const PricingTable = ({ billingCycle: externalBilling }: PricingTableProps) => {
                             {plans.map(plan => (
                                 <td key={plan.id} className="p-4 border-l border-gray-200">
                                     <button
-                                        onClick={() => navigate(`/login?redirect=/client/checkout&planId=${plan.id}&billing=${billingCycle}`)}
+                                        onClick={() => {
+                                            const url = `/client/checkout?planId=${plan.id}&billing=${billingCycle}`;
+                                            if (user) {
+                                                navigate(url);
+                                            } else {
+                                                navigate(`/login?redirect=${url}`);
+                                            }
+                                        }}
                                         className={`block w-full py-3 text-center rounded-xl font-bold transition-all shadow-sm hover:shadow-md ${plan.isPopular
                                             ? 'bg-blue-600 text-white hover:bg-blue-700'
                                             : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300'
