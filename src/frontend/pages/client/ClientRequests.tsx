@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/UI';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Eye, CheckCircle, Star, ThumbsUp, X, FileText, Download, Clock, Check } from 'lucide-react';
+import { Search, Filter, Eye, CheckCircle, Star, ThumbsUp, X, FileText, Download, Clock, Check, Plus } from 'lucide-react';
 import { Request, Review, FileBatch, DocumentCategory, UploadedFile } from '../../types';
 import { DocumentBatchList } from '../../components/DocumentBatchList';
 import { SmartUploadWidget } from '../../components/SmartUploadWidget';
@@ -170,15 +170,23 @@ const ClientRequests = () => {
                 </div>
 
                 <div className="flex flex-1 max-w-md gap-2 w-full">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Search by ID or Service..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
+                    <div className="relative flex-1 flex gap-2">
+                        <Button
+                            onClick={() => navigate('/pricing')}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md text-sm whitespace-nowrap"
+                        >
+                            <Plus size={16} className="mr-2" /> Add Request
+                        </Button>
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search by ID or Service..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            />
+                        </div>
                     </div>
                     <div className="relative">
                         <select
