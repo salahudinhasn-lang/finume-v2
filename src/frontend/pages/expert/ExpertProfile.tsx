@@ -8,13 +8,40 @@ const ExpertProfile = () => {
     const { user, updateExpert } = useAppContext();
     const [isPublic, setIsPublic] = useState(true);
 
-    const [formData, setFormData] = useState({
-        name: user?.name || '',
-        email: user?.email || '',
-        bio: (user as any).bio || '',
-        hourlyRate: (user as any).hourlyRate || 0,
-        specializations: ((user as any).specializations || []).join(', '),
+    const [formData, setFormData] = React.useState(() => {
+        const specs = (user as any)?.specializations;
+        const safeSpecs = Array.isArray(specs) ? specs.join(', ') : (typeof specs === 'string' ? specs : '');
+
+        return {
+            name: user?.name || '',
+            email: user?.email || '',
+            bio: (user as any)?.bio || '',
+            hourlyRate: (user as any)?.hourlyRate || 0,
+            specializations: safeSpecs,
+        };
     });
+
+    // Update form data if user context changes (e.g. initial load from null/storage)
+    React.useEffect(() => {
+        if (user) {
+            setFormData(prev => {
+                // Only update if email changed to avoid wiping user edits
+                if (prev.email !== user.email) {
+                    const specs = (user as any)?.specializations;
+                    const safeSpecs = Array.isArray(specs) ? specs.join(', ') : (typeof specs === 'string' ? specs : '');
+                    return {
+                        name: user.name || '',
+                        email: user.email || '',
+                        bio: (user as any).bio || '',
+                        hourlyRate: (user as any).hourlyRate || 0,
+                        specializations: safeSpecs,
+                    };
+                }
+                return prev;
+            });
+            setAvatarPreview(user.avatarUrl);
+        }
+    }, [user]);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatarUrl);
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +114,7 @@ const ExpertProfile = () => {
                                             <Shield size={10} /> Verified Expert
                                         </span>
                                         <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
-                                            {(user as any).rating.toFixed(1)} ★
+                                            {((user as any).rating || 0).toFixed(1)} ★
                                         </span>
                                     </div>
                                 </div>
