@@ -175,8 +175,14 @@ export interface Request {
   id: string;
   clientId: string;
   clientName: string; // Denormalized for ease
-  serviceId: string;
-  serviceName?: string;
+  // Services & Plans (Mutually Exclusive usually)
+  serviceId?: string;
+  service?: Service; // Populated by Backend
+  pricingPlanId?: string;
+  pricingPlan?: PricingPlan; // Populated by Backend
+
+  // Derived Display Data
+  serviceName: string; // Helper for display (either Service Name or Plan Name)
   status: 'PENDING_PAYMENT' | 'NEW' | 'MATCHED' | 'IN_PROGRESS' | 'REVIEW_CLIENT' | 'REVIEW_ADMIN' | 'COMPLETED' | 'CANCELLED';
   visibility?: 'ADMIN' | 'ASSIGNED' | 'OPEN'; // New
   requiredSkills?: string[]; // New

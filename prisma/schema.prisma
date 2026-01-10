@@ -74,14 +74,17 @@ model PricingPlan {
   guarantee   String
   isPopular   Boolean @default(false)
   color       String?
+  requests    Request[]
 }
 
 model Request {
   id              String        @id @default(uuid())
   clientId        String
   client          User          @relation("ClientRequests", fields: [clientId], references: [id])
-  serviceId       String
-  service         Service       @relation(fields: [serviceId], references: [id])
+  serviceId       String?
+  service         Service?      @relation(fields: [serviceId], references: [id])
+  pricingPlanId   String?
+  pricingPlan     PricingPlan?  @relation(fields: [pricingPlanId], references: [id])
   status          String        @default("NEW") // Enum: NEW, MATCHED, etc.
   visibility      String        @default("ADMIN") // Enum: ADMIN, OPEN, ASSIGNED
   requiredSkills  String?       // JSON string: List of skills required to view this request

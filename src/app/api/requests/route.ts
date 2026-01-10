@@ -17,16 +17,11 @@ export async function OPTIONS() {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { clientId, serviceId, amount, description, batches } = body;
+        const { clientId, serviceId, pricingPlanId, amount, description, batches } = body;
 
-        // Ensure Client Exists (Mock Seed Check)
-        // Check if user exists, if not create placeholder to satisfy FK
+        // Ensure Client Exists
         const userExists = await prisma.user.findUnique({ where: { id: clientId } });
         if (!userExists) {
-            // For simplicity in this demo, create the user if missing, assuming clientId is valid format
-            // But usually clientId is 'C-1' or UUID.
-            // We can just upsert.
-            // Using ID as email placeholder if real email not known.
             await prisma.user.create({
                 data: {
                     id: clientId,
@@ -37,32 +32,37 @@ export async function POST(req: Request) {
             });
         }
 
-        // Ensure Service Exists
-        const serviceExists = await prisma.service.findUnique({ where: { id: serviceId } });
-        if (!serviceExists) {
-            // Upsert placeholder service
-            await prisma.service.create({
-                data: {
-                    id: serviceId,
-                    nameEn: 'Custom Service',
-                    nameAr: 'خدمة مخصصة',
-                    price: amount,
-                    description: description || 'Custom Request'
-                }
-            });
+        // Validate Services or Plans
+        if (serviceId) {
+            const serviceExists = await prisma.service.findUnique({ where: { id: serviceId } });
+            if (!serviceExists) {
+                await prisma.service.create({
+                    data: {
+                        id: serviceId,
+                        nameEn: 'Custom Service',
+                        nameAr: 'خدمة مخصصة',
+                        price: amount,
+                        description: description || 'Custom Request'
+                    }
+                });
+            }
+        } else if (pricingPlanId) {
+            const planExists = await prisma.pricingPlan.findUnique({ where: { id: pricingPlanId } });
+            if (!planExists) {
+                return NextResponse.json({ error: 'Invalid Pricing Plan ID' }, { status: 400, headers: corsHeaders });
+            }
         }
 
 
         // Validate simple required fields
-        if (!clientId || !serviceId || !amount) {
-            return NextResponse.json({ error: 'Missing Required Fields' }, { status: 400, headers: corsHeaders });
+        if (!clientId || (!serviceId && !pricingPlanId) || !amount) {
+            return NextResponse.json({ error: 'Missing Required Fields (Service or Plan)' }, { status: 400, headers: corsHeaders });
         }
 
         // Generate Custom Sequential ID (REQ-0000000001)
-        // 1. Find last request with REQ- prefix
         const lastRequest = await prisma.request.findFirst({
             where: { id: { startsWith: 'REQ-' } },
-            orderBy: { id: 'desc' } // String sort works for fixed length padding
+            orderBy: { id: 'desc' }
         });
 
         let nextId = 'REQ-0000000001';
@@ -78,6 +78,7 @@ export async function POST(req: Request) {
                 id: nextId,
                 clientId,
                 serviceId,
+                pricingPlanId,
                 amount,
                 description: description || '',
                 status: 'NEW', // Initial status
@@ -125,7 +126,8 @@ export async function GET(req: Request) {
             include: {
                 batches: { include: { files: true } },
                 transactions: true,
-                service: true
+                service: true,
+                pricingPlan: true
             },
             orderBy: { createdAt: 'desc' }
         });

@@ -40,7 +40,7 @@ const PaymentPage = () => {
                         id: `REQ-${Date.now()}`,
                         clientId: user.id,
                         clientName: user.name,
-                        serviceId: plan.id,
+                        pricingPlanId: plan.id,
                         serviceName: `${plan.name} (${isYearly ? 'Yearly' : 'Monthly'})`,
                         status: 'PENDING_PAYMENT',
                         amount: finalAmount,

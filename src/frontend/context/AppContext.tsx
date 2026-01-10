@@ -290,29 +290,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const res = await fetch(`${API_BASE_URL}/api/requests`);
       if (res.ok) {
         const data = await res.json();
-        // Map backend data format to frontend type if necessary, or ensure they match
-        // Ideally we merge with mocks or replace. For this demo, let's prepend backend data to mocks or replace.
-        // Since we want to see "saved" data, we should prioritize backend.
-        // However, our mocks are static. Let's just append.
-        // Actually, we don't have a full User system on backend yet (auth is skipped), so standardizing IDs is tricky.
-        // We will just log success for now and maybe append to state.
-        // Merge backend data with mocks.
-        // For simplicity, we prioritize backend data if IDs match, or append.
-        // Actually, let's just REPLACE requests with backend data + any mocks that don't exist in backend (if needed).
-        // Since we want to see "new transactions", backend is truth.
-        // But MOCK_REQUESTS should be kept for demo purposes if backend is empty.
 
-        if (Array.isArray(data) && data.length > 0) {
-          // If backend has data, use it. Migh want to mix in mocks if backend has few.
-          // For now, let's just setRequests to (backend + mocks) avoiding duplicates by ID?
-          // Or just PREPEND backend items.
+        // Parse and map service names
+        const parsedData = data.map((d: any) => ({
+          ...d,
+          batches: d.batches?.map((b: any) => ({
+            ...b,
+            files: b.files || []
+          })) || [],
+          // Prioritize Pricing Plan Name if available, then Service Name
+          serviceName: d.pricingPlan ? d.pricingPlan.name : (d.service ? (language === 'en' ? d.service.nameEn : d.service.nameAr) : d.serviceName)
+        }));
+
+        if (Array.isArray(parsedData) && parsedData.length > 0) {
           setRequests(prev => {
-            const newIds = new Set(data.map((d: any) => d.id));
-            const filteredPrev = prev.filter(p => !newIds.has(p.id) && p.id.startsWith('R-')); // Keep mocks (R- prefix) if not colliding
-            return [...data, ...filteredPrev];
+            const newIds = new Set(parsedData.map((d: any) => d.id));
+            const filteredPrev = prev.filter(p => !newIds.has(p.id) && p.id.startsWith('R-'));
+            return [...parsedData, ...filteredPrev];
           });
         }
-        console.log('Fetched requests from DB:', data);
+        console.log('Fetched requests from DB:', parsedData);
       }
     } catch (e) {
       console.error('Failed to fetch requests', e);
