@@ -59,17 +59,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing Required Fields (Service or Plan)' }, { status: 400, headers: corsHeaders });
         }
 
-        // Generate Custom Sequential ID (REQ-0000000001)
+        // Generate Custom Sequential ID (REQ-000001)
         const lastRequest = await prisma.request.findFirst({
             where: { id: { startsWith: 'REQ-' } },
             orderBy: { id: 'desc' }
         });
 
-        let nextId = 'REQ-0000000001';
+        let nextId = 'REQ-000001';
         if (lastRequest) {
             const currentNum = parseInt(lastRequest.id.replace('REQ-', ''), 10);
             if (!isNaN(currentNum)) {
-                nextId = `REQ-${String(currentNum + 1).padStart(10, '0')}`;
+                nextId = `REQ-${String(currentNum + 1).padStart(6, '0')}`;
             }
         }
 

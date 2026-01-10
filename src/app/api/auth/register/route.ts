@@ -70,6 +70,25 @@ export async function POST(request: Request) {
                 }
             }
             userId = `CUS-${nextSerial.toString().padStart(6, '0')}`;
+        } else if (role === 'EXPERT') {
+            // Find last expert ID
+            const lastExpert = await prisma.user.findFirst({
+                where: {
+                    role: 'EXPERT',
+                    id: { startsWith: 'EXP-' }
+                },
+                orderBy: { id: 'desc' },
+                select: { id: true }
+            });
+
+            let nextSerial = 1;
+            if (lastExpert && lastExpert.id) {
+                const parts = lastExpert.id.split('-');
+                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+                    nextSerial = Number(parts[1]) + 1;
+                }
+            }
+            userId = `EXP-${nextSerial.toString().padStart(6, '0')}`;
         }
 
         // 4. Create User
@@ -78,7 +97,7 @@ export async function POST(request: Request) {
 
         const newUser = await prisma.user.create({
             data: {
-                id: userId, // Will be CUS-XXXXXX for clients, undefined (auto-UUID) for others
+                id: userId, // Will be CUS- or EXP- or auto-uuid
                 name,
                 email,
                 password: hashedPassword,
