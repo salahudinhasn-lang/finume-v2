@@ -88,7 +88,7 @@ const JoinExpert = () => {
             email: formData.email,
             password: formData.password,
             role: 'EXPERT',
-            mobileNumber: formData.phone, // Map phone to mobileNumber
+            mobileNumber: `${(formData as any).countryCode || '+966'}${formData.phone}`, // Map phone to mobileNumber with code
             bio: formData.bio,
             yearsExperience: Number(formData.yearsExperience),
             hourlyRate: Number(formData.hourlyRate),
@@ -206,7 +206,40 @@ const JoinExpert = () => {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">{t('joinExpert.phone')}</label>
-                                    <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all font-medium" placeholder="+966 5..." />
+                                    <div className="flex gap-2">
+                                        {/* Country Code Select */}
+                                        <div className="relative w-1/3">
+                                            <select
+                                                name="countryCode"
+                                                value={(formData as any).countryCode || '+966'}
+                                                onChange={(e) => setFormData({ ...formData, countryCode: e.target.value } as any)}
+                                                className="block w-full px-3 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all font-medium"
+                                            >
+                                                <option value="+966">🇸🇦 +966</option>
+                                                <option value="+971">🇦🇪 +971</option>
+                                                <option value="+973">🇧🇭 +973</option>
+                                                <option value="+965">🇰🇼 +965</option>
+                                                <option value="+968">🇴🇲 +968</option>
+                                                <option value="+974">🇶🇦 +974</option>
+                                            </select>
+                                        </div>
+
+                                        <input
+                                            required
+                                            type="tel"
+                                            name="phone"
+                                            maxLength={9}
+                                            value={formData.phone}
+                                            onChange={(e) => {
+                                                // Strip leading zero & non-digits
+                                                let val = e.target.value.replace(/\D/g, '');
+                                                if (val.startsWith('0')) val = val.substring(1);
+                                                setFormData({ ...formData, phone: val });
+                                            }}
+                                            className="w-2/3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all font-medium font-mono tracking-wide"
+                                            placeholder="50 000 0000"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="md:col-span-2 space-y-1">
                                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">{t('joinExpert.linkedinUrl')}</label>

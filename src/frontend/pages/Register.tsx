@@ -32,8 +32,12 @@ const RegisterPage = () => {
     const searchParams = new URLSearchParams(location.search);
     const redirect = searchParams.get('redirect');
 
+    const countryCode = (formData as any).countryCode || '+966';
+    const fullMobile = `${countryCode}${formData.mobileNumber}`;
+
     const user = await register({
       ...formData,
+      mobileNumber: fullMobile,
       role: 'CLIENT'
     });
 
@@ -183,21 +187,49 @@ const RegisterPage = () => {
               <label htmlFor="mobileNumber" className="block text-xs font-bold text-gray-700 uppercase mb-1 ml-1">
                 {t('joinExpert.phone') || "Mobile Number"}
               </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 rtl:left-auto rtl:right-0 rtl:pl-0 rtl:pr-3 flex items-center pointer-events-none transition-colors group-focus-within:text-primary-500">
-                  <Building className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500" /> {/* TODO: Mobile Icon */}
+              <div className="flex gap-2">
+                {/* Country Code Select */}
+                <div className="relative w-1/3">
+                  <select
+                    name="countryCode"
+                    value={(formData as any).countryCode || '+966'}
+                    onChange={(e) => setFormData({ ...formData, countryCode: e.target.value } as any)}
+                    className="block w-full px-3 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all shadow-sm appearance-none font-sans"
+                  >
+                    <option value="+966">🇸🇦 +966</option>
+                    <option value="+971">🇦🇪 +971</option>
+                    <option value="+973">🇧🇭 +973</option>
+                    <option value="+965">🇰🇼 +965</option>
+                    <option value="+968">🇴🇲 +968</option>
+                    <option value="+974">🇶🇦 +974</option>
+                  </select>
                 </div>
-                <input
-                  id="mobileNumber"
-                  name="mobileNumber"
-                  type="tel"
-                  required
-                  value={formData.mobileNumber}
-                  onChange={handleChange}
-                  className="block w-full pl-10 pr-3 rtl:pl-3 rtl:pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder-gray-400 shadow-sm"
-                  placeholder="+966 5..."
-                />
+
+                {/* Number Input */}
+                <div className="relative w-2/3 group">
+                  <div className="absolute inset-y-0 left-0 pl-3 rtl:left-auto rtl:right-0 rtl:pl-0 rtl:pr-3 flex items-center pointer-events-none transition-colors group-focus-within:text-primary-500">
+                    <Building className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500" />
+                    {/* Note: Building icon used as previous. Better valid lucide-react phone icon would be 'Phone' but kept consistent or changed if imported */}
+                  </div>
+                  <input
+                    id="mobileNumber"
+                    name="mobileNumber"
+                    type="tel"
+                    required
+                    maxLength={9}
+                    value={formData.mobileNumber}
+                    onChange={(e) => {
+                      // Strip leading zero & non-digits
+                      let val = e.target.value.replace(/\D/g, '');
+                      if (val.startsWith('0')) val = val.substring(1);
+                      setFormData({ ...formData, mobileNumber: val });
+                    }}
+                    className="block w-full pl-10 pr-3 rtl:pl-3 rtl:pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder-gray-400 shadow-sm font-mono tracking-wide"
+                    placeholder="50 000 0000"
+                  />
+                </div>
               </div>
+              <p className="text-[10px] text-gray-400 mt-1 ml-1">{t('common.phoneHint') || "Enter 9 digits without leading zero"}</p>
             </div>
 
             <div>

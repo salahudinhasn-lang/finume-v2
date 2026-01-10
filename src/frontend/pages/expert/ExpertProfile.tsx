@@ -207,33 +207,37 @@ const ExpertProfile = () => {
                     <Card>
                         <h3 className="font-bold text-gray-800 mb-4">Verification Status</h3>
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
-                                <div className="flex items-center gap-3">
-                                    <Shield size={18} className="text-green-600" />
-                                    <div className="text-sm">
-                                        <p className="font-bold text-gray-800">Identity Verified</p>
-                                        <p className="text-xs text-gray-500">National ID / Iqama</p>
+                            {/* Only show if actually approved/verified */}
+                            {user?.status === 'APPROVED' ? (
+                                <>
+                                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                                        <div className="flex items-center gap-3">
+                                            <Shield size={18} className="text-green-600" />
+                                            <div className="text-sm">
+                                                <p className="font-bold text-gray-800">Account Approved</p>
+                                                <p className="text-xs text-gray-500">Ready to accept requests</p>
+                                            </div>
+                                        </div>
+                                        <CheckCircle size={18} className="text-green-600" />
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                                    <div className="flex items-center gap-3">
+                                        <Shield size={18} className="text-yellow-600" />
+                                        <div className="text-sm">
+                                            <p className="font-bold text-gray-800">Under Review</p>
+                                            <p className="text-xs text-gray-500">We are verifying your profile</p>
+                                        </div>
                                     </div>
                                 </div>
-                                <CheckCircle size={18} className="text-green-600" />
-                            </div>
-
-                            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
-                                <div className="flex items-center gap-3">
-                                    <FileText size={18} className="text-green-600" />
-                                    <div className="text-sm">
-                                        <p className="font-bold text-gray-800">SOCPA Certified</p>
-                                        <p className="text-xs text-gray-500">License Valid</p>
-                                    </div>
-                                </div>
-                                <CheckCircle size={18} className="text-green-600" />
-                            </div>
+                            )}
 
                             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 opacity-60">
                                 <div className="flex items-center gap-3">
                                     <FileText size={18} className="text-gray-500" />
                                     <div className="text-sm">
-                                        <p className="font-bold text-gray-800">Freelance License</p>
+                                        <p className="font-bold text-gray-800">Professional License</p>
                                         <p className="text-xs text-gray-500">Not Uploaded</p>
                                     </div>
                                 </div>

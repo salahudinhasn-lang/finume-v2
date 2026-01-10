@@ -9,7 +9,8 @@ export interface User {
   avatarUrl?: string;
   specializations?: string[];
   mobileNumber?: string;
-  linkedinUrl?: string;
+  linkedinUrl?: string; // Experts
+  status?: 'NEW' | 'VETTING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'SUSPENDED';
 }
 
 export interface Client extends User {

@@ -48,12 +48,37 @@ export async function POST(request: Request) {
         // 2. Hash Password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 3. Create User
+        // 3. Generate Custom ID
+        let userId = undefined; // Let Prisma generate UUID by default for others
+
+        if (role === 'CLIENT') {
+            // Find last client ID
+            const lastClient = await prisma.user.findFirst({
+                where: {
+                    role: 'CLIENT',
+                    id: { startsWith: 'CUS-' }
+                },
+                orderBy: { id: 'desc' },
+                select: { id: true }
+            });
+
+            let nextSerial = 1;
+            if (lastClient && lastClient.id) {
+                const parts = lastClient.id.split('-');
+                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+                    nextSerial = Number(parts[1]) + 1;
+                }
+            }
+            userId = `CUS-${nextSerial.toString().padStart(6, '0')}`;
+        }
+
+        // 4. Create User
         // Note: Avatar generation is nice to keep
         const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`;
 
         const newUser = await prisma.user.create({
             data: {
+                id: userId, // Will be CUS-XXXXXX for clients, undefined (auto-UUID) for others
                 name,
                 email,
                 password: hashedPassword,

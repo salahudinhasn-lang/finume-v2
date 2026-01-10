@@ -58,6 +58,7 @@ interface AppContextType {
   getPermissions: (clientId: string) => ClientFeaturePermissions;
   updatePermissions: (clientId: string, permissions: Partial<ClientFeaturePermissions>) => Promise<void>;
   updateSitePages: (pages: SitePage[]) => Promise<void>;
+  isRestoringSession: boolean;
 }
 
 // Define API Base URL
@@ -67,6 +68,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
   const [language, setLanguage] = useState<'en' | 'ar'>('en');
 
   // "Database" in state
@@ -84,7 +86,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [language]);
 
   useEffect(() => {
-    // Initialize Mock Data
+    // Initialize Mock Data (Empty now as we cleaned it)
     setClients(MOCK_CLIENTS);
     setExperts(MOCK_EXPERTS);
     setRequests(MOCK_REQUESTS);
@@ -92,20 +94,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setServices(SERVICES);
     setPlans(MOCK_PLANS);
 
-    // Legacy payouts
-    setPayoutRequests([
-      { id: 'WD-LEGACY', expertId: 'E1', expertName: 'Expert 1', amount: 0, requestDate: '2023-01-01', processedDate: '2023-01-01', status: 'APPROVED', requestIds: [] }
-    ]);
+    // Legacy payouts - REMOVED
+    setPayoutRequests([]); // Start empty
+
 
     // Check LocalStorage for User Session
     const savedUser = localStorage.getItem('finume_user');
+    console.log("Restoring session, found:", savedUser ? "YES" : "NO");
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        console.log("Session restored for:", parsed.email);
       } catch (e) {
         console.error('Failed to restore session');
       }
     }
+    setIsRestoringSession(false);
+
 
     const initBackend = async () => {
       try {
@@ -694,7 +700,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       settings, updateSettings, clientPermissions, getPermissions, updatePermissions,
       updateSitePages: async (pages) => {
         await updateSettings({ sitePages: JSON.stringify(pages) });
-      }
+      },
+      isRestoringSession
     }}>
       {children}
     </AppContext.Provider>
