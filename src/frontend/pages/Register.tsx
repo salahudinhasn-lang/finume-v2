@@ -8,14 +8,15 @@ import { Mail, Lock, User, Building, Check, Github, Linkedin, ShieldCheck, Star,
 import { Client } from '../types';
 
 const RegisterPage = () => {
-  const { addClient, login, t, language, setLanguage } = useAppContext();
+  const { register, login, t, language, setLanguage } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    companyName: ''
+    companyName: '',
+    mobileNumber: ''
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,19 +31,22 @@ const RegisterPage = () => {
     // Parse query params for redirect logic
     const searchParams = new URLSearchParams(location.search);
     const redirect = searchParams.get('redirect');
-    const action = searchParams.get('action');
-    const serviceId = searchParams.get('serviceId');
-    const planId = searchParams.get('planId');
 
-    const user = await addClient({
+    const user = await register({
       ...formData,
       role: 'CLIENT'
-    } as any);
+    });
 
-    // Wait, addClient is Void in context actions. I need `register` from context.
-    // I need to destructure `register` from `useAppContext()`.
-
-    // Changing implementation to use `register`:
+    if (user) {
+      // Successful registration
+      if (redirect) {
+        navigate(redirect);
+      } else {
+        navigate('/client');
+      }
+    } else {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -170,6 +174,28 @@ const RegisterPage = () => {
                   onChange={handleChange}
                   className="block w-full pl-10 pr-3 rtl:pl-3 rtl:pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder-gray-400 shadow-sm"
                   placeholder="e.g. Acme Corp LLC"
+                />
+              </div>
+            </div>
+
+            {/* Mobile Number Field */}
+            <div>
+              <label htmlFor="mobileNumber" className="block text-xs font-bold text-gray-700 uppercase mb-1 ml-1">
+                {t('joinExpert.phone') || "Mobile Number"}
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 rtl:left-auto rtl:right-0 rtl:pl-0 rtl:pr-3 flex items-center pointer-events-none transition-colors group-focus-within:text-primary-500">
+                  <Building className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500" /> {/* TODO: Mobile Icon */}
+                </div>
+                <input
+                  id="mobileNumber"
+                  name="mobileNumber"
+                  type="tel"
+                  required
+                  value={formData.mobileNumber}
+                  onChange={handleChange}
+                  className="block w-full pl-10 pr-3 rtl:pl-3 rtl:pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder-gray-400 shadow-sm"
+                  placeholder="+966 5..."
                 />
               </div>
             </div>

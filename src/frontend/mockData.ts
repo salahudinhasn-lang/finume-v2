@@ -295,11 +295,7 @@ export const MOCK_ADMINS: Admin[] = [
   }
 ];
 
-export const MOCK_CLIENTS = generateClients(50);
-export const MOCK_EXPERTS = generateExperts(20);
-
 // Combine History and Recent
-const history = generateHistoricalRequests(MOCK_EXPERTS, MOCK_CLIENTS);
-const recent = generateActiveRequests(50, MOCK_CLIENTS, MOCK_EXPERTS);
-
-export const MOCK_REQUESTS = [...history, ...recent].sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+export const MOCK_CLIENTS: Client[] = [];
+export const MOCK_EXPERTS: Expert[] = [];
+export const MOCK_REQUESTS: Request[] = [];

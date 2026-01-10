@@ -16,6 +16,13 @@ const RegisterSchema = z.object({
     role: z.enum(['CLIENT', 'EXPERT', 'ADMIN']).default('CLIENT'),
     companyName: z.string().optional(), // For Client
     industry: z.string().optional(),    // For Client
+    mobileNumber: z.string().min(9),    // Required
+    // Expert fields
+    bio: z.string().optional(),
+    yearsExperience: z.union([z.string(), z.number()]).optional(),
+    hourlyRate: z.union([z.string(), z.number()]).optional(),
+    specializations: z.array(z.string()).optional(),
+    linkedinUrl: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -27,7 +34,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Validation failed', details: result.error.format() }, { status: 400 });
         }
 
-        const { name, email, password, role, companyName, industry } = result.data;
+        const { name, email, password, role, companyName, industry, mobileNumber, bio, yearsExperience, hourlyRate, specializations, linkedinUrl } = result.data;
 
         // 1. Check if user exists
         const existing = await prisma.user.findUnique({
@@ -43,7 +50,7 @@ export async function POST(request: Request) {
 
         // 3. Create User
         // Note: Avatar generation is nice to keep
-        const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${name}`;
+        const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`;
 
         const newUser = await prisma.user.create({
             data: {
@@ -52,8 +59,18 @@ export async function POST(request: Request) {
                 password: hashedPassword,
                 role,
                 avatarUrl,
+                mobileNumber,
                 companyName: role === 'CLIENT' ? companyName : undefined,
                 industry: role === 'CLIENT' ? industry || 'General' : undefined,
+
+                // Expert Specific
+                bio: role === 'EXPERT' ? bio : undefined,
+                yearsExperience: role === 'EXPERT' ? Number(yearsExperience) : undefined,
+                hourlyRate: role === 'EXPERT' ? Number(hourlyRate) : undefined,
+                specializations: role === 'EXPERT' && specializations ? JSON.stringify(specializations) : undefined,
+                linkedinUrl: role === 'EXPERT' ? linkedinUrl : undefined,
+                status: role === 'EXPERT' ? 'VETTING' : undefined,
+
                 // Client Defaults
                 totalSpent: 0,
                 zatcaStatus: 'GREEN',

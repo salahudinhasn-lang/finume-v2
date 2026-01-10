@@ -95,86 +95,8 @@ async function main() {
   }
   console.log('Admins seeded.');
 
-  // 4. CLIENTS & EXPERTS (Generating manually to avoid importing frontend code)
-  // CLIENTS
-  const cities = ['Riyadh', 'Jeddah', 'Dammam', 'Khobar', 'Mecca'];
-  const industries = ['Retail', 'Services', 'Manufacturing', 'Tech', 'Healthcare'];
-  for (let i = 0; i < 50; i++) {
-    const id = `C${i + 1}`;
-    const email = `client${i + 1}@example.com`;
-    await prisma.user.upsert({
-      where: { email },
-      update: { password },
-      create: {
-        id,
-        email,
-        name: `Company ${i + 1} ${cities[i % cities.length]}`,
-        role: 'CLIENT',
-        companyName: `Company ${i + 1} LLC`,
-        industry: industries[i % industries.length],
-        totalSpent: Math.floor(Math.random() * 50000),
-        zatcaStatus: ['GREEN', 'YELLOW', 'RED'][Math.floor(Math.random() * 3)],
-        avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=C${i}&backgroundColor=e0f2fe`,
-        password
-      }
-    });
-  }
-  console.log('Clients seeded.');
-
-  // EXPERTS
-  const expertBios = [
-    "Certified CPA with over 10 years of experience in Saudi Tax Law and ZATCA compliance.",
-    "Financial analyst specializing in retail sector growth strategies and bookkeeping.",
-    "Former Big 4 auditor helping SMEs streamline their financial reporting.",
-    "Zakat and Tax expert with a focus on manufacturing and logistics companies.",
-    "Virtual CFO helping tech startups manage burn rate and fundraising preparation."
-  ];
-  for (let i = 0; i < 20; i++) {
-    const id = `E${i + 1}`;
-    const email = `expert${i + 1}@example.com`;
-    await prisma.user.upsert({
-      where: { email },
-      update: { password },
-      create: {
-        id,
-        email,
-        name: `Expert ${i + 1}`,
-        role: 'EXPERT',
-        specializations: JSON.stringify(['VAT Compliance', 'Bookkeeping']), // Simplified
-        status: i < 15 ? 'ACTIVE' : 'VETTING',
-        // totalEarned calculated from requests usually, but seeding initial value
-        totalEarned: 0,
-        rating: 4.5 + (Math.random() * 0.5),
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=Expert${i}`,
-        bio: expertBios[i % expertBios.length],
-        yearsExperience: 5 + Math.floor(Math.random() * 15),
-        hourlyRate: 200 + Math.floor(Math.random() * 300),
-        isPremium: i % 3 === 0,
-        isFeatured: i % 4 === 0,
-        password
-      }
-    });
-  }
-  console.log('Experts seeded.');
-
-  // 5. REQUESTS (Simplified generation)
-  // We need to fetch clients and experts to link them correctly if IDs were auto-generated, 
-  // but we forced IDs (C1, E1) so we can map easily.
-
-  // Create some requests
-  console.log('Seeding Requests...');
-  // ... (Skipping complex request generation for brevity, but ensuring at least some exist)
-  // Let's create one request for Client 1 and Expert 1
-  await prisma.request.create({
-    data: {
-      clientId: 'C1',
-      serviceId: 'S1',
-      status: 'MATCHED',
-      amount: 500,
-      assignedExpertId: 'E1',
-      description: 'Seeded Request for VAT Filing',
-    }
-  }).catch((e: any) => console.log('Request creation failed (might already exist or ID mismatch)', e.message));
+  // 4. CLIENTS & EXPERTS
+  console.log('Skipping fake client/expert generation to keep DB clean.');
 
   console.log('Seeding finished.');
 }

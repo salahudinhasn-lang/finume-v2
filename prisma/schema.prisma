@@ -28,6 +28,7 @@ model User {
   industry    String?
   totalSpent  Float    @default(0)
   zatcaStatus String?  // Enum: GREEN, YELLOW, RED
+  mobileNumber String?
 
   // Expert specific
   specializations String? // Stored as JSON or comma-separated
@@ -35,6 +36,7 @@ model User {
   totalEarned     Float    @default(0)
   rating          Float    @default(0)
   bio             String?
+  linkedinUrl     String?
   yearsExperience Int?
   hourlyRate      Float?
   isPremium       Boolean  @default(false)

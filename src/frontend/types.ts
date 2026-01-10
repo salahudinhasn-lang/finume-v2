@@ -8,6 +8,8 @@ export interface User {
   role: UserRole;
   avatarUrl?: string;
   specializations?: string[];
+  mobileNumber?: string;
+  linkedinUrl?: string;
 }
 
 export interface Client extends User {

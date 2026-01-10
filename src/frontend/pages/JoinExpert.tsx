@@ -8,7 +8,7 @@ import { Expert } from '../types';
 import { Logo } from '../components/Logo';
 
 const JoinExpert = () => {
-    const { addExpert, login, t, language, setLanguage } = useAppContext();
+    const { register, t, language, setLanguage } = useAppContext();
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -79,29 +79,28 @@ const JoinExpert = () => {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const newExpert: Expert = {
-            id: `EXP-${Date.now()}`,
-            role: 'EXPERT',
+        // Map form data to API payload schema
+        const payload = {
             name: formData.name,
             email: formData.email,
-            avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=random`,
+            password: formData.password,
+            role: 'EXPERT',
+            mobileNumber: formData.phone, // Map phone to mobileNumber
             bio: formData.bio,
             yearsExperience: Number(formData.yearsExperience),
             hourlyRate: Number(formData.hourlyRate),
-            specializations: formData.specializations.length > 0 ? formData.specializations : ['General Accounting'],
-            status: 'VETTING',
-            rating: 0.0,
-            totalEarned: 0,
-            isPremium: false,
-            isFeatured: false,
+            specializations: formData.specializations,
+            linkedinUrl: formData.linkedin,
         };
 
-        addExpert(newExpert);
-        login(newExpert.email, 'EXPERT', newExpert);
-        navigate('/expert');
+        const user = await register(payload);
+
+        if (user) {
+            navigate('/expert');
+        }
     };
 
     return (
