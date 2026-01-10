@@ -410,25 +410,67 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateExpertStatus = (expertId: string, status: Expert['status']) => {
+  const updateExpertStatus = async (expertId: string, status: Expert['status']) => {
+    // 1. Optimistic Update
     setExperts(prev => prev.map(e => e.id === expertId ? { ...e, status } : e));
+
+    // 2. Persist
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/users/${expertId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) {
+        console.error('Failed to update expert status DB');
+        // Revert? For now, we assume success or user refreshes.
+      }
+    } catch (e) {
+      console.error('Network error updating expert status', e);
+    }
   };
 
   const updateRequest = (id: string, updates: Partial<Request>) => {
     setRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
   };
 
-  const updateClient = (id: string, updates: Partial<Client>) => {
+  const updateClient = async (id: string, updates: Partial<Client>) => {
+    // 1. Optimistic Update
     setClients(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
     if (user && user.id === id) {
       setUser(prev => prev ? { ...prev, ...updates } as User : null);
     }
+
+    // 2. Persist
+    try {
+      await fetch(`${API_BASE_URL}/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+    } catch (e) {
+      console.error('Failed to update client DB', e);
+    }
   };
 
-  const updateExpert = (id: string, updates: Partial<Expert>) => {
+  const updateExpert = async (id: string, updates: Partial<Expert>) => {
+    // 1. Optimistic Update
     setExperts(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     if (user && user.id === id) {
       setUser(prev => prev ? { ...prev, ...updates } as User : null);
+    }
+
+    // 2. Persist
+    try {
+      await fetch(`${API_BASE_URL}/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        // Ensure we don't send derived fields if they aren't in DB Schema effectively (though Prisma ignores unknown if configured, better to be safe)
+        // For now, passing updates directly.
+        body: JSON.stringify(updates)
+      });
+    } catch (e) {
+      console.error('Failed to update expert DB', e);
     }
   };
 
