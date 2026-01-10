@@ -349,6 +349,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const payload = {
         clientId: req.clientId,
         serviceId: req.serviceId,
+        pricingPlanId: req.pricingPlanId,
         description: req.description,
         amount: req.amount,
         batches: req.batches

@@ -44,7 +44,7 @@ const ClientServices = () => {
             id: requestId,
             clientId: user.id,
             clientName: user.name,
-            serviceId: 'PLAN_SUB',
+            pricingPlanId: selectedPlan ? selectedPlan.id : undefined,
             serviceName: selectedPlan ? `Subscription: ${selectedPlan.name}` : 'Plan Subscription',
             status: 'PENDING_PAYMENT',
             amount: selectedPlan ? selectedPlan.price : 0,
