@@ -23,7 +23,7 @@ interface AppContextType {
   payoutRequests: PayoutRequest[];
 
   // Actions
-  addRequest: (req: Request) => void;
+  addRequest: (req: Request) => Promise<Request | null>;
   updateRequestStatus: (id: string, status: Request['status']) => void;
   assignRequest: (requestId: string, expertId: string) => void;
   updateExpertStatus: (expertId: string, status: Expert['status']) => void;
@@ -350,7 +350,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const addRequest = async (req: Request) => {
+  const addRequest = async (req: Request): Promise<Request | null> => {
     // 1. Optimistic UI Update
     setRequests(prev => [req, ...prev]);
 
@@ -376,14 +376,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Update the temporary ID with the real one from DB
         setRequests(prev => prev.map(r => r.id === req.id ? { ...savedReq, status: r.status, batches: req.batches } : r));
         console.log('Request saved to DB:', savedReq);
+        return savedReq;
       } else {
         const err = await res.json();
         console.error('Failed to save request:', err);
         alert(`Failed to save request: ${err.error || 'Unknown error'}`);
+        return null;
       }
     } catch (error) {
       console.error('Failed to save request to DB', error);
       alert('Network error: Request not saved to database.');
+      return null;
     }
   };
 

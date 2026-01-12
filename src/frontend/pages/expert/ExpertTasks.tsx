@@ -50,33 +50,47 @@ const ExpertTasks = () => {
         return status;
     };
 
-    const handleStart = (e: React.MouseEvent, id: string) => {
-        e.stopPropagation();
-        updateRequestStatus(id, 'IN_PROGRESS');
+    // Timer Component
+    const WorkTimer = ({ startTime }: { startTime?: string }) => {
+        const [elapsed, setElapsed] = useState(0);
+
+        useEffect(() => {
+            if (!startTime) return;
+            const start = new Date(startTime).getTime();
+            const interval = setInterval(() => {
+                setElapsed(Math.floor((Date.now() - start) / 1000));
+            }, 1000);
+            return () => clearInterval(interval);
+        }, [startTime]);
+
+        const formatTime = (seconds: number) => {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return `${h}h ${m}m ${s}s`;
+        };
+
+        return (
+            <div className="flex items-center gap-2 text-blue-600 font-mono text-sm bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                <Clock size={16} className="animate-pulse" />
+                {formatTime(elapsed)}
+            </div>
+        );
     };
 
-    const handleClaim = (e: React.MouseEvent, req: Request) => {
+    const handleStart = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (user) {
-            updateRequest(req.id, {
-                assignedExpertId: user.id,
-                expertName: user.name,
-                status: 'MATCHED',
-                visibility: 'ASSIGNED'
-            });
-        }
+        // Persist IN_PROGRESS and workStartedAt
+        updateRequest(id, {
+            status: 'IN_PROGRESS',
+            workStartedAt: new Date().toISOString()
+        });
     };
 
     const handleSubmit = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        updateRequestStatus(id, 'REVIEW_CLIENT');
-    };
-
-    const handleUpdateBatches = (newBatches: FileBatch[]) => {
-        if (selectedTask) {
-            updateRequest(selectedTask.id, { batches: newBatches });
-            setSelectedTask(prev => prev ? { ...prev, batches: newBatches } : null);
-        }
+        // Persist REVIEW_CLIENT
+        updateRequest(id, { status: 'REVIEW_CLIENT' });
     };
 
     return (
@@ -136,6 +150,10 @@ const ExpertTasks = () => {
                                             <span className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold border border-indigo-100">
                                                 <Layers size={10} /> Sub-task
                                             </span>
+                                        )}
+                                        {/* Timer in List View */}
+                                        {req.status === 'IN_PROGRESS' && req.workStartedAt && (
+                                            <WorkTimer startTime={req.workStartedAt} />
                                         )}
                                     </div>
                                     <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{req.serviceName}</h3>
@@ -220,8 +238,14 @@ const ExpertTasks = () => {
                                                     <div className="flex justify-between items-start mb-2">
                                                         <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{req.id}</span>
                                                         {isOpen && <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">OPEN</span>}
+                                                        {/* Timer in Board View */}
+                                                        {req.status === 'IN_PROGRESS' && req.workStartedAt && (
+                                                            <div className="scale-75 origin-top-right absolute right-2 top-2">
+                                                                <WorkTimer startTime={req.workStartedAt} />
+                                                            </div>
+                                                        )}
                                                         {/* Context Menu Mock */}
-                                                        <button className="text-gray-300 hover:text-gray-500"><MoreVertical size={14} /></button>
+                                                        {(!req.status || req.status !== 'IN_PROGRESS') && <button className="text-gray-300 hover:text-gray-500"><MoreVertical size={14} /></button>}
                                                     </div>
                                                     <h4 className="font-bold text-gray-800 text-sm mb-1 leading-snug">{req.serviceName}</h4>
                                                     <p className="text-xs text-gray-500 mb-3 truncate">{req.clientName}</p>
@@ -273,6 +297,10 @@ const ExpertTasks = () => {
                                 <div className="flex items-center gap-3 mb-1">
                                     <h2 className="text-xl font-bold text-gray-900">{selectedTask.serviceName}</h2>
                                     <Badge status={selectedTask.status} />
+                                    {/* Timer in Modal */}
+                                    {selectedTask.status === 'IN_PROGRESS' && selectedTask.workStartedAt && (
+                                        <WorkTimer startTime={selectedTask.workStartedAt} />
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-4 text-sm text-gray-500">
                                     <span className="flex items-center gap-1"><User size={14} /> {selectedTask.clientName}</span>
@@ -351,12 +379,12 @@ const ExpertTasks = () => {
                                 {selectedTask.assignedExpertId === user?.id && (
                                     <>
                                         {selectedTask.status === 'MATCHED' && (
-                                            <Button onClick={() => updateRequestStatus(selectedTask.id, 'IN_PROGRESS')} className="bg-blue-600 hover:bg-blue-700">
+                                            <Button onClick={(e) => { handleStart(e, selectedTask.id); setSelectedTask(null); }} className="bg-blue-600 hover:bg-blue-700">
                                                 Start Project
                                             </Button>
                                         )}
                                         {selectedTask.status === 'IN_PROGRESS' && (
-                                            <Button onClick={() => updateRequestStatus(selectedTask.id, 'REVIEW_CLIENT')} className="bg-purple-600 hover:bg-purple-700 shadow-lg">
+                                            <Button onClick={(e) => { handleSubmit(e, selectedTask.id); setSelectedTask(null); }} className="bg-purple-600 hover:bg-purple-700 shadow-lg">
                                                 Submit for Approval
                                             </Button>
                                         )}

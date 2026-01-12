@@ -8,7 +8,7 @@ import { Request } from '../../types';
 import { MOCK_PLANS } from '../../mockData';
 
 const PaymentPage = () => {
-    const { user, addRequest, updateRequestStatus, requests, services, plans, t, language, settings } = useAppContext();
+    const { user, addRequest, updateRequest, requests, services, plans, t, language, settings } = useAppContext();
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
@@ -114,7 +114,7 @@ const PaymentPage = () => {
                 const isExisting = requests.some(r => r.id === pendingRequest.id);
 
                 if (isExisting) {
-                    updateRequestStatus(pendingRequest.id, 'NEW');
+                    updateRequest(pendingRequest.id, { status: 'NEW' });
                 } else {
                     addRequest({ ...pendingRequest, status: 'NEW' });
                 }

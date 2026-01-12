@@ -198,6 +198,8 @@ export interface Request {
   review?: Review;
   batches?: FileBatch[];
   payoutId?: string; // Link to a PayoutRequest. If undefined, it is "Unsettled".
+  workStartedAt?: string; // ISO String
+  completedAt?: string; // ISO String
 }
 
 export interface Transaction {

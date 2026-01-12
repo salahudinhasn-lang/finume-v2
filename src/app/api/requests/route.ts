@@ -81,7 +81,7 @@ export async function POST(req: Request) {
                 pricingPlanId,
                 amount,
                 description: description || '',
-                status: 'NEW', // Initial status
+                status: 'PENDING', // Initial status
                 batches: {
                     create: batches ? batches.map((b: any) => ({
                         status: b.status,
