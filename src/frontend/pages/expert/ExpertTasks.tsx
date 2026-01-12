@@ -93,6 +93,24 @@ const ExpertTasks = () => {
         updateRequest(id, { status: 'REVIEW_CLIENT' });
     };
 
+    const handleClaim = (e: React.MouseEvent, req: Request) => {
+        e.stopPropagation();
+        if (!user) return;
+        updateRequest(req.id, {
+            assignedExpertId: user.id,
+            expertName: user.name,
+            status: 'MATCHED',
+            visibility: 'ASSIGNED'
+        });
+    };
+
+    const handleUpdateBatches = (batches: any[]) => {
+        if (selectedTask) {
+            updateRequest(selectedTask.id, { batches });
+            setSelectedTask(prev => prev ? { ...prev, batches } : null);
+        }
+    };
+
     return (
         <div className="space-y-6 h-full flex flex-col">
             {/* Controls Header */}
