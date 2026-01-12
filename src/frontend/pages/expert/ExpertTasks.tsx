@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/UI';
 import { Check, Play, Filter, Search, Send, LayoutGrid, List, Clock, User, Calendar, Paperclip, MoreVertical, FileText, AlertCircle, MessageSquare, X, Layers, Briefcase } from 'lucide-react';
