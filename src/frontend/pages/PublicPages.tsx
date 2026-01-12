@@ -42,7 +42,7 @@ const Section = ({ children, className = '' }: { children: React.ReactNode, clas
 );
 
 export const ServicesPage = () => {
-    const { services, user, t } = useAppContext();
+    const { services, user, t, addRequest } = useAppContext();
     const navigate = useNavigate();
 
     const getIcon = (name: string) => {
@@ -56,10 +56,30 @@ export const ServicesPage = () => {
 
     const handleBookService = (serviceId: string) => {
         if (user) {
-            // Direct to checkout if logged in
-            navigate(`/client/checkout?serviceId=${serviceId}`);
+            const service = services.find(s => s.id === serviceId);
+            if (!service) return;
+
+            const newReq: any = {
+                id: `REQ-${Date.now()}`,
+                serviceId: service.id,
+                serviceName: service.nameEn,
+                clientId: user.id,
+                clientName: user.name,
+                expertId: null,
+                expertName: null,
+                status: 'PENDING_PAYMENT',
+                dateCreated: new Date().toISOString(),
+                amount: service.price,
+                description: service.description,
+                batches: []
+            };
+
+            addRequest(newReq);
+            navigate(`/client/request-received/${newReq.id}`);
         } else {
-            navigate(`/login?redirect=/client/checkout&serviceId=${serviceId}`);
+            // Redirect to Services page after login so they can book from there, 
+            // or ideally we handle auto-booking. For now, sending to services to avoid skipping flow.
+            navigate(`/login?redirect=/client/services`);
         }
     };
 
@@ -155,7 +175,7 @@ export const ServicesPage = () => {
 };
 
 export const PricingPage = () => {
-    const { plans, user, t, settings } = useAppContext();
+    const { plans, user, t, settings, addRequest } = useAppContext();
     const navigate = useNavigate();
     const [billing, setBilling] = useState<'MONTHLY' | 'YEARLY'>('YEARLY');
     const [highlightedPlan, setHighlightedPlan] = useState<string | null>(null);
@@ -169,10 +189,32 @@ export const PricingPage = () => {
 
     const handleSelectPlan = (planId: string) => {
         if (user) {
-            // Direct to checkout if logged in
-            navigate(`/client/checkout?planId=${planId}&billing=${billing}`);
+            const plan = plans.find(p => p.id === planId);
+            if (!plan) return;
+
+            const discount = billing === 'YEARLY' ? (settings?.yearlyDiscountPercentage || 20) / 100 : 0;
+            const finalPrice = billing === 'YEARLY' ? Math.round(plan.price * (1 - discount)) : plan.price;
+
+            const newReq: any = {
+                id: `SUB-${Date.now()}`,
+                serviceId: plan.id,
+                serviceName: `${plan.name} (${billing})`,
+                clientId: user.id,
+                clientName: user.name,
+                expertId: null,
+                expertName: null,
+                status: 'PENDING_PAYMENT',
+                dateCreated: new Date().toISOString(),
+                amount: finalPrice,
+                description: `Subscription to ${plan.name} plan. Billed ${billing}.`,
+                batches: []
+            };
+
+            addRequest(newReq);
+            navigate(`/client/request-received/${newReq.id}`);
         } else {
-            navigate(`/login?redirect=/client/checkout&planId=${planId}&billing=${billing}`);
+            // Redirect to Pricing page after login
+            navigate(`/login?redirect=/pricing`);
         }
     };
 

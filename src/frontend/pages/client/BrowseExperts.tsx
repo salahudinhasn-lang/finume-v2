@@ -119,10 +119,14 @@ const BrowseExperts = () => {
                 description: `AI Matched Request based on: "${matchInput}". Client requested admin assignment.`
             };
             addRequest(req);
-            navigate('/client/checkout', { state: { pendingRequest: req } });
+            navigate(`/client/request-received/${req.id}`);
         } else {
-            // Not logged in: Redirect to register with params
-            navigate(`/register?redirect=/client&action=book_service&serviceId=${matchedService.id}`);
+            // Not logged in: Redirect to register with params - logic handled in Register to eventually redirect to Request Received?
+            // Actually, we should probably redirect to Service Page or Expert Page in a real flow if they aren't logged in, 
+            // but for now keeping it simple. But ideally we want to preserve the "Request" intent.
+            // Let's redirect to login which then redirects to this page, or handle it via query params.
+            // For now, simpler:
+            navigate(`/login?redirect=/client/experts`);
         }
         setShowMatchModal(false);
     };
@@ -148,7 +152,7 @@ const BrowseExperts = () => {
                 description: `Direct hire request for ${service.nameEn}`
             };
             addRequest(req);
-            navigate('/client/checkout', { state: { pendingRequest: req } });
+            navigate(`/client/request-received/${req.id}`);
         }
     };
 

@@ -11,7 +11,7 @@ interface PricingTableProps {
 
 const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: PricingTableProps) => {
     const navigate = useNavigate();
-    const { settings, plans, user } = useAppContext();
+    const { settings, plans, user, addRequest } = useAppContext();
     const [internalBilling, setInternalBilling] = useState<'monthly' | 'yearly'>('monthly');
     const [showOverage, setShowOverage] = useState(false);
 
@@ -162,11 +162,31 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
                                     <td key={plan.id} className={`p-4 border-l border-gray-200 ${isHighlighted ? 'bg-blue-50/50' : ''}`}>
                                         <button
                                             onClick={() => {
-                                                const url = `/client/checkout?planId=${plan.id}&billing=${billingCycle}`;
                                                 if (user) {
-                                                    navigate(url);
+                                                    const discount = billingCycle === 'yearly' ? (settings?.yearlyDiscountPercentage || 20) / 100 : 0;
+                                                    const finalPrice = billingCycle === 'yearly' ? Math.round(plan.price * (1 - discount)) : plan.price;
+
+                                                    const newReq: any = {
+                                                        id: `SUB-${Date.now()}`,
+                                                        serviceId: plan.id,
+                                                        serviceName: `${plan.name} (${billingCycle})`,
+                                                        clientId: user.id,
+                                                        clientName: user.name,
+                                                        expertId: null,
+                                                        expertName: null,
+                                                        status: 'PENDING_PAYMENT',
+                                                        dateCreated: new Date().toISOString(),
+                                                        amount: finalPrice,
+                                                        description: `Subscription to ${plan.name} plan. Billed ${billingCycle}.`,
+                                                        batches: []
+                                                    };
+
+                                                    if (addRequest) {
+                                                        addRequest(newReq);
+                                                        navigate(`/client/request-received/${newReq.id}`);
+                                                    }
                                                 } else {
-                                                    navigate(`/login?redirect=${url}`);
+                                                    navigate(`/login?redirect=/pricing`);
                                                 }
                                             }}
                                             className={`block w-full py-3 text-center rounded-xl font-bold transition-all shadow-sm hover:shadow-md ${plan.isPopular || isHighlighted
