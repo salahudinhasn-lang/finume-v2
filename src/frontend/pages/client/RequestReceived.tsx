@@ -41,59 +41,111 @@ const RequestReceived = () => {
     }
 
     return (
-        <div className="max-w-3xl mx-auto py-12 px-4 animate-in fade-in slide-in-from-bottom-8">
-            <Card className="p-8 shadow-2xl border-t-4 border-t-green-500">
-                <div className="text-center mb-8">
-                    <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
-                        <CheckCircle size={40} />
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Request Received</h1>
-                    <p className="text-gray-500 text-lg">Your request has been created successfully and is pending payment.</p>
-                </div>
+        <div className="max-w-5xl mx-auto py-8 px-4 animate-in fade-in slide-in-from-bottom-8 font-sans">
 
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-8">
-                    <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <FileText size={18} className="text-gray-500" /> Request Details
+            {/* Stepper */}
+            <div className="flex items-center justify-between max-w-4xl mx-auto mb-12 relative px-4 text-sm font-bold text-gray-400">
+                {/* Connector Line */}
+                <div className="absolute left-0 top-4 right-0 h-1 bg-gray-200 -z-10 rounded-full"></div>
+
+                {/* Steps */}
+                {['Select Service', 'Confirm Request', 'Received', 'Payment'].map((step, i) => {
+                    const stepNum = i + 1;
+                    const isActive = stepNum === 3; // Current step
+                    const isCompleted = stepNum < 3;
+
+                    return (
+                        <div key={i} className="flex flex-col items-center gap-2 bg-gray-50 px-2 box-decoration-clone">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-colors ${isActive ? 'bg-green-500 border-green-500 text-white' :
+                                    isCompleted ? 'bg-green-500 border-green-500 text-white' :
+                                        'bg-white border-gray-300 text-gray-400'
+                                }`}>
+                                {isCompleted ? <CheckCircle size={16} /> : stepNum}
+                            </div>
+                            <span className={`${isActive || isCompleted ? 'text-gray-800' : ''}`}>{step}</span>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Main Content Card - Mint Background */}
+            <div className="bg-[#EAFDF5] rounded-[2rem] p-8 md:p-12 shadow-sm text-center relative overflow-hidden border border-green-50">
+
+                <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">Request Received Successfully</h1>
+                <p className="text-gray-600 mb-12 max-w-xl mx-auto text-lg">
+                    Your request has been received. You can now proceed to payment to finalize your order.
+                </p>
+
+                {/* Details Card - White */}
+                <div className="bg-white rounded-3xl p-8 shadow-sm text-left mb-12 max-w-4xl mx-auto">
+                    <h3 className="font-bold text-gray-900 text-xl mb-8 flex items-center justify-between">
+                        Request Details
+                        <span className="text-xs font-normal text-gray-400 bg-gray-50 px-3 py-1 rounded-full border">ID: {request.id}</span>
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <p className="text-sm text-gray-500 mb-1">Service / Plan</p>
-                            <p className="font-bold text-gray-900 text-lg">{request.serviceName}</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
+                        {/* Service Type */}
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-gray-50 rounded-xl text-gray-500">
+                                <FileText size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Service Type</p>
+                                <p className="font-bold text-gray-900 text-lg">{request.serviceName}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500 mb-1">Request ID</p>
-                            <p className="font-mono text-gray-700 bg-white px-2 py-1 rounded border inline-block">{request.id}</p>
+
+                        {/* Amount */}
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-gray-50 rounded-xl text-gray-500">
+                                <Calendar size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Date Created</p>
+                                <p className="font-bold text-gray-900 text-lg">{new Date(request.dateCreated || request.createdAt!).toLocaleDateString()}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500 mb-1">Amount Due</p>
-                            <p className="font-bold text-primary-600 text-xl">{request.amount.toLocaleString()} SAR</p>
+
+                        {/* Client Name */}
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-gray-50 rounded-xl text-gray-500">
+                                <CheckCircle size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Client Name</p>
+                                <p className="font-bold text-gray-900 text-lg">{request.clientName || 'Valued Client'}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500 mb-1">Created Date</p>
-                            <div className="flex items-center gap-2 text-gray-700 font-medium">
-                                <Calendar size={16} />
-                                {new Date(request.dateCreated || request.createdAt!).toLocaleDateString()}
+
+                        {/* Amount */}
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-gray-50 rounded-xl text-gray-500">
+                                <ArrowRight size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Total Amount</p>
+                                <p className="font-bold text-primary-600 text-lg">{request.amount.toLocaleString()} SAR</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Button
-                        variant="danger"
+                {/* Action Buttons */}
+                <div className="flex flex-col-reverse sm:flex-row gap-4 justify-center items-center">
+                    <button
                         onClick={handleCancel}
-                        className="flex items-center justify-center gap-2 px-8"
+                        className="w-full sm:w-auto px-12 py-3.5 rounded-xl bg-red-100 text-red-600 font-bold hover:bg-red-200 transition-colors"
                     >
-                        <XCircle size={18} /> Cancel Order
-                    </Button>
-                    <Button
+                        Cancel Order
+                    </button>
+                    <button
                         onClick={handleContinue}
-                        className="flex items-center justify-center gap-2 px-8 bg-gray-900 text-white hover:bg-gray-800 shadow-lg transform transition-transform hover:-translate-y-1"
+                        className="w-full sm:w-auto px-12 py-3.5 rounded-xl bg-[#FCD34D] text-gray-900 font-bold hover:bg-[#FBBF24] shadow-lg shadow-yellow-100 transition-all transform hover:-translate-y-1"
                     >
-                        Continue to Payment <ArrowRight size={18} />
-                    </Button>
+                        Continue to Payment
+                    </button>
                 </div>
-            </Card>
+            </div>
         </div>
     );
 };

@@ -183,7 +183,7 @@ const ClientDashboard = () => {
 
                     <div className="flex flex-col gap-4 w-full md:w-auto">
                         <Button
-                            onClick={() => navigate('/pricing')}
+                            onClick={() => navigate('/client/services')}
                             className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white shadow-lg w-full justify-center md:w-auto text-lg h-auto py-3"
                         >
                             <Plus size={24} className="mr-2" /> Add Request
