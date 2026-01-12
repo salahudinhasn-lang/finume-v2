@@ -81,7 +81,7 @@ export async function POST(req: Request) {
                 pricingPlanId,
                 amount,
                 description: description || '',
-                status: 'PENDING', // Initial status
+                status: body.status || 'PENDING_PAYMENT', // Use provided status or default to PENDING_PAYMENT
                 batches: {
                     create: batches ? batches.map((b: any) => ({
                         status: b.status,

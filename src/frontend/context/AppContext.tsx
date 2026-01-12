@@ -380,7 +380,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } else {
         const err = await res.json();
         console.error('Failed to save request:', err);
-        alert(`Failed to save request: ${err.error || 'Unknown error'}`);
+        alert(`Failed to save request: ${err.error || 'Unknown error'} \nDetails: ${err.details || ''}`);
         return null;
       }
     } catch (error) {
