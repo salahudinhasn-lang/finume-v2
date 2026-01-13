@@ -180,6 +180,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Fetch Requests
         await fetchRequests();
 
+        // Fetch Pool (API will return 403 if not expert, or empty. Safe to call, or check valid user? No user yet in initBackend variable scope?
+        // Actually initBackend runs once. User might not be logged in yet? 
+        // Logic issue: initBackend runs on mount. login() sets user.
+        // We should trigger fetch on user change?
+        // AppContext Lines 116.
+        // Let's call it. If 403, it catches.
+        await fetchPool();
+
         // Fetch Services
         const servicesRes = await fetch(`${API_BASE_URL}/api/services`);
         if (servicesRes.ok) {
@@ -347,6 +355,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (e) {
       console.error('Failed to fetch requests', e);
+    }
+  };
+
+  // Fetch Pool (for Experts)
+  const fetchPool = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/pool`);
+      if (res.ok) {
+        const data = await res.json();
+        // Parse and map service names (Same logic as fetchRequests - reusable?)
+        const parsedData = data.map((d: any) => ({
+          ...d,
+          batches: d.batches?.map((b: any) => ({ ...b, files: b.files || [] })) || [],
+          serviceName: d.pricingPlan ? d.pricingPlan.name : (d.service ? (language === 'en' ? d.service.nameEn : d.service.nameAr) : d.serviceName),
+          clientName: d.client ? d.client.name : 'Unknown Client',
+          expertName: d.assignedExpert ? d.assignedExpert.name : (d.expertName || ''),
+          dateCreated: d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-CA') : (d.dateCreated || new Date().toISOString().split('T')[0]),
+          requiredSkills: typeof d.requiredSkills === 'string' ? JSON.parse(d.requiredSkills) : (d.requiredSkills || [])
+        }));
+
+        setRequests(prev => {
+          // Merge pool into requests, avoiding duplicates
+          const newIds = new Set(parsedData.map((d: any) => d.id));
+          const filteredPrev = prev.filter(p => !newIds.has(p.id));
+          return [...filteredPrev, ...parsedData];
+        });
+        console.log('Fetched pool:', parsedData);
+      }
+    } catch (e) {
+      console.error('Failed to fetch pool', e);
     }
   };
 

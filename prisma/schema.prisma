@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,214 +7,269 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enums
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EXPERT
+  CLIENT
+}
+
+enum AdminLevel {
+  FINANCE
+  COMPLIANCE
+  OPS
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ServiceType {
+  ONE_TIME
+  RECURRING
+}
+
+enum CommissionType {
+  FIXED
+  PERCENTAGE
+  HYBRID
+}
+
+enum RequestStatus {
+  CREATED
+  PENDING_ASSIGNMENT
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+  DISPUTED
+}
+
+enum PoolStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PAID
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PAID
+}
+
 // Models
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String   @default("12121212")
-  name      String
-  role      String   // Enum: CLIENT, EXPERT, ADMIN
-  avatarUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CLIENT)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  // Relations (simplified for single table inheritance or optional fields)
-  // Client specific
-  companyName String?
-  industry    String?
-  totalSpent  Float    @default(0)
-  zatcaStatus String?  // Enum: GREEN, YELLOW, RED
-  mobileNumber String?
+  clientProfile ClientProfile?
+  expertProfile ExpertProfile?
+  adminProfile  AdminProfile?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+}
 
-  // Expert specific
-  specializations String? // Stored as JSON or comma-separated
-  status          String? // Enum: ACTIVE, VETTING, SUSPENDED
-  totalEarned     Float    @default(0)
-  rating          Float    @default(0)
+model ClientProfile {
+  id             String @id @default(cuid())
+  userId         String @unique
+  user           User   @relation(fields: [userId], references: [id])
+  companyName    String?
+  vatNumber      String?
+  industry       String?
+  billingAddress String?
+  requests       Request[]
+  invoices       Invoice[]
+}
+
+model ExpertProfile {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id])
   bio             String?
-  linkedinUrl     String?
-  yearsExperience Int?
-  hourlyRate      Float?
-  isPremium       Boolean  @default(false)
-  isFeatured      Boolean  @default(false)
-
-  // Admin specific
-  adminRole String? // Enum: SUPER_ADMIN, ADMIN, FINANCE...
-
-  // Relations
-  sentMessages     ChatMessage[] @relation("SentMessages")
-  clientRequests   Request[]     @relation("ClientRequests")
-  expertRequests   Request[]     @relation("ExpertRequests")
-  uploadedFiles    UploadedFile[]
-  gamification     GamificationProfile?
-  complianceLogs   ComplianceLog[]
+  hourlyRate      Decimal?
+  kycStatus       KycStatus @default(PENDING)
+  iban            String?
+  specializations Json?     // Array of strings
+  
+  assignedRequests Request[]      @relation("AssignedExpert")
+  poolInvites      ProviderPool[]
   payouts          PayoutRequest[]
-  permissions      ClientFeaturePermissions?
+}
+
+model AdminProfile {
+  id         String     @id @default(cuid())
+  userId     String     @unique
+  user       User       @relation(fields: [userId], references: [id])
+  adminLevel AdminLevel
 }
 
 model Service {
-  id          String   @id @default(uuid())
-  nameEn      String
-  nameAr      String
-  price       Float
-  description String
-  requests    Request[]
+  id               String          @id @default(cuid())
+  nameEn           String
+  nameAr           String
+  slug             String          @unique
+  type             ServiceType
+  basePrice        Decimal
+  description      String?
+  commissionRuleId String?
+  commissionRule   CommissionRule? @relation(fields: [commissionRuleId], references: [id])
+  isActive         Boolean         @default(true)
+  requests         Request[]
 }
 
-model PricingPlan {
-  id          String   @id @default(uuid())
-  name        String
-  price       Float
-  description String
-  tagline     String
-  features    String // JSON string
-  attributes  String? // JSON string for dynamic table usage (e.g. { "vat_reg": true, "employees": "10" })
-  guarantee   String
-  isPopular   Boolean @default(false)
-  color       String?
-  requests    Request[]
+model CommissionRule {
+  id            String         @id @default(cuid())
+  type          CommissionType
+  valueProvider Decimal
+  valuePlatform Decimal
+  services      Service[]
 }
 
 model Request {
-  id              String        @id @default(uuid())
-  clientId        String
-  client          User          @relation("ClientRequests", fields: [clientId], references: [id])
-  serviceId       String?
-  service         Service?      @relation(fields: [serviceId], references: [id])
-  pricingPlanId   String?
-  pricingPlan     PricingPlan?  @relation(fields: [pricingPlanId], references: [id])
-  status          String        @default("NEW") // Enum: NEW, MATCHED, etc.
-  visibility      String        @default("ADMIN") // Enum: ADMIN, OPEN, ASSIGNED
-  requiredSkills  String?       // JSON string: List of skills required to view this request
-  amount          Float
+  id               String        @id @default(cuid())
+  clientId         String
+  client           ClientProfile @relation(fields: [clientId], references: [userId]) // Link to ClientProfile via userId or id? User relations usually easier via Profile or User. Let's link to ClientProfile.id for now or cleaner to userId if profile is 1:1.
+  // Actually, let's link ClientProfile.id for referential integrity if we want to ensure only profiled users request.
+  // But wait, ClientProfile.id is random CUID. Let's start with User ID or Profile ID. Linking to Profile is safer for role enforcement.
+  // However, User ID is more standard. Let's stick to Profile ID for strict role context if easy, else User ID.
+  // Design said "clientId", "assignedExpertId". Let's assume these refer to the PROFILE IDs for clarity, but standard is often User ID.
+  // Let's use User IDs for simplicity in queries (no need to join profile to get auth info), but ensure role checks.
+  // Actually, linking to Profile Table ensures the user IS a client/expert.
+  
+  serviceId        String
+  service          Service       @relation(fields: [serviceId], references: [id])
+  description      String?
+  
   assignedExpertId String?
-  assignedExpert   User?        @relation("ExpertRequests", fields: [assignedExpertId], references: [id])
-  description     String
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  workStartedAt   DateTime?
+  assignedExpert   ExpertProfile? @relation("AssignedExpert", fields: [assignedExpertId], references: [userId])
 
-  // Review (Embedded 1:1)
-  reviewExpertRating Int?
-  reviewExpertComment String?
-  reviewAdminNps     Int?
-  reviewAdminComment String?
-  reviewDate         DateTime?
+  status           RequestStatus @default(CREATED)
+  dueDate          DateTime?
+  
+  // Finance
+  payoutId         String?
+  payout           PayoutRequest? @relation(fields: [payoutId], references: [id])
 
-  batches         FileBatch[]
-  transactions    Transaction[]
-  payoutRequestId String?       // Relation manual or loosely coupled
+  files            RequestFile[]
+  messages         RequestMessage[]
+  poolInvites      ProviderPool[]
+  invoices         Invoice[]
+  disputes         Dispute[] // One request can technically have multiple disputes over time? Or 1? Design implies 1 active? Many is safer.
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
-model FileBatch {
-  id               String        @id @default(uuid())
-  requestId        String
-  request          Request       @relation(fields: [requestId], references: [id])
-  date             DateTime      @default(now())
-  status           String        @default("PENDING") // Enum: PENDING, COMPLETED
-  assignedExpertId String?
-  // assignedExpert User? @relation... (Optional, can rely on Request's expert)
-
-  files            UploadedFile[]
-}
-
-
-
-model GamificationProfile {
-  id              String         @id @default(uuid())
-  userId          String         @unique
-  user            User           @relation(fields: [userId], references: [id])
-  totalPoints     Int            @default(0)
-  totalStars      Int            @default(0)
-  currentStreak   Int            @default(0)
-  lastActivityDate DateTime?     // To track streaks
-  level           String         @default("Bronze") // Enum: Bronze, Silver, Gold, Platinum
-}
-
-model ComplianceLog {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  date      String   // YYYY-MM-DD
-  action    String   // Enum: 'UPLOAD', 'NOTHING_FOR_TODAY'
-  pointsEarned Int
+model RequestFile {
+  id        String   @id @default(cuid())
+  requestId String
+  request   Request  @relation(fields: [requestId], references: [id])
+  uploaderId String
+  filePath  String
+  version   Int      @default(1)
+  fileType  String
   createdAt DateTime @default(now())
-
-  @@unique([userId, date]) // One log per day per user mainly, though uploads vary
 }
 
-model UploadedFile {
-  id          String   @id @default(uuid())
-  name        String
-  size        String
-  type        String
-  url         String
-  uploadedById String
-  uploadedBy   User    @relation(fields: [uploadedById], references: [id])
-  batchId     String?
-  batch       FileBatch? @relation(fields: [batchId], references: [id])
-  source      String? // Enum mapped to string
-  category    String? // Enum: SALES_INVOICE, PURCHASE_INVOICE, etc.
-  originalCategory String? // The AI detected category before manual override
-  status      String   @default("PENDING") // Enum: PENDING, IN_PROGRESS, COMPLETED
+model RequestMessage {
+  id          String   @id @default(cuid())
+  requestId   String
+  request     Request  @relation(fields: [requestId], references: [id])
+  senderId    String
+  messageBody String
   createdAt   DateTime @default(now())
 }
 
-model Transaction {
-  id        String            @id @default(uuid())
+model ProviderPool {
   requestId String
-  request   Request           @relation(fields: [requestId], references: [id])
-  amount    Float
-  date      DateTime          @default(now())
-  status    String            // Enum: PAID, PENDING, REFUNDED
-  type      String            // Enum: PAYMENT, PAYOUT
+  request   Request       @relation(fields: [requestId], references: [id])
+  expertId  String
+  expert    ExpertProfile @relation(fields: [expertId], references: [userId])
+  status    PoolStatus    @default(INVITED)
+
+  @@id([requestId, expertId])
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  clientId         String
+  client           ClientProfile @relation(fields: [clientId], references: [userId])
+  requestId        String?
+  request          Request?      @relation(fields: [requestId], references: [id])
+  amount           Decimal
+  status           InvoiceStatus @default(UNPAID)
+  paymentGatewayRef String?
+  createdAt        DateTime      @default(now())
 }
 
 model PayoutRequest {
-  id            String       @id @default(uuid())
+  id            String        @id @default(cuid())
   expertId      String
-  expert        User         @relation(fields: [expertId], references: [id])
-  amount        Float
-  requestDate   DateTime     @default(now())
+  expert        ExpertProfile @relation(fields: [expertId], references: [userId])
+  amount        Decimal
+  status        PayoutStatus  @default(PENDING)
+  requestDate   DateTime      @default(now())
   processedDate DateTime?
-  status        String       @default("PENDING") // Enum: PENDING, APPROVED, REJECTED
-  bankDetails   String?
-  requestIds    String // JSON string of IDs
+  requests      Request[]     // Requests paid out in this batch
 }
 
-model ChatMessage {
-  id        String   @id @default(uuid())
+model Dispute {
+  id              String   @id @default(cuid())
+  requestId       String
+  request         Request  @relation(fields: [requestId], references: [id])
+  openedBy        String
+  reason          String
+  status          String // e.g., OPEN, RESOLVED
+  resolutionNotes String?
+  createdAt       DateTime @default(now())
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorId      String
+  user         User     @relation(fields: [actorId], references: [id])
+  action       String
+  resourceType String?
+  resourceId   String?
+  ipAddress    String?
+  meta         Json?
+  createdAt    DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
   userId    String
-  user      User     @relation("SentMessages", fields: [userId], references: [id])
-  text      String
-  role      String   // 'user' or 'model' - if 'model', userId might be null or system bot user
-  timestamp DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
 }
 
-// Admin & Platform Control
-model PlatformSettings {
-  id               String  @id @default("global")
-  showExpertsPage  Boolean @default(false)
-  showServicesPage Boolean @default(false)
-  careersEnabled   Boolean @default(false)
-  careersTitle     String?
-  careersSubtitle  String?
-  pageVisibility   String? // JSON string for { [pageKey]: { public: boolean, client: boolean } }
-  sitePages        String? // JSON string: List of SitePage objects
-  pricingTableConfig String? // JSON string: List of { id, label, section, type }
-  expertSkills     String? // JSON string: List of available skills for experts
-  yearlyDiscountPercentage Int @default(20)
-}
-
-model ClientFeaturePermissions {
-  id                  String  @id @default(uuid())
-  clientId            String  @unique
-  client              User    @relation(fields: [clientId], references: [id])
-  canViewReports      Boolean @default(true)
-  canUploadDocs       Boolean @default(true)
-  canDownloadInvoices Boolean @default(true)
-  canRequestCalls     Boolean @default(true)
-  canSubmitTickets    Boolean @default(true)
-  canViewMarketplace  Boolean @default(false)
+model PricingPlan {
+  id          String   @id
+  name        String
+  price       Decimal 
+  description String
+  tagline     String?
+  features    Json?
+  guarantee   String?
+  isPopular   Boolean  @default(false)
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

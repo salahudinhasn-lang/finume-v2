@@ -1,14 +1,15 @@
 
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const bcrypt = require('bcryptjs');
+const db = new PrismaClient();
 
 // CONSTANTS (Mirrored from mockData.ts)
 const SERVICES = [
-  { id: 'S1', nameEn: 'VAT Filing', nameAr: 'إقرار ضريبة القيمة المضافة', price: 500, description: 'Complete VAT return filing with ZATCA' },
-  { id: 'S2', nameEn: 'Bookkeeping (Monthly)', nameAr: 'مسك الدفاتر (شهري)', price: 2500, description: 'Monthly financial record keeping' },
-  { id: 'S3', nameEn: 'Financial Audit', nameAr: 'تدقيق مالي', price: 15000, description: 'Full annual financial audit' },
-  { id: 'S4', nameEn: 'Zakat Advisory', nameAr: 'استشارات الزكاة', price: 1000, description: 'Consultation on Zakat calculation' },
-  { id: 'S5', nameEn: 'CFO Advisory', nameAr: 'استشارات المدير المالي', price: 5000, description: 'Strategic financial planning' },
+  { id: 'S1', nameEn: 'VAT Filing', nameAr: 'إقرار ضريبة القيمة المضافة', basePrice: 500, description: 'Complete VAT return filing with ZATCA', slug: 'vat-filing', type: 'RECURRING', isActive: true },
+  { id: 'S2', nameEn: 'Bookkeeping (Monthly)', nameAr: 'مسك الدفاتر (شهري)', basePrice: 2500, description: 'Monthly financial record keeping', slug: 'bookkeeping', type: 'RECURRING', isActive: true },
+  { id: 'S3', nameEn: 'Financial Audit', nameAr: 'تدقيق مالي', basePrice: 15000, description: 'Full annual financial audit', slug: 'audit', type: 'ONE_TIME', isActive: true },
+  { id: 'S4', nameEn: 'Zakat Advisory', nameAr: 'استشارات الزكاة', basePrice: 1000, description: 'Consultation on Zakat calculation', slug: 'zakat', type: 'ONE_TIME', isActive: true },
+  { id: 'S5', nameEn: 'CFO Advisory', nameAr: 'استشارات المدير المالي', basePrice: 5000, description: 'Strategic financial planning', slug: 'cfo', type: 'RECURRING', isActive: true },
 ];
 
 const PLANS = [
@@ -56,10 +57,11 @@ const ADMINS = [
 async function main() {
   console.log('Start seeding ...');
   const password = "12121212";
+  const passwordHash = await bcrypt.hash(password, 10);
 
   // 1. SERVICES
   for (const s of SERVICES) {
-    await prisma.service.upsert({
+    await db.service.upsert({
       where: { id: s.id },
       update: {},
       create: s,
@@ -69,7 +71,7 @@ async function main() {
 
   // 2. PLANS
   for (const p of PLANS) {
-    await prisma.pricingPlan.upsert({
+    await db.pricingPlan.upsert({
       where: { id: p.id },
       update: {},
       create: p,
@@ -79,17 +81,39 @@ async function main() {
 
   // 3. ADMINS
   for (const a of ADMINS) {
-    await prisma.user.upsert({
+    // Map seed adminRole to schema AdminLevel or User Role
+    let userRole = a.role;
+    let adminLevel = 'OPS'; // Default
+
+    if (a.adminRole === 'SUPER_ADMIN') {
+      userRole = 'SUPER_ADMIN';
+      adminLevel = 'OPS'; // Super admin has all access
+    } else if (a.adminRole === 'FINANCE') {
+      adminLevel = 'FINANCE';
+    } else {
+      adminLevel = 'OPS';
+    }
+
+    const userData = {
+      id: a.id,
+      email: a.email,
+      name: a.name,
+      role: userRole,
+      // avatarUrl: a.avatarUrl, // Skipped as not in schema
+      passwordHash: passwordHash
+    };
+
+    // Create User
+    await db.user.upsert({
       where: { email: a.email },
-      update: { password }, // Update password just in case
+      update: { passwordHash: passwordHash },
       create: {
-        id: a.id,
-        email: a.email,
-        name: a.name,
-        role: a.role,
-        adminRole: a.adminRole,
-        avatarUrl: a.avatarUrl,
-        password: password
+        ...userData,
+        adminProfile: (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') ? {
+          create: {
+            adminLevel: adminLevel
+          }
+        } : undefined
       }
     });
   }
@@ -103,10 +127,10 @@ async function main() {
 
 main()
   .then(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   })
   .catch(async (e) => {
     console.error(e);
-    await prisma.$disconnect();
+    await db.$disconnect();
     process.exit(1);
   });

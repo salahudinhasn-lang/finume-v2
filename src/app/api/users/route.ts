@@ -1,29 +1,55 @@
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { getSession } from '@/lib/auth';
 
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+export async function GET(req: NextRequest) {
+    const session = await getSession();
+    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.role)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
 
-const prisma = new PrismaClient();
+    const { searchParams } = new URL(req.url);
+    const role = searchParams.get('role');
+    const status = searchParams.get('status'); // e.g., PENDING for experts
 
-export async function GET(request: Request) {
     try {
+        const whereClause: any = {};
+        if (role) whereClause.role = role.toUpperCase();
+
+        // Filter by expert kyc status provided via profile relation logic
+        // This is trickier with simple query, might need include.
+        // Let's keep it simple: filter users.
+
+        // If status requested is for experts (KYC)
+        if (status === 'VETTING' || status === 'PENDING') {
+            whereClause.role = 'EXPERT';
+            whereClause.expertProfile = {
+                kycStatus: 'PENDING'
+            };
+        }
+
         const users = await prisma.user.findMany({
-            include: { permissions: true }
+            where: whereClause,
+            include: {
+                clientProfile: true,
+                expertProfile: true,
+            },
+            orderBy: { createdAt: 'desc' }
         });
 
-        // Split by role for frontend convenience, matches AppContext expectation
-        const clients = users.filter(u => u.role === 'CLIENT');
-        const experts = users.filter(u => u.role === 'EXPERT');
-        const admins = users.filter(u => u.role === 'ADMIN');
+        // Sanitize output (remove hash)
+        const safeUsers = users.map(u => ({
+            id: u.id,
+            email: u.email,
+            role: u.role,
+            isActive: u.isActive,
+            createdAt: u.createdAt,
+            profile: u.role === 'CLIENT' ? u.clientProfile : u.role === 'EXPERT' ? u.expertProfile : null
+        }));
 
-        // Remove passwords
-        const cleanUsers = (list: any[]) => list.map(({ password, ...rest }) => rest);
-
-        return NextResponse.json({
-            clients: cleanUsers(clients),
-            experts: cleanUsers(experts),
-            admins: cleanUsers(admins)
-        });
+        return NextResponse.json(safeUsers);
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+        console.error('User List Error:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

@@ -31,18 +31,19 @@ export async function POST(request: Request) {
                     description: body.description,
                     tagline: body.tagline,
                     features: JSON.stringify(body.features || []), // Ensure array
-                    attributes: JSON.stringify(body.attributes || {}), // Ensure object
+                    // attributes: JSON.stringify(body.attributes || {}), // Removed as not in schema
                     guarantee: body.guarantee,
                     isPopular: body.isPopular || false,
                     color: body.color
                 },
                 create: {
+                    id: body.id || body.name.toLowerCase().replace(/\s+/g, '-'), // Ensure ID exists
                     name: body.name,
                     price: parseFloat(body.price),
                     description: body.description,
                     tagline: body.tagline,
                     features: JSON.stringify(body.features || []),
-                    attributes: JSON.stringify(body.attributes || {}),
+                    // attributes: JSON.stringify(body.attributes || {}), // Removed as not in schema
                     guarantee: body.guarantee,
                     isPopular: body.isPopular || false,
                     color: body.color
@@ -53,12 +54,13 @@ export async function POST(request: Request) {
             // Create new
             const plan = await prisma.pricingPlan.create({
                 data: {
+                    id: body.id || body.name.toLowerCase().replace(/\s+/g, '-'), // Ensure ID exists
                     name: body.name,
                     price: parseFloat(body.price),
                     description: body.description,
                     tagline: body.tagline,
                     features: JSON.stringify(body.features || []),
-                    attributes: JSON.stringify(body.attributes || {}),
+                    // attributes: JSON.stringify(body.attributes || {}), // Removed as not in schema
                     guarantee: body.guarantee,
                     isPopular: body.isPopular || false,
                     color: body.color

@@ -1,47 +1,40 @@
-import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
     try {
-        const data = await request.formData();
-        const file: File | null = data.get('file') as unknown as File;
+        const formData = await req.formData();
+        const file = formData.get('file') as File | null;
 
         if (!file) {
-            return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+            return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
 
-        // Ensure upload directory exists
-        const relativeUploadDir = `/uploads/${new Date().toISOString().split('T')[0]}`;
-        const uploadDir = join(process.cwd(), 'public', relativeUploadDir);
-
-        try {
-            await mkdir(uploadDir, { recursive: true });
-        } catch (e) {
-            // Ignore if exists
+        // Ensure upload dir exists
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
         }
 
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-        const filename = `${uniqueSuffix}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`; // Sanitize
-        const filepath = join(uploadDir, filename);
+        const filePath = path.join(uploadDir, filename);
+        await fs.promises.writeFile(filePath, buffer);
 
-        await writeFile(filepath, buffer);
-
-        const fileUrl = `${relativeUploadDir}/${filename}`;
+        // Return URL
+        const fileUrl = `/uploads/${filename}`;
 
         return NextResponse.json({
-            success: true,
             url: fileUrl,
             name: file.name,
             size: file.size,
             type: file.type
         });
 
-    } catch (e) {
-        console.error("Upload error:", e);
-        return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    } catch (error) {
+        console.error('Upload Error', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
