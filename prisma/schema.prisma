@@ -366,4 +366,5 @@ model PricingPlan {
   color       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  requests    Request[]
 }
