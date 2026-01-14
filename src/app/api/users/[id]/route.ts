@@ -39,7 +39,10 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 
         if (Object.keys(expertUpdates).length > 0) {
             dataToUpdate.expertProfile = {
-                update: expertUpdates
+                upsert: {
+                    create: expertUpdates,
+                    update: expertUpdates
+                }
             };
         }
 
@@ -52,7 +55,10 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 
         if (Object.keys(clientUpdates).length > 0) {
             dataToUpdate.clientProfile = {
-                update: clientUpdates
+                upsert: {
+                    create: clientUpdates,
+                    update: clientUpdates
+                }
             };
         }
 

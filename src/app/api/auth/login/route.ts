@@ -26,14 +26,15 @@ export async function POST(request: Request) {
         // A. Try Bcrypt
         // If password doesn't look like a hash (e.g. is '12121212'), bcrypt.compare calls might error or fail gracefully.
         // It's safer to try compare.
+        // A. Try Bcrypt
         try {
-            isValid = await bcrypt.compare(password, user.password);
+            isValid = await bcrypt.compare(password, user.passwordHash);
         } catch (e) {
             isValid = false;
         }
 
         // B. Fallback to plain text (DEV ONLY - for seed compatibility)
-        if (!isValid && user.password === password) {
+        if (!isValid && user.passwordHash === password) {
             console.warn(`User ${email} logged in with PLAIN TEXT password. Please migrate to hash.`);
             isValid = true;
         }
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
         );
 
         // 4. Return User (clean) + Token
-        const { password: _, ...userWithoutPassword } = user;
+        const { passwordHash: _, ...userWithoutPassword } = user;
 
         return NextResponse.json({
             user: userWithoutPassword,
