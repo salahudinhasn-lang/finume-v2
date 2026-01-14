@@ -189,26 +189,38 @@ model Request {
   payoutId         String?
   payout           PayoutRequest? @relation(fields: [payoutId], references: [id])
 
-  files            RequestFile[]
-  messages         RequestMessage[]
-  poolInvites      ProviderPool[]
-  invoices         Invoice[]
-  disputes         Dispute[] // One request can technically have multiple disputes over time? Or 1? Design implies 1 active? Many is safer.
-  review           Review?
+  batches          FileBatch[]
+  amount           Decimal       @default(0)
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
 
-model RequestFile {
+model FileBatch {
   id        String   @id @default(cuid())
   requestId String
   request   Request  @relation(fields: [requestId], references: [id])
-  uploaderId String
-  filePath  String
-  version   Int      @default(1)
-  fileType  String
+  status    String   // e.g. PENDING, COMPLETED
+  files     UploadedFile[]
   createdAt DateTime @default(now())
+}
+
+model UploadedFile {
+  id           String   @id @default(cuid())
+  name         String
+  size         String
+  type         String
+  url          String
+  uploadedById String
+  
+  fileBatchId  String?
+  fileBatch    FileBatch? @relation(fields: [fileBatchId], references: [id])
+  
+  // Optional direct link to Request if needed, but App seems to use Batches
+  requestId    String?
+  // request      Request? @relation(fields: [requestId], references: [id]) // Commented out to avoid confusion unless needed
+
+  createdAt    DateTime @default(now())
 }
 
 model RequestMessage {
