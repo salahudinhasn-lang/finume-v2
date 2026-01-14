@@ -1,21 +1,20 @@
 
 const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-const db = new PrismaClient();
+const prisma = new PrismaClient();
 
-// CONSTANTS (Mirrored from mockData.ts)
+// CONSTANTS
 const SERVICES = [
-  { id: 'S1', nameEn: 'VAT Filing', nameAr: 'إقرار ضريبة القيمة المضافة', basePrice: 500, description: 'Complete VAT return filing with ZATCA', slug: 'vat-filing', type: 'RECURRING', isActive: true },
-  { id: 'S2', nameEn: 'Bookkeeping (Monthly)', nameAr: 'مسك الدفاتر (شهري)', basePrice: 2500, description: 'Monthly financial record keeping', slug: 'bookkeeping', type: 'RECURRING', isActive: true },
-  { id: 'S3', nameEn: 'Financial Audit', nameAr: 'تدقيق مالي', basePrice: 15000, description: 'Full annual financial audit', slug: 'audit', type: 'ONE_TIME', isActive: true },
-  { id: 'S4', nameEn: 'Zakat Advisory', nameAr: 'استشارات الزكاة', basePrice: 1000, description: 'Consultation on Zakat calculation', slug: 'zakat', type: 'ONE_TIME', isActive: true },
-  { id: 'S5', nameEn: 'CFO Advisory', nameAr: 'استشارات المدير المالي', basePrice: 5000, description: 'Strategic financial planning', slug: 'cfo', type: 'RECURRING', isActive: true },
+  { id: 'S1', nameEn: 'VAT Filing', nameAr: 'إقرار ضريبة القيمة المضافة', price: 500, description: 'Complete VAT return filing with ZATCA' },
+  { id: 'S2', nameEn: 'Bookkeeping (Monthly)', nameAr: 'مسك الدفاتر (شهري)', price: 2500, description: 'Monthly financial record keeping' },
+  { id: 'S3', nameEn: 'Financial Audit', nameAr: 'تدقيق مالي', price: 15000, description: 'Full annual financial audit' },
+  { id: 'S4', nameEn: 'Zakat Advisory', nameAr: 'استشارات الزكاة', price: 1000, description: 'Consultation on Zakat calculation' },
+  { id: 'S5', nameEn: 'CFO Advisory', nameAr: 'استشارات المدير المالي', price: 5000, description: 'Strategic financial planning' },
 ];
 
 const PLANS = [
   {
-    id: 'basic',
-    name: 'CR Guard (Basic)',
+    id: 'Plan-0001',
+    name: 'CR Guard',
     price: 250,
     description: 'Dormant / Low-Activity CRs',
     tagline: '"Keep my CR Active"',
@@ -24,8 +23,8 @@ const PLANS = [
     color: 'border-gray-200'
   },
   {
-    id: 'standard',
-    name: 'ZATCA Shield (Standard)',
+    id: 'Plan-0002',
+    name: 'ZATCA Shield',
     price: 1300,
     description: 'Active Shops / Cafes',
     tagline: '"No VAT Fines"',
@@ -35,8 +34,8 @@ const PLANS = [
     color: 'border-primary-500'
   },
   {
-    id: 'pro',
-    name: 'Audit Proof (Pro)',
+    id: 'Plan-0003',
+    name: 'Audit Proof',
     price: 5000,
     description: 'Funded Startups / Contractors',
     tagline: '"CFO-Level Reporting"',
@@ -46,22 +45,88 @@ const PLANS = [
   }
 ];
 
-const ADMINS = [
-  { id: 'ADMIN1', email: 'admin@finume.com', name: 'Super Admin', role: 'ADMIN', adminRole: 'SUPER_ADMIN', avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=0ea5e9&color=fff' },
-  { id: 'ADMIN2', email: 'finance@finume.com', name: 'Sarah Finance', role: 'ADMIN', adminRole: 'FINANCE', avatarUrl: 'https://ui-avatars.com/api/?name=Sarah+Finance&background=10b981&color=fff' },
-  { id: 'ADMIN3', email: 'support@finume.com', name: 'John Support', role: 'ADMIN', adminRole: 'SUPPORT', avatarUrl: 'https://ui-avatars.com/api/?name=John+Support&background=f59e0b&color=fff' },
-  { id: 'ADMIN4', email: 'sales@finume.com', name: 'Mike Sales', role: 'ADMIN', adminRole: 'SALES', avatarUrl: 'https://ui-avatars.com/api/?name=Mike+Sales&background=8b5cf6&color=fff' },
-  { id: 'ADMIN5', email: 'experts@finume.com', name: 'Lisa Relations', role: 'ADMIN', adminRole: 'EXPERT_RELATIONS', avatarUrl: 'https://ui-avatars.com/api/?name=Lisa+Relations&background=ec4899&color=fff' }
+// USERS TO SEED
+const USERS = [
+  {
+    id: 'ADMIN_MAIN',
+    email: 'admin@finume.com',
+    name: 'Main Admin',
+    role: 'ADMIN',
+    adminRole: 'SUPER_ADMIN',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=0ea5e9&color=fff'
+  },
+  {
+    id: 'EXPERT_MAIN',
+    email: 'expert@finume.com',
+    name: 'Main Expert',
+    role: 'EXPERT',
+    status: 'ACTIVE',
+    specializations: JSON.stringify(['VAT', 'Audit']),
+    bio: 'Senior Financial Expert',
+    yearsExperience: 10,
+    hourlyRate: 200,
+    avatarUrl: 'https://ui-avatars.com/api/?name=Expert&background=10b981&color=fff'
+  },
+  {
+    id: 'CLIENT_MAIN',
+    email: 'client@finume.com',
+    name: 'Business Owner',
+    role: 'CLIENT',
+    companyName: 'My Business Ltd',
+    industry: 'Retail',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Client&background=f59e0b&color=fff',
+    // Default Permissions
+    permissions: {
+      create: {
+        canViewReports: true,
+        canUploadDocs: true,
+        canDownloadInvoices: true,
+        canRequestCalls: true,
+        canSubmitTickets: true,
+        canViewMarketplace: true
+      }
+    }
+  }
 ];
 
 async function main() {
   console.log('Start seeding ...');
   const password = "12121212";
-  const passwordHash = await bcrypt.hash(password, 10);
 
-  // 1. SERVICES
+  // 1. CLEAN UP
+  // We clean up everything to ensure fresh IDs and no stale data.
+  try {
+    console.log('Cleaning up database...');
+    // Order matters due to foreign keys
+    await prisma.fileBatch.deleteMany({}); // Delete FileBatches (depends on Request) - wait, Request depends on User/Plan/Service
+    // Request -> Client(User), Service, Plan, Expert(User)
+    // FileBatch -> Request
+    // UploadedFile -> User, FileBatch...
+
+    // Let's try to delete in order of dependency (Leafs first)
+    await prisma.transaction.deleteMany({});
+    await prisma.complianceLog.deleteMany({});
+    await prisma.gamificationProfile.deleteMany({});
+    await prisma.chatMessage.deleteMany({});
+    await prisma.uploadedFile.deleteMany({});
+    await prisma.fileBatch.deleteMany({});
+    await prisma.request.deleteMany({});
+
+    await prisma.clientFeaturePermissions.deleteMany({});
+    await prisma.payoutRequest.deleteMany({});
+
+    await prisma.user.deleteMany({});
+    await prisma.pricingPlan.deleteMany({});
+    // await prisma.service.deleteMany({}); // Optional, services are stable usually, but consistent to clear.
+
+    console.log('Database cleaned.');
+  } catch (e) {
+    console.warn('Cleanup warning (non-fatal):', e);
+  }
+
+  // 2. SERVICES
   for (const s of SERVICES) {
-    await db.service.upsert({
+    await prisma.service.upsert({
       where: { id: s.id },
       update: {},
       create: s,
@@ -69,68 +134,37 @@ async function main() {
   }
   console.log('Services seeded.');
 
-  // 2. PLANS
+  // 3. PLANS (New IDs)
   for (const p of PLANS) {
-    await db.pricingPlan.upsert({
-      where: { id: p.id },
-      update: {},
-      create: p,
+    await prisma.pricingPlan.create({ // We can use create because we cleared table
+      data: p
     });
   }
   console.log('Plans seeded.');
 
-  // 3. ADMINS
-  for (const a of ADMINS) {
-    // Map seed adminRole to schema AdminLevel or User Role
-    let userRole = a.role;
-    let adminLevel = 'OPS'; // Default
+  // 4. USERS
+  for (const u of USERS) {
+    const { permissions, ...userData } = u;
 
-    if (a.adminRole === 'SUPER_ADMIN') {
-      userRole = 'SUPER_ADMIN';
-      adminLevel = 'OPS'; // Super admin has all access
-    } else if (a.adminRole === 'FINANCE') {
-      adminLevel = 'FINANCE';
-    } else {
-      adminLevel = 'OPS';
-    }
-
-    const userData = {
-      id: a.id,
-      email: a.email,
-      name: a.name,
-      role: userRole,
-      // avatarUrl: a.avatarUrl, // Skipped as not in schema
-      passwordHash: passwordHash
-    };
-
-    // Create User
-    await db.user.upsert({
-      where: { email: a.email },
-      update: { passwordHash: passwordHash },
-      create: {
+    await prisma.user.create({
+      data: {
         ...userData,
-        adminProfile: (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') ? {
-          create: {
-            adminLevel: adminLevel
-          }
-        } : undefined
+        password: password,
+        permissions: permissions
       }
     });
   }
-  console.log('Admins seeded.');
-
-  // 4. CLIENTS & EXPERTS
-  console.log('Skipping fake client/expert generation to keep DB clean.');
+  console.log('Specific users seeded.');
 
   console.log('Seeding finished.');
 }
 
 main()
   .then(async () => {
-    await db.$disconnect();
+    await prisma.$disconnect();
   })
   .catch(async (e) => {
     console.error(e);
-    await db.$disconnect();
+    await prisma.$disconnect();
     process.exit(1);
   });

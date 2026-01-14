@@ -1,48 +1,72 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
-import { ServiceType } from '@prisma/client';
 
-// GET: List all services (Public or Admin filtered)
-export async function GET(req: NextRequest) {
+import { prisma } from '@/lib/prisma';
+import { NextResponse } from 'next/server';
+
+
+// GET /api/services
+export async function GET() {
     try {
         const services = await prisma.service.findMany({
-            where: { isActive: true }, // Default to active only for general listing
-            orderBy: { nameEn: 'asc' }
+            orderBy: { price: 'asc' }
         });
         return NextResponse.json(services);
     } catch (error) {
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to fetch services' }, { status: 500 });
     }
 }
 
-// POST: Create new service (Admin Only)
-export async function POST(req: NextRequest) {
-    const session = await getSession();
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.role)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
-
+// POST /api/services (Create or Update)
+export async function POST(request: Request) {
     try {
-        const body = await req.json();
-        const { nameEn, nameAr, slug, type, basePrice } = body;
+        const body = await request.json();
 
-        const service = await prisma.service.create({
-            data: {
-                nameEn,
-                nameAr,
-                slug,
-                type: type as ServiceType,
-                basePrice: Number(basePrice)
-            }
-        });
-
-        return NextResponse.json(service);
-    } catch (error: any) {
-        // Handle unique constraint error
-        if (error.code === 'P2002') {
-            return NextResponse.json({ error: 'Service slug must be unique' }, { status: 409 });
+        if (body.id && !body.id.startsWith('S-NEW')) {
+            // Update
+            const service = await prisma.service.upsert({
+                where: { id: body.id },
+                update: {
+                    nameEn: body.nameEn,
+                    nameAr: body.nameAr || body.nameEn,
+                    description: body.description,
+                    price: parseFloat(body.price)
+                },
+                create: {
+                    nameEn: body.nameEn,
+                    nameAr: body.nameAr || body.nameEn,
+                    description: body.description,
+                    price: parseFloat(body.price)
+                }
+            });
+            return NextResponse.json(service);
+        } else {
+            // Create
+            const service = await prisma.service.create({
+                data: {
+                    nameEn: body.nameEn,
+                    nameAr: body.nameAr || body.nameEn,
+                    description: body.description,
+                    price: parseFloat(body.price)
+                }
+            });
+            return NextResponse.json(service);
         }
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    } catch (error) {
+        console.error('Service error:', error);
+        return NextResponse.json({ error: 'Failed to save service' }, { status: 500 });
+    }
+}
+
+// DELETE /api/services
+export async function DELETE(request: Request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+
+        await prisma.service.delete({ where: { id } });
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        return NextResponse.json({ error: 'Failed to delete service' }, { status: 500 });
     }
 }

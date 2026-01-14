@@ -1,71 +1,154 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { hashPassword, signToken, setSession } from '@/lib/auth';
-import { Role } from '@prisma/client';
 
-export async function POST(req: NextRequest) {
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { z } from 'zod';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-prod';
+
+// Validation Schema
+const RegisterSchema = z.object({
+    name: z.string().min(2),
+    email: z.string().email(),
+    password: z.string().min(8),
+    role: z.enum(['CLIENT', 'EXPERT', 'ADMIN']).default('CLIENT'),
+    companyName: z.string().optional(), // For Client
+    industry: z.string().optional(),    // For Client
+    mobileNumber: z.string().min(9),    // Required
+    // Expert fields
+    bio: z.string().optional(),
+    yearsExperience: z.union([z.string(), z.number()]).optional(),
+    hourlyRate: z.union([z.string(), z.number()]).optional(),
+    specializations: z.array(z.string()).optional(),
+    linkedinUrl: z.string().optional(),
+});
+
+export async function POST(request: Request) {
     try {
-        const body = await req.json();
-        const { email, password, role, companyName, name } = body;
+        const body = await request.json();
+        const result = RegisterSchema.safeParse(body);
 
-        // Basic Validation
-        if (!email || !password || !role) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        if (!result.success) {
+            return NextResponse.json({ error: 'Validation failed', details: result.error.format() }, { status: 400 });
         }
 
-        // Check existing user
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser) {
-            return NextResponse.json({ error: 'User already exists' }, { status: 409 });
+        const { name, email, password, role, companyName, industry, mobileNumber, bio, yearsExperience, hourlyRate, specializations, linkedinUrl } = result.data;
+
+        // 1. Check if user exists
+        const existing = await prisma.user.findUnique({
+            where: { email }
+        });
+
+        if (existing) {
+            return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
         }
 
-        const hashedPassword = await hashPassword(password);
+        // 2. Hash Password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create User & Profile Transaction
-        const user = await prisma.$transaction(async (tx) => {
-            const newUser = await tx.user.create({
-                data: {
-                    name,
-                    email,
-                    passwordHash: hashedPassword,
-                    role: role as Role,
+        // 3. Generate Custom ID
+        let userId = undefined; // Let Prisma generate UUID by default for others
+
+        if (role === 'CLIENT') {
+            // Find last client ID
+            const lastClient = await prisma.user.findFirst({
+                where: {
+                    role: 'CLIENT',
+                    id: { startsWith: 'CUS-' }
                 },
+                orderBy: { id: 'desc' },
+                select: { id: true }
             });
 
-            // Create specific profile based on role
-            if (role === 'CLIENT') {
-                await tx.clientProfile.create({
-                    data: {
-                        userId: newUser.id,
-                        companyName: companyName || 'Unknown Company',
-                        // Default props
-                    },
-                });
-            } else if (role === 'EXPERT') {
-                await tx.expertProfile.create({
-                    data: {
-                        userId: newUser.id,
-                        bio: 'New Expert',
-                        // Default props
-                    },
-                });
+            let nextSerial = 1;
+            if (lastClient && lastClient.id) {
+                const parts = lastClient.id.split('-');
+                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+                    nextSerial = Number(parts[1]) + 1;
+                }
             }
-            // Add Admin logic if needed, but Admin registration is restricted usually
+            userId = `CUS-${nextSerial.toString().padStart(6, '0')}`;
+        } else if (role === 'EXPERT') {
+            // Find last expert ID
+            const lastExpert = await prisma.user.findFirst({
+                where: {
+                    role: 'EXPERT',
+                    id: { startsWith: 'EXP-' }
+                },
+                orderBy: { id: 'desc' },
+                select: { id: true }
+            });
 
-            return newUser;
+            let nextSerial = 1;
+            if (lastExpert && lastExpert.id) {
+                const parts = lastExpert.id.split('-');
+                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+                    nextSerial = Number(parts[1]) + 1;
+                }
+            }
+            userId = `EXP-${nextSerial.toString().padStart(6, '0')}`;
+        }
+
+        // 4. Create User
+        // Note: Avatar generation is nice to keep
+        const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`;
+
+        const newUser = await prisma.user.create({
+            data: {
+                id: userId, // Will be CUS- or EXP- or auto-uuid
+                name,
+                email,
+                password: hashedPassword,
+                role,
+                avatarUrl,
+                mobileNumber,
+                companyName: role === 'CLIENT' ? companyName : undefined,
+                industry: role === 'CLIENT' ? industry || 'General' : undefined,
+
+                // Expert Specific
+                bio: role === 'EXPERT' ? bio : undefined,
+                yearsExperience: role === 'EXPERT' ? Number(yearsExperience) : undefined,
+                hourlyRate: role === 'EXPERT' ? Number(hourlyRate) : undefined,
+                specializations: role === 'EXPERT' && specializations ? JSON.stringify(specializations) : undefined,
+                linkedinUrl: role === 'EXPERT' ? linkedinUrl : undefined,
+                status: role === 'EXPERT' ? 'VETTING' : undefined,
+
+                // Client Defaults
+                totalSpent: 0,
+                zatcaStatus: 'GREEN',
+                // Create Default Permissions if Client
+                permissions: role === 'CLIENT' ? {
+                    create: {
+                        canViewReports: true,
+                        canUploadDocs: true,
+                        canDownloadInvoices: true,
+                        canRequestCalls: true,
+                        canSubmitTickets: true,
+                        canViewMarketplace: false
+                    }
+                } : undefined
+            },
+            include: { permissions: true }
         });
 
-        // Generate Session
-        const token = await signToken({ id: user.id, email: user.email, role: user.role });
-        await setSession(token);
+        // 4. Generate Token
+        const token = jwt.sign(
+            { id: newUser.id, email: newUser.email, role: newUser.role },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        // 5. Return
+        const { password: _, ...userWithoutPassword } = newUser;
 
         return NextResponse.json({
-            user: { id: user.id, email: user.email, name: user.name, role: user.role },
-            token // Return token for client storage if needed (though cookie is set)
-        });
+            user: userWithoutPassword,
+            token
+        }, { status: 201 });
 
     } catch (error) {
-        console.error('Registration Error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        console.error('Registration error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

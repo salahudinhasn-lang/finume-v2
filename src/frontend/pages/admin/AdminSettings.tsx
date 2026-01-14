@@ -1,107 +1,159 @@
+
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Button } from '../../components/UI';
-import { Eye, EyeOff, Shield, ShieldAlert, CheckCircle, Globe } from 'lucide-react';
+import { Settings, Save, Lock, User, CheckCircle, AlertCircle } from 'lucide-react';
 
-const AdminSettingsPage = () => {
-    const { settings, updateSettings, t } = useAppContext();
-    const [successMsg, setSuccessMsg] = useState('');
+const AdminSettings = () => {
+    const { user, updateAdmin, t } = useAppContext();
+    const [name, setName] = useState(user?.name || '');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [status, setStatus] = useState<'IDLE' | 'SAVING' | 'SUCCESS' | 'ERROR'>('IDLE');
+    const [errorMsg, setErrorMsg] = useState('');
 
-    const handleToggle = (key: keyof typeof settings) => {
-        updateSettings({ [key]: !settings[key] });
-        setSuccessMsg('Settings updated successfully!');
-        setTimeout(() => setSuccessMsg(''), 3000);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setStatus('SAVING');
+        setErrorMsg('');
+
+        if (password && password !== confirmPassword) {
+            setErrorMsg(t('auth.passwordsDoNotMatch') || 'Passwords do not match');
+            setStatus('ERROR');
+            return;
+        }
+
+        if (password && password.length < 6) {
+            setErrorMsg('Password must be at least 6 characters');
+            setStatus('ERROR');
+            return;
+        }
+
+        try {
+            if (user?.id) {
+                const updates: any = { name };
+                if (password) {
+                    updates.password = password;
+                }
+
+                await updateAdmin(user.id, updates);
+                setStatus('SUCCESS');
+                setPassword('');
+                setConfirmPassword('');
+
+                // Reset success message after 3 seconds
+                setTimeout(() => setStatus('IDLE'), 3000);
+            }
+        } catch (e) {
+            console.error(e);
+            setStatus('ERROR');
+            setErrorMsg('Failed to update settings');
+        }
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-slate-900">Platform Settings</h1>
+        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
+            {/* Header */}
+            <div className="flex items-center gap-4 border-b border-gray-100 pb-6">
+                <div className="p-3 bg-slate-100 text-slate-600 rounded-xl">
+                    <Settings size={28} />
+                </div>
+                <div>
+                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Settings</h1>
+                    <p className="text-gray-500 mt-1">Manage your account preferences and security.</p>
+                </div>
             </div>
 
-            {successMsg && (
-                <div className="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center shadow-sm">
-                    <CheckCircle className="mr-2" size={20} />
-                    {successMsg}
-                </div>
-            )}
+            <Card className="border border-gray-100 shadow-xl bg-white/80 backdrop-blur-xl relative overflow-hidden max-w-2xl">
+                <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
 
-            <div className="grid grid-cols-1 gap-6">
-                <Card className="p-6 border border-slate-200 shadow-sm">
-                    <div className="flex items-start gap-4">
-                        <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-                            <Globe size={24} />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-lg font-bold text-slate-900 mb-1">Public Portal Visibility</h3>
-                            <p className="text-slate-500 mb-6 text-sm">Control which sections of the platform are visible to non-logged-in visitors.</p>
+                    {/* Name Field */}
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                            <User size={16} className="text-blue-500" />
+                            Full Name
+                        </label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium"
+                            placeholder="Enter your name"
+                            required
+                        />
+                    </div>
 
-                            <div className="space-y-6">
-                                {/* Expert Directory Toggle */}
-                                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${settings.showExpertsPage ? 'bg-green-100 text-green-600' : 'bg-slate-200 text-slate-500'}`}>
-                                            {settings.showExpertsPage ? <Eye size={18} /> : <EyeOff size={18} />}
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-slate-700">Expert Directory</div>
-                                            <div className="text-xs text-slate-400">/experts</div>
-                                        </div>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only peer"
-                                            checked={settings.showExpertsPage}
-                                            onChange={() => handleToggle('showExpertsPage')}
-                                        />
-                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
-                                </div>
+                    <hr className="border-gray-100" />
 
-                                {/* Services Catalog Toggle */}
-                                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${settings.showServicesPage ? 'bg-green-100 text-green-600' : 'bg-slate-200 text-slate-500'}`}>
-                                            {settings.showServicesPage ? <Eye size={18} /> : <EyeOff size={18} />}
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-slate-700">Services Catalog</div>
-                                            <div className="text-xs text-slate-400">/services</div>
-                                        </div>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only peer"
-                                            checked={settings.showServicesPage}
-                                            onChange={() => handleToggle('showServicesPage')}
-                                        />
-                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
-                                </div>
+                    {/* Password Section */}
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <Lock size={20} className="text-orange-500" />
+                            Change Password
+                        </h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-500 mb-1">New Password</label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all"
+                                    placeholder="Leave empty to keep current"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-500 mb-1">Confirm New Password</label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all"
+                                    placeholder="Confirm new password"
+                                />
                             </div>
                         </div>
                     </div>
-                </Card>
 
-                <Card className="p-6 border border-slate-200 shadow-sm opacity-60">
-                    <div className="flex items-start gap-4">
-                        <div className="p-3 bg-red-50 rounded-xl text-red-600">
-                            <ShieldAlert size={24} />
+                    {/* Status Messages */}
+                    {status === 'ERROR' && (
+                        <div className="p-4 bg-red-50 text-red-600 rounded-xl flex items-center gap-2 text-sm font-bold animate-in slide-in-from-top-2">
+                            <AlertCircle size={18} />
+                            {errorMsg || 'An error occurred. Please try again.'}
                         </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-slate-900 mb-1">Emergency Controls</h3>
-                            <p className="text-slate-500 mb-4 text-sm">System-wide locks. Use with caution.</p>
-                            <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" disabled>
-                                Enable Maintenance Mode
-                            </Button>
+                    )}
+
+                    {status === 'SUCCESS' && (
+                        <div className="p-4 bg-green-50 text-green-600 rounded-xl flex items-center gap-2 text-sm font-bold animate-in slide-in-from-top-2">
+                            <CheckCircle size={18} />
+                            Settings updated successfully!
                         </div>
+                    )}
+
+                    {/* Submit Button */}
+                    <div className="pt-4">
+                        <Button
+                            type="submit"
+                            disabled={status === 'SAVING'}
+                            className="w-full py-4 text-lg font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-200 rounded-xl"
+                        >
+                            {status === 'SAVING' ? (
+                                <span className="flex items-center gap-2">
+                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Saving...
+                                </span>
+                            ) : (
+                                <span className="flex items-center gap-2">
+                                    <Save size={20} />
+                                    Save Changes
+                                </span>
+                            )}
+                        </Button>
                     </div>
-                </Card>
-            </div>
+                </form>
+            </Card>
         </div>
     );
 };
 
-export default AdminSettingsPage;
+export default AdminSettings;
