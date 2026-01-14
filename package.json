@@ -43,5 +43,8 @@
     "prisma": "5.22.0",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.8.2"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.ts"
   }
 }
