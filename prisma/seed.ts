@@ -13,9 +13,9 @@ const SERVICES = [
 
 const PLANS = [
   {
-    id: 'Plan-0001',
+    id: 'PLAN-0001',
     name: 'CR Guard',
-    price: 250,
+    price: 500,
     description: 'Dormant / Low-Activity CRs',
     tagline: '"Keep my CR Active"',
     features: JSON.stringify(['Zero-filing VAT', 'Annual Qawaem (Basic)', 'Zakat "Estimated" Filing']),
@@ -23,7 +23,7 @@ const PLANS = [
     color: 'border-gray-200'
   },
   {
-    id: 'Plan-0002',
+    id: 'PLAN-0002',
     name: 'ZATCA Shield',
     price: 1300,
     description: 'Active Shops / Cafes',
@@ -34,7 +34,7 @@ const PLANS = [
     color: 'border-primary-500'
   },
   {
-    id: 'Plan-0003',
+    id: 'PLAN-0003',
     name: 'Audit Proof',
     price: 5000,
     description: 'Funded Startups / Contractors',

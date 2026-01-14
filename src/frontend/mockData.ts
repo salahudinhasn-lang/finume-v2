@@ -18,7 +18,7 @@ export const SERVICES: Service[] = [
 
 export const MOCK_PLANS: PricingPlan[] = [
   {
-    id: 'PLAN-00001',
+    id: 'PLAN-0001',
     name: 'CR Guard',
     price: 500,
     description: 'Dormant or pre-revenue CRs',
@@ -37,7 +37,7 @@ export const MOCK_PLANS: PricingPlan[] = [
     }
   },
   {
-    id: 'PLAN-00002',
+    id: 'PLAN-0002',
     name: 'ZATCA Shield',
     price: 1750,
     description: 'Active shops, cafes, and service businesses',
@@ -57,7 +57,7 @@ export const MOCK_PLANS: PricingPlan[] = [
     }
   },
   {
-    id: 'PLAN-00003',
+    id: 'PLAN-0003',
     name: 'Audit Proof',
     price: 5000,
     description: 'Funded startups & Government contractors',
