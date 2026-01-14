@@ -68,8 +68,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
             include: { expertProfile: true, clientProfile: true }
         });
 
-        // Remove password from response
-        const { password: _, ...userWithoutPassword } = updatedUser;
+        // Remove password hash from response
+        const { passwordHash: _, ...userWithoutPassword } = updatedUser;
 
         return NextResponse.json(userWithoutPassword);
     } catch (error) {
