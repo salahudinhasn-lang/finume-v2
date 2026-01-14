@@ -118,8 +118,10 @@ export async function POST(request: Request) {
                     expertProfile: {
                         create: {
                             bio,
+                            yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
                             hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
                             specializations: specializations ? JSON.stringify(specializations) : undefined,
+                            linkedinUrl,
                             kycStatus: 'PENDING',
                         }
                     }

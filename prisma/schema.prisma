@@ -103,6 +103,8 @@ model ExpertProfile {
   hourlyRate      Decimal?
   kycStatus       KycStatus @default(PENDING)
   iban            String?
+  yearsExperience Int?
+  linkedinUrl     String?
   specializations Json?     // Array of strings
   
   assignedRequests Request[]      @relation("AssignedExpert")
