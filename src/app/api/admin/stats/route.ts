@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
@@ -18,10 +18,10 @@ export async function GET(req: NextRequest) {
         ] = await Promise.all([
             prisma.user.count({ where: { role: 'CLIENT' } }),
             prisma.user.count({ where: { role: 'EXPERT' } }),
-            prisma.expertProfile.count({ where: { kycStatus: 'PENDING' } }),
+            prisma.user.count({ where: { role: 'EXPERT', status: 'VETTING' } }),
             prisma.request.count(),
-            prisma.invoice.aggregate({
-                where: { status: 'PAID' },
+            prisma.request.aggregate({
+                where: { status: 'COMPLETED' },
                 _sum: { amount: true }
             })
         ]);
