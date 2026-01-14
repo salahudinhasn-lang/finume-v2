@@ -4,7 +4,8 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
 // PATCH /api/users/[id]
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const id = params.id;
         const body = await request.json();
@@ -37,7 +38,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 // GET /api/users/[id] (Optional, useful for fetching fresh data)
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const id = params.id;
         const user = await prisma.user.findUnique({
