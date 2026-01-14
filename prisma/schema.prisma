@@ -167,8 +167,10 @@ model Request {
   // Let's use User IDs for simplicity in queries (no need to join profile to get auth info), but ensure role checks.
   // Actually, linking to Profile Table ensures the user IS a client/expert.
   
-  serviceId        String
-  service          Service       @relation(fields: [serviceId], references: [id])
+  serviceId        String?  // Made optional because a request might be for a Plan instead
+  service          Service? @relation(fields: [serviceId], references: [id])
+  pricingPlanId    String?
+  pricingPlan      PricingPlan? @relation(fields: [pricingPlanId], references: [id])
   description      String?
   
   assignedExpertId String?
