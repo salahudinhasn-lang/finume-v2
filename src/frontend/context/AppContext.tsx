@@ -1028,7 +1028,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateSitePages: async (pages) => {
         await updateSettings({ sitePages: JSON.stringify(pages) });
       },
-      isRestoringSession
+      isRestoringSession,
+      refreshData: initBackend
     }}>
       {children}
     </AppContext.Provider>
