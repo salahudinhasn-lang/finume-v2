@@ -18,10 +18,10 @@ export async function GET(req: NextRequest) {
         ] = await Promise.all([
             prisma.user.count({ where: { role: 'CLIENT' } }),
             prisma.user.count({ where: { role: 'EXPERT' } }),
-            prisma.user.count({ where: { role: 'EXPERT', status: 'VETTING' } }),
+            prisma.user.count({ where: { role: 'EXPERT', expertProfile: { kycStatus: 'PENDING' } } }),
             prisma.request.count(),
-            prisma.request.aggregate({
-                where: { status: 'COMPLETED' },
+            prisma.invoice.aggregate({
+                where: { status: 'PAID' },
                 _sum: { amount: true }
             })
         ]);
