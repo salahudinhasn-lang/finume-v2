@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
     try {
         const services = await prisma.service.findMany({
-            orderBy: { price: 'asc' }
+            orderBy: { basePrice: 'asc' }
         });
         return NextResponse.json(services);
     } catch (error) {
@@ -22,19 +22,15 @@ export async function POST(request: Request) {
 
         if (body.id && !body.id.startsWith('S-NEW')) {
             // Update
-            const service = await prisma.service.upsert({
+            const service = await prisma.service.update({
                 where: { id: body.id },
-                update: {
+                data: {
                     nameEn: body.nameEn,
                     nameAr: body.nameAr || body.nameEn,
                     description: body.description,
-                    price: parseFloat(body.price)
-                },
-                create: {
-                    nameEn: body.nameEn,
-                    nameAr: body.nameAr || body.nameEn,
-                    description: body.description,
-                    price: parseFloat(body.price)
+                    basePrice: parseFloat(body.price || 0),
+                    // status: body.status, // Not in schema, relying on isActive
+                    isActive: body.isActive !== undefined ? body.isActive : true
                 }
             });
             return NextResponse.json(service);
@@ -45,7 +41,10 @@ export async function POST(request: Request) {
                     nameEn: body.nameEn,
                     nameAr: body.nameAr || body.nameEn,
                     description: body.description,
-                    price: parseFloat(body.price)
+                    basePrice: parseFloat(body.price || 0),
+                    slug: body.slug || `service-${Date.now()}`,
+                    type: body.type || 'ONE_TIME', // Default
+                    isActive: true
                 }
             });
             return NextResponse.json(service);
