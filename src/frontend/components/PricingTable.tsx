@@ -15,6 +15,7 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
     const [internalBilling, setInternalBilling] = useState<'monthly' | 'yearly'>('monthly');
     const [showOverage, setShowOverage] = useState(false);
     const [submittingId, setSubmittingId] = useState<string | null>(null);
+    const isSubmittingRef = React.useRef<boolean>(false);
 
     const billingCycle = externalBilling || internalBilling;
 
@@ -164,39 +165,47 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
                                         <button
                                             disabled={submittingId === plan.id}
                                             onClick={async () => {
-                                                if (submittingId) return;
+                                                if (isSubmittingRef.current || submittingId) return;
+                                                isSubmittingRef.current = true;
                                                 setSubmittingId(plan.id);
+                                                try {
 
-                                                // Artificial delay to prevent race conditions or double taps processing
-                                                await new Promise(r => setTimeout(r, 100));
-                                                if (user) {
-                                                    const discount = billingCycle === 'yearly' ? (settings?.yearlyDiscountPercentage || 20) / 100 : 0;
-                                                    // Calculate monthly equivalent first for display consistency
-                                                    const monthlyEquivalent = billingCycle === 'yearly' ? Math.round(plan.price * (1 - discount)) : plan.price;
-                                                    // Calculate total amount to charge
-                                                    const totalAmount = billingCycle === 'yearly' ? monthlyEquivalent * 12 : plan.price;
+                                                    // Artificial delay to prevent race conditions or double taps processing
+                                                    await new Promise(r => setTimeout(r, 100));
+                                                    if (user) {
+                                                        const discount = billingCycle === 'yearly' ? (settings?.yearlyDiscountPercentage || 20) / 100 : 0;
+                                                        // Calculate monthly equivalent first for display consistency
+                                                        const monthlyEquivalent = billingCycle === 'yearly' ? Math.round(plan.price * (1 - discount)) : plan.price;
+                                                        // Calculate total amount to charge
+                                                        const totalAmount = billingCycle === 'yearly' ? monthlyEquivalent * 12 : plan.price;
 
-                                                    const newReq: any = {
-                                                        id: `SUB-${Date.now()}`,
-                                                        pricingPlanId: plan.id,
-                                                        serviceName: `${plan.name} (${billingCycle === 'yearly' ? 'Yearly' : 'Monthly'})`,
-                                                        clientId: user.id,
-                                                        clientName: user.name,
-                                                        expertId: null,
-                                                        expertName: null,
-                                                        status: 'PENDING_PAYMENT',
-                                                        dateCreated: new Date().toISOString(),
-                                                        amount: totalAmount,
-                                                        description: `Subscription to ${plan.name} plan. ${billingCycle === 'yearly' ? 'Billed Annually' : 'Billed Monthly'}.`,
-                                                        batches: []
-                                                    };
+                                                        const newReq: any = {
+                                                            id: `SUB-${Date.now()}`,
+                                                            pricingPlanId: plan.id,
+                                                            serviceName: `${plan.name} (${billingCycle === 'yearly' ? 'Yearly' : 'Monthly'})`,
+                                                            clientId: user.id,
+                                                            clientName: user.name,
+                                                            expertId: null,
+                                                            expertName: null,
+                                                            status: 'PENDING_PAYMENT',
+                                                            dateCreated: new Date().toISOString(),
+                                                            amount: totalAmount,
+                                                            description: `Subscription to ${plan.name} plan. ${billingCycle === 'yearly' ? 'Billed Annually' : 'Billed Monthly'}.`,
+                                                            batches: []
+                                                        };
 
-                                                    if (addRequest) {
-                                                        addRequest(newReq);
-                                                        navigate(`/client/request-received/${newReq.id}`);
+                                                        if (addRequest) {
+                                                            addRequest(newReq);
+                                                            navigate(`/client/request-received/${newReq.id}`);
+                                                        }
+                                                    } else {
+                                                        navigate(`/login?redirect=/pricing`);
                                                     }
-                                                } else {
-                                                    navigate(`/login?redirect=/pricing`);
+                                                } catch (e) {
+                                                    console.error(e);
+                                                } finally {
+                                                    isSubmittingRef.current = false;
+                                                    setSubmittingId(null);
                                                 }
                                             }}
                                             className={`block w-full py-3 text-center rounded-xl font-bold transition-all shadow-sm hover:shadow-md ${plan.isPopular || isHighlighted

@@ -144,8 +144,12 @@ export async function GET(req: Request) {
                 transactions: true,
                 service: true,
                 pricingPlan: true,
-                client: true, // Include Client
-                assignedExpert: true // Include Expert
+                client: {
+                    include: { user: true }
+                },
+                assignedExpert: {
+                    include: { user: true }
+                }
             },
             orderBy: { createdAt: 'desc' }
         });

@@ -596,7 +596,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (res.ok) {
         const savedReq = await res.json();
         // Update the temporary ID with the real one from DB
-        setRequests(prev => prev.map(r => r.id === req.id ? { ...savedReq, status: r.status, batches: req.batches } : r));
+        setRequests(prev => prev.map(r => r.id === req.id ? { ...req, ...savedReq, status: r.status, batches: req.batches } : r));
         console.log('Request saved to DB:', savedReq);
         return savedReq;
       } else {
