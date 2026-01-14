@@ -28,6 +28,7 @@ export interface Expert extends User {
   status: 'ACTIVE' | 'VETTING' | 'SUSPENDED';
   totalEarned: number;
   rating: number;
+  totalReviews?: number;
   bio: string;
   yearsExperience: number;
   hourlyRate: number;
@@ -123,14 +124,32 @@ export interface ClientFeaturePermissions {
   canViewMarketplace: boolean; // New: View Experts/Services
 }
 
-export interface Review {
-  requestId: string;
-  expertRating: number; // 1-5
-  expertComment: string;
-  adminNps: number; // 0-10
-  adminComment: string;
-  date: string;
+export interface Expert extends User {
+  role: 'EXPERT';
+  specializations: string[];
+  status: 'ACTIVE' | 'VETTING' | 'SUSPENDED';
+  totalEarned: number;
+  rating: number; // 0-5
+  totalReviews?: number; // Added
+  bio: string;
+  yearsExperience: number;
+  hourlyRate: number;
+  isPremium?: boolean;
+  isFeatured?: boolean;
 }
+
+export type AdminRole = 'SUPER_ADMIN' | 'ADMIN' | 'FINANCE' | 'SUPPORT' | 'EXPERT_RELATIONS' | 'SALES';
+
+export interface Admin extends User {
+  role: 'ADMIN';
+  adminRole: AdminRole;
+}
+
+// ... (skipping unchanged parts if possible, but replace_file_content needs contiguous block. Expert is line 25, Review is line 126. Too far apart.)
+// I will do two replaces.
+
+// REPLACE 1: Expert Interface
+// REPLACE 2: Review Interface
 
 export interface ClientGamification {
   totalPoints: number;
