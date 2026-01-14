@@ -192,8 +192,25 @@ model Request {
   batches          FileBatch[]
   amount           Decimal       @default(0)
   
+  messages         RequestMessage[]
+  poolInvites      ProviderPool[]
+  invoices         Invoice[]
+  disputes         Dispute[]
+  review           Review?
+  transactions     Transaction[]
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  requestId String
+  request   Request  @relation(fields: [requestId], references: [id])
+  amount    Decimal
+  date      DateTime @default(now())
+  status    String   // PAID, PENDING, REFUNDED
+  type      String   // PAYMENT, PAYOUT
 }
 
 model FileBatch {
