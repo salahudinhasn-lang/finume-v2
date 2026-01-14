@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         } else if (pricingPlanId) {
             const planExists = await prisma.pricingPlan.findUnique({ where: { id: pricingPlanId } });
             if (!planExists) {
-                return NextResponse.json({ error: 'Invalid Pricing Plan ID' }, { status: 400, headers: corsHeaders });
+                return NextResponse.json({ error: 'Invalid Pricing Plan ID', details: `Received ID: ${pricingPlanId}` }, { status: 400, headers: corsHeaders });
             }
         }
 
