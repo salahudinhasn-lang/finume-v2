@@ -85,7 +85,12 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
         const id = params.id;
         const user = await prisma.user.findUnique({
             where: { id },
-            include: { permissions: true }
+            include: {
+                clientProfile: {
+                    include: { permissions: true }
+                },
+                expertProfile: true
+            }
         });
 
         if (!user) {
@@ -93,7 +98,14 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
         }
 
         const { passwordHash: _, ...userWithoutPassword } = user;
-        return NextResponse.json(userWithoutPassword);
+
+        // Flatten permissions for frontend compatibility if needed
+        const responseData = {
+            ...userWithoutPassword,
+            permissions: user.clientProfile?.permissions || null
+        };
+
+        return NextResponse.json(responseData);
     } catch (error) {
         return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 });
     }
