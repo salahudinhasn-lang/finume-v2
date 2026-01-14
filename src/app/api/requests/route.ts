@@ -15,7 +15,22 @@ export async function OPTIONS() {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { clientId, serviceId, pricingPlanId, amount, description, batches } = body;
+        let { clientId, serviceId, pricingPlanId, amount, description, batches } = body;
+
+        // Legacy/Frontend Cache Compatibility Layer
+        // Map old 5-digit IDs (PLAN-00001) to new 4-digit IDs (PLAN-0001)
+        if (pricingPlanId && pricingPlanId.startsWith('PLAN-0000')) {
+            const planNum = pricingPlanId.replace('PLAN-0000', '');
+            pricingPlanId = `PLAN-000${planNum}`; // e.g., PLAN-0001
+        }
+        else if (pricingPlanId && pricingPlanId.startsWith('Plan-')) {
+            // Handle any old mixed case
+            pricingPlanId = pricingPlanId.toUpperCase().replace('PLAN-', 'PLAN-000');
+            // Attempt to standardise "Plan-0001" -> "PLAN-0001"
+            if (pricingPlanId.length === 9) { // PLAN-0001
+                // Correct
+            }
+        }
 
         // Ensure Client Exists
         const userExists = await prisma.user.findUnique({ where: { id: clientId } });
