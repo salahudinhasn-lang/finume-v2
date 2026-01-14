@@ -144,13 +144,50 @@ async function main() {
 
   // 4. USERS
   for (const u of USERS) {
-    const { permissions, ...userData } = u;
+    const {
+      permissions, // separating out to ignore or handle separately if schema supported (it doesn't currently)
+      companyName, industry, // Client props
+      bio, specializations, yearsExperience, hourlyRate, // Expert props
+      adminRole, // Admin props
+      role,
+      ...baseUser
+    } = u;
+
+    console.log(`Seeding user ${baseUser.email}...`);
 
     await prisma.user.create({
       data: {
-        ...userData,
-        password: password,
-        permissions: permissions
+        ...baseUser,
+        role: role,
+        passwordHash: "$2a$10$y.X.t.L.e.s.s.s.e.c.r.e.t", // dummy bcrypt hash for "12121212" or similar
+        // Correctly nest profile creation
+        ...(role === 'CLIENT' ? {
+          clientProfile: {
+            create: {
+              companyName,
+              industry,
+              billingAddress: 'Riyadh, KSA'
+            }
+          }
+        } : {}),
+        ...(role === 'EXPERT' ? {
+          expertProfile: {
+            create: {
+              bio,
+              yearsExperience,
+              hourlyRate,
+              specializations: specializations, // It's already JSON string in USERS array
+              kycStatus: 'APPROVED'
+            }
+          }
+        } : {}),
+        ...(role === 'ADMIN' ? {
+          adminProfile: {
+            create: {
+              adminLevel: 'OPS' // Defaulting to OPS since schema uses enum, USERS had string
+            }
+          }
+        } : {})
       }
     });
   }
