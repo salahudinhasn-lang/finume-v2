@@ -185,6 +185,7 @@ model Request {
   poolInvites      ProviderPool[]
   invoices         Invoice[]
   disputes         Dispute[] // One request can technically have multiple disputes over time? Or 1? Design implies 1 active? Many is safer.
+  review           Review?
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
