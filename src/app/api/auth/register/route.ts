@@ -99,37 +99,37 @@ export async function POST(request: Request) {
                 id: userId, // Will be CUS- or EXP- or auto-uuid
                 name,
                 email,
-                password: hashedPassword,
+                passwordHash: hashedPassword,
                 role,
-                avatarUrl,
-                mobileNumber,
-                companyName: role === 'CLIENT' ? companyName : undefined,
-                industry: role === 'CLIENT' ? industry || 'General' : undefined,
+                isActive: true,
 
-                // Expert Specific
-                bio: role === 'EXPERT' ? bio : undefined,
-                yearsExperience: role === 'EXPERT' ? Number(yearsExperience) : undefined,
-                hourlyRate: role === 'EXPERT' ? Number(hourlyRate) : undefined,
-                specializations: role === 'EXPERT' && specializations ? JSON.stringify(specializations) : undefined,
-                linkedinUrl: role === 'EXPERT' ? linkedinUrl : undefined,
-                status: role === 'EXPERT' ? 'VETTING' : undefined,
-
-                // Client Defaults
-                totalSpent: 0,
-                zatcaStatus: 'GREEN',
-                // Create Default Permissions if Client
-                permissions: role === 'CLIENT' ? {
-                    create: {
-                        canViewReports: true,
-                        canUploadDocs: true,
-                        canDownloadInvoices: true,
-                        canRequestCalls: true,
-                        canSubmitTickets: true,
-                        canViewMarketplace: false
+                // Create Profile based on Role
+                ...(role === 'CLIENT' ? {
+                    clientProfile: {
+                        create: {
+                            companyName,
+                            industry: industry || 'General',
+                            billingAddress: '', // Default
+                        }
                     }
-                } : undefined
+                } : {}),
+
+                ...(role === 'EXPERT' ? {
+                    expertProfile: {
+                        create: {
+                            bio,
+                            yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
+                            hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
+                            specializations: specializations ? JSON.stringify(specializations) : undefined,
+                            kycStatus: 'PENDING',
+                        }
+                    }
+                } : {})
             },
-            include: { permissions: true }
+            include: {
+                clientProfile: true,
+                expertProfile: true
+            }
         });
 
         // 4. Generate Token
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
         );
 
         // 5. Return
-        const { password: _, ...userWithoutPassword } = newUser;
+        const { passwordHash: _, ...userWithoutPassword } = newUser;
 
         return NextResponse.json({
             user: userWithoutPassword,
