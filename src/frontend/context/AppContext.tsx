@@ -521,6 +521,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         });
         setClientPermissions(permsMap);
+
+        // Sync User Session with fresh data
+        const storedUserJSON = localStorage.getItem('finume_user');
+        if (storedUserJSON) {
+          const storedUser = JSON.parse(storedUserJSON);
+          let freshUser: User | undefined;
+
+          if (storedUser.role === 'CLIENT') {
+            freshUser = (usersData.clients as Client[]).find((c: any) => c.id === storedUser.id);
+          } else if (storedUser.role === 'EXPERT') {
+            freshUser = (usersData.experts as Expert[]).find((e: any) => e.id === storedUser.id);
+          } else if (storedUser.role === 'ADMIN') {
+            freshUser = (usersData.admins as Admin[]).find((a: any) => a.id === storedUser.id);
+          }
+
+          if (freshUser) {
+            console.log("Refreshing session with fresh data:", freshUser);
+            setUser(freshUser);
+            localStorage.setItem('finume_user', JSON.stringify(freshUser));
+          }
+        }
       }
 
       // Fetch Requests & Pool
@@ -544,529 +565,506 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }));
         setPlans(parsedPlans);
       }
+
+
+    } catch (e) {
+      console.warn('Backend not available:', e);
     }
-
-      // Sync User Session with fresh data
-      // If we have a logged in user, refresh their data from the lists we just fetched
-      const storedUserJSON = localStorage.getItem('finume_user');
-    if (storedUserJSON) {
-      const storedUser = JSON.parse(storedUserJSON);
-      let freshUser: User | undefined;
-
-      if (storedUser.role === 'CLIENT') {
-        freshUser = (usersData.clients as Client[]).find((c: any) => c.id === storedUser.id);
-      } else if (storedUser.role === 'EXPERT') {
-        freshUser = (usersData.experts as Expert[]).find((e: any) => e.id === storedUser.id);
-      } else if (storedUser.role === 'ADMIN') {
-        freshUser = (usersData.admins as Admin[]).find((a: any) => a.id === storedUser.id);
-      }
-
-      if (freshUser) {
-        // Preserve the token or any other non-profile fields if necessary (usually just user object is enough)
-        console.log("Refreshing session with fresh data:", freshUser);
-        setUser(freshUser);
-        localStorage.setItem('finume_user', JSON.stringify(freshUser));
-      }
-    }
-
-  } catch (e) {
-    console.warn('Backend not available:', e);
   }
-}
 
-const addRequest = async (req: Request): Promise<Request | null> => {
-  // 1. Optimistic UI Update
-  setRequests(prev => [req, ...prev]);
+  const addRequest = async (req: Request): Promise<Request | null> => {
+    // 1. Optimistic UI Update
+    setRequests(prev => [req, ...prev]);
 
-  // 2. Persist to Backend
-  try {
-    const payload = {
-      clientId: req.clientId,
-      serviceId: req.serviceId,
-      pricingPlanId: req.pricingPlanId,
-      description: req.description,
-      amount: req.amount,
-      batches: req.batches
-    };
+    // 2. Persist to Backend
+    try {
+      const payload = {
+        clientId: req.clientId,
+        serviceId: req.serviceId,
+        pricingPlanId: req.pricingPlanId,
+        description: req.description,
+        amount: req.amount,
+        batches: req.batches
+      };
 
-    const res = await fetch(`${API_BASE_URL}/api/requests`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+      const res = await fetch(`${API_BASE_URL}/api/requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-    if (res.ok) {
-      const savedReq = await res.json();
-      // Update the temporary ID with the real one from DB
-      setRequests(prev => prev.map(r => r.id === req.id ? { ...savedReq, status: r.status, batches: req.batches } : r));
-      console.log('Request saved to DB:', savedReq);
-      return savedReq;
-    } else {
-      const err = await res.json();
-      console.error('Failed to save request:', err);
-      alert(`Failed to save request: ${err.error || 'Unknown error'} \nDetails: ${err.details || ''}`);
+      if (res.ok) {
+        const savedReq = await res.json();
+        // Update the temporary ID with the real one from DB
+        setRequests(prev => prev.map(r => r.id === req.id ? { ...savedReq, status: r.status, batches: req.batches } : r));
+        console.log('Request saved to DB:', savedReq);
+        return savedReq;
+      } else {
+        const err = await res.json();
+        console.error('Failed to save request:', err);
+        alert(`Failed to save request: ${err.error || 'Unknown error'} \nDetails: ${err.details || ''}`);
+        return null;
+      }
+    } catch (error) {
+      console.error('Failed to save request to DB', error);
+      alert('Network error: Request not saved to database.');
       return null;
     }
-  } catch (error) {
-    console.error('Failed to save request to DB', error);
-    alert('Network error: Request not saved to database.');
-    return null;
-  }
-};
+  };
 
-const updateRequestStatus = (id: string, status: Request['status']) => {
-  setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
-};
+  const updateRequestStatus = (id: string, status: Request['status']) => {
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+  };
 
-const assignRequest = (requestId: string, expertId: string) => {
-  const expert = experts.find(e => e.id === expertId);
-  if (!expert) return;
+  const assignRequest = (requestId: string, expertId: string) => {
+    const expert = experts.find(e => e.id === expertId);
+    if (!expert) return;
 
-  // Optimistic Update
-  setRequests(prev => prev.map(r => {
-    if (r.id === requestId) {
-      return {
-        ...r,
-        assignedExpertId: expertId,
-        expertName: expert.name,
-        status: 'MATCHED'
-      };
+    // Optimistic Update
+    setRequests(prev => prev.map(r => {
+      if (r.id === requestId) {
+        return {
+          ...r,
+          assignedExpertId: expertId,
+          expertName: expert.name,
+          status: 'MATCHED'
+        };
+      }
+      return r;
+    }));
+
+    // Persist to Backend
+    try {
+      fetch(`${API_BASE_URL}/api/requests/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignedExpertId: expertId, status: 'MATCHED', visibility: 'ASSIGNED' })
+      }).catch(err => console.error("Failed to assign expert DB", err));
+    } catch (e) {
+      console.error("Assign request error", e);
     }
-    return r;
-  }));
+  };
 
-  // Persist to Backend
-  try {
-    fetch(`${API_BASE_URL}/api/requests/${requestId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assignedExpertId: expertId, status: 'MATCHED', visibility: 'ASSIGNED' })
-    }).catch(err => console.error("Failed to assign expert DB", err));
-  } catch (e) {
-    console.error("Assign request error", e);
-  }
-};
+  const updateExpertStatus = async (expertId: string, status: Expert['status']) => {
+    // 1. Optimistic Update
+    setExperts(prev => prev.map(e => e.id === expertId ? { ...e, status } : e));
 
-const updateExpertStatus = async (expertId: string, status: Expert['status']) => {
-  // 1. Optimistic Update
-  setExperts(prev => prev.map(e => e.id === expertId ? { ...e, status } : e));
-
-  // 2. Persist
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/users/${expertId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status })
-    });
-    if (!res.ok) {
-      console.error('Failed to update expert status DB');
-      // Revert? For now, we assume success or user refreshes.
+    // 2. Persist
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/users/${expertId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) {
+        console.error('Failed to update expert status DB');
+        // Revert? For now, we assume success or user refreshes.
+      }
+    } catch (e) {
+      console.error('Network error updating expert status', e);
     }
-  } catch (e) {
-    console.error('Network error updating expert status', e);
-  }
-};
+  };
 
-const updateRequest = async (id: string, updates: Partial<Request>) => {
-  // 1. Optimistic Update
-  setRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  const updateRequest = async (id: string, updates: Partial<Request>) => {
+    // 1. Optimistic Update
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
 
-  // 2. Persist
-  try {
-    // Map frontend fields (like objects) to what API expects if needed, 
-    // but our API route handles JSON.stringify for requiredSkills if passed as object.
-    await fetch(`${API_BASE_URL}/api/requests/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
-    });
-  } catch (e) {
-    console.error('Failed to update request DB', e);
-  }
-};
-
-const updateClient = async (id: string, updates: Partial<Client>) => {
-  // 1. Optimistic Update
-  setClients(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-  if (user && user.id === id) {
-    const updatedUser = user ? { ...user, ...updates } as User : null;
-    setUser(updatedUser);
-    if (updatedUser) {
-      localStorage.setItem('finume_user', JSON.stringify(updatedUser));
+    // 2. Persist
+    try {
+      // Map frontend fields (like objects) to what API expects if needed, 
+      // but our API route handles JSON.stringify for requiredSkills if passed as object.
+      await fetch(`${API_BASE_URL}/api/requests/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+    } catch (e) {
+      console.error('Failed to update request DB', e);
     }
-  }
+  };
 
-  // 2. Persist
-  try {
-    await fetch(`${API_BASE_URL}/api/users/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
-    });
-  } catch (e) {
-    console.error('Failed to update client DB', e);
-  }
-};
-
-const updateExpert = async (id: string, updates: Partial<Expert>) => {
-  // 1. Optimistic Update
-  setExperts(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
-  if (user && user.id === id) {
-    const updatedUser = user ? { ...user, ...updates } as User : null;
-    setUser(updatedUser);
-    if (updatedUser) {
-      localStorage.setItem('finume_user', JSON.stringify(updatedUser));
+  const updateClient = async (id: string, updates: Partial<Client>) => {
+    // 1. Optimistic Update
+    setClients(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    if (user && user.id === id) {
+      const updatedUser = user ? { ...user, ...updates } as User : null;
+      setUser(updatedUser);
+      if (updatedUser) {
+        localStorage.setItem('finume_user', JSON.stringify(updatedUser));
+      }
     }
-  }
 
-  // 2. Persist
-  try {
-    await fetch(`${API_BASE_URL}/api/users/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      // Ensure we don't send derived fields if they aren't in DB Schema effectively (though Prisma ignores unknown if configured, better to be safe)
-      // For now, passing updates directly.
-      body: JSON.stringify(updates)
-    });
-  } catch (e) {
-    console.error('Failed to update expert DB', e);
-  }
-};
-
-const addClient = (client: Client) => {
-  setClients(prev => [client, ...prev]);
-};
-
-const addExpert = (expert: Expert) => {
-  setExperts(prev => [expert, ...prev]);
-};
-
-const addAdmin = (admin: Admin) => {
-  setAdmins(prev => [...prev, admin]);
-};
-
-const updateAdmin = async (id: string, updates: Partial<Admin>) => {
-  // 1. Optimistic Update
-  setAdmins(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
-
-  // Update local user session if the admin is updating themselves
-  if (user && user.id === id) {
-    setUser(prev => prev ? { ...prev, ...updates } as User : null);
-    // Update LocalStorage to keep session fresh
-    const stored = localStorage.getItem('finume_user');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      localStorage.setItem('finume_user', JSON.stringify({ ...parsed, ...updates }));
+    // 2. Persist
+    try {
+      await fetch(`${API_BASE_URL}/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+    } catch (e) {
+      console.error('Failed to update client DB', e);
     }
-  }
+  };
 
-  // 2. Persist to API
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
-    });
-
-    if (!res.ok) {
-      console.error("Failed to persist admin update");
-      // Optionally revert optimistic update here
+  const updateExpert = async (id: string, updates: Partial<Expert>) => {
+    // 1. Optimistic Update
+    setExperts(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    if (user && user.id === id) {
+      const updatedUser = user ? { ...user, ...updates } as User : null;
+      setUser(updatedUser);
+      if (updatedUser) {
+        localStorage.setItem('finume_user', JSON.stringify(updatedUser));
+      }
     }
-  } catch (e) {
-    console.error("Network error updating admin", e);
-  }
-};
 
-const deleteAdmin = (id: string) => {
-  setAdmins(prev => prev.filter(a => a.id !== id));
-};
+    // 2. Persist
+    try {
+      await fetch(`${API_BASE_URL}/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        // Ensure we don't send derived fields if they aren't in DB Schema effectively (though Prisma ignores unknown if configured, better to be safe)
+        // For now, passing updates directly.
+        body: JSON.stringify(updates)
+      });
+    } catch (e) {
+      console.error('Failed to update expert DB', e);
+    }
+  };
 
-// Service & Pricing Actions
-const updateService = async (id: string, updates: Partial<Service>) => {
-  setServices(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
-  try {
-    await fetch(`${API_BASE_URL}/api/services`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, ...updates })
-    });
-  } catch (e) { console.error(e); }
-};
+  const addClient = (client: Client) => {
+    setClients(prev => [client, ...prev]);
+  };
 
-const addService = async (service: Service) => {
-  setServices(prev => [...prev, service]);
-  try {
-    await fetch(`${API_BASE_URL}/api/services`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(service)
-    });
-  } catch (e) { console.error(e); }
-};
+  const addExpert = (expert: Expert) => {
+    setExperts(prev => [expert, ...prev]);
+  };
 
-const deleteService = async (id: string) => {
-  setServices(prev => prev.filter(s => s.id !== id));
-  try {
-    await fetch(`${API_BASE_URL}/api/services?id=${id}`, { method: 'DELETE' });
-  } catch (e) { console.error(e); }
-};
+  const addAdmin = (admin: Admin) => {
+    setAdmins(prev => [...prev, admin]);
+  };
 
-const updatePlan = async (id: string, updates: Partial<PricingPlan>) => {
-  setPlans(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-  try {
-    await fetch(`${API_BASE_URL}/api/plans`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, ...updates })
-    });
-  } catch (e) { console.error(e); }
-};
+  const updateAdmin = async (id: string, updates: Partial<Admin>) => {
+    // 1. Optimistic Update
+    setAdmins(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
 
-const submitReview = async (requestId: string, review: Review) => {
-  // 1. Optimistic Update
-  setRequests(prev => prev.map(r => r.id === requestId ? { ...r, review } : r));
+    // Update local user session if the admin is updating themselves
+    if (user && user.id === id) {
+      setUser(prev => prev ? { ...prev, ...updates } as User : null);
+      // Update LocalStorage to keep session fresh
+      const stored = localStorage.getItem('finume_user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        localStorage.setItem('finume_user', JSON.stringify({ ...parsed, ...updates }));
+      }
+    }
 
-  // 2. Persist to API
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/reviews`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        requestId,
-        expertId: review.expertId, // Ensure review object has this
-        rating: review.expertRating, // Mapping UI 'expertRating' to API 'rating'
-        comment: review.comment
-      })
-    });
+    // 2. Persist to API
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
 
-    if (res.ok) {
-      console.log("Review saved to DB");
-      // Optionally refetch experts to get updated rating?
-      // For now, let's just optimistically update expert rating locally too
-      const request = requests.find(r => r.id === requestId);
-      if (request && request.assignedExpertId) {
-        setExperts(prev => prev.map(e => {
-          if (e.id === request.assignedExpertId) {
-            const totalRatings = e.totalReviews || 0; // Use DB field if available
-            const currentAvg = e.rating || 0;
-            // Approx update
-            const newAvg = ((currentAvg * totalRatings) + review.expertRating) / (totalRatings + 1);
-            return { ...e, rating: newAvg, totalReviews: totalRatings + 1 };
+      if (!res.ok) {
+        console.error("Failed to persist admin update");
+        // Optionally revert optimistic update here
+      }
+    } catch (e) {
+      console.error("Network error updating admin", e);
+    }
+  };
+
+  const deleteAdmin = (id: string) => {
+    setAdmins(prev => prev.filter(a => a.id !== id));
+  };
+
+  // Service & Pricing Actions
+  const updateService = async (id: string, updates: Partial<Service>) => {
+    setServices(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    try {
+      await fetch(`${API_BASE_URL}/api/services`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates })
+      });
+    } catch (e) { console.error(e); }
+  };
+
+  const addService = async (service: Service) => {
+    setServices(prev => [...prev, service]);
+    try {
+      await fetch(`${API_BASE_URL}/api/services`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(service)
+      });
+    } catch (e) { console.error(e); }
+  };
+
+  const deleteService = async (id: string) => {
+    setServices(prev => prev.filter(s => s.id !== id));
+    try {
+      await fetch(`${API_BASE_URL}/api/services?id=${id}`, { method: 'DELETE' });
+    } catch (e) { console.error(e); }
+  };
+
+  const updatePlan = async (id: string, updates: Partial<PricingPlan>) => {
+    setPlans(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    try {
+      await fetch(`${API_BASE_URL}/api/plans`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates })
+      });
+    } catch (e) { console.error(e); }
+  };
+
+  const submitReview = async (requestId: string, review: Review) => {
+    // 1. Optimistic Update
+    setRequests(prev => prev.map(r => r.id === requestId ? { ...r, review } : r));
+
+    // 2. Persist to API
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId,
+          expertId: review.expertId, // Ensure review object has this
+          rating: review.expertRating, // Mapping UI 'expertRating' to API 'rating'
+          comment: review.comment
+        })
+      });
+
+      if (res.ok) {
+        console.log("Review saved to DB");
+        // Optionally refetch experts to get updated rating?
+        // For now, let's just optimistically update expert rating locally too
+        const request = requests.find(r => r.id === requestId);
+        if (request && request.assignedExpertId) {
+          setExperts(prev => prev.map(e => {
+            if (e.id === request.assignedExpertId) {
+              const totalRatings = e.totalReviews || 0; // Use DB field if available
+              const currentAvg = e.rating || 0;
+              // Approx update
+              const newAvg = ((currentAvg * totalRatings) + review.expertRating) / (totalRatings + 1);
+              return { ...e, rating: newAvg, totalReviews: totalRatings + 1 };
+            }
+            return e;
+          }));
+        }
+      }
+    } catch (e) {
+      console.error("Failed to save review DB", e);
+    }
+  };
+
+  const requestPayout = (amount: number, specificRequestIds?: string[]) => {
+    if (!user || user.role !== 'EXPERT') return;
+
+    let requestIds: string[] = [];
+    let payoutAmount = amount;
+
+    if (specificRequestIds && specificRequestIds.length > 0) {
+      requestIds = specificRequestIds;
+      // Calculate amount from specific IDs to be safe
+      const selectedRequests = requests.filter(r => requestIds.includes(r.id));
+      payoutAmount = selectedRequests.reduce((sum, r) => sum + (r.amount * 0.8), 0);
+    } else {
+      // Fallback: Find All Unsettled
+      const unsettledRequests = requests.filter(r =>
+        r.assignedExpertId === user.id &&
+        r.status === 'COMPLETED' &&
+        !r.payoutId
+      );
+      requestIds = unsettledRequests.map(r => r.id);
+      payoutAmount = unsettledRequests.reduce((sum, r) => sum + (r.amount * 0.8), 0);
+    }
+
+    if (requestIds.length === 0) return;
+
+    const payoutId = `WD-${Date.now()}`;
+
+    // Update Requests to link to this payout
+    setRequests(prev => prev.map(r => {
+      if (requestIds.includes(r.id)) {
+        return { ...r, payoutId: payoutId };
+      }
+      return r;
+    }));
+
+    const newPayout: PayoutRequest = {
+      id: payoutId,
+      expertId: user.id,
+      expertName: user.name,
+      amount: payoutAmount,
+      requestDate: new Date().toISOString().split('T')[0],
+      status: 'PENDING',
+      requestIds: requestIds
+    };
+
+    setPayoutRequests(prev => [newPayout, ...prev]);
+  };
+
+  const processPayout = (id: string, status: 'APPROVED' | 'REJECTED') => {
+    setPayoutRequests(prev => prev.map(p =>
+      p.id === id ? { ...p, status, processedDate: new Date().toISOString().split('T')[0] } : p
+    ));
+
+    // If rejected, unlink the requests so they can be requested again
+    if (status === 'REJECTED') {
+      const payout = payoutRequests.find(p => p.id === id);
+      if (payout && payout.requestIds) {
+        setRequests(prev => prev.map(r => {
+          if (payout.requestIds.includes(r.id)) {
+            return { ...r, payoutId: undefined };
           }
-          return e;
+          return r;
         }));
       }
     }
-  } catch (e) {
-    console.error("Failed to save review DB", e);
-  }
-};
-
-const requestPayout = (amount: number, specificRequestIds?: string[]) => {
-  if (!user || user.role !== 'EXPERT') return;
-
-  let requestIds: string[] = [];
-  let payoutAmount = amount;
-
-  if (specificRequestIds && specificRequestIds.length > 0) {
-    requestIds = specificRequestIds;
-    // Calculate amount from specific IDs to be safe
-    const selectedRequests = requests.filter(r => requestIds.includes(r.id));
-    payoutAmount = selectedRequests.reduce((sum, r) => sum + (r.amount * 0.8), 0);
-  } else {
-    // Fallback: Find All Unsettled
-    const unsettledRequests = requests.filter(r =>
-      r.assignedExpertId === user.id &&
-      r.status === 'COMPLETED' &&
-      !r.payoutId
-    );
-    requestIds = unsettledRequests.map(r => r.id);
-    payoutAmount = unsettledRequests.reduce((sum, r) => sum + (r.amount * 0.8), 0);
-  }
-
-  if (requestIds.length === 0) return;
-
-  const payoutId = `WD-${Date.now()}`;
-
-  // Update Requests to link to this payout
-  setRequests(prev => prev.map(r => {
-    if (requestIds.includes(r.id)) {
-      return { ...r, payoutId: payoutId };
-    }
-    return r;
-  }));
-
-  const newPayout: PayoutRequest = {
-    id: payoutId,
-    expertId: user.id,
-    expertName: user.name,
-    amount: payoutAmount,
-    requestDate: new Date().toISOString().split('T')[0],
-    status: 'PENDING',
-    requestIds: requestIds
   };
 
-  setPayoutRequests(prev => [newPayout, ...prev]);
-};
+  const manualSettle = (requestIds: string[]) => {
+    // Create a dummy approved payout
+    const payoutId = `SETTLE-MANUAL-${Date.now()}`;
 
-const processPayout = (id: string, status: 'APPROVED' | 'REJECTED') => {
-  setPayoutRequests(prev => prev.map(p =>
-    p.id === id ? { ...p, status, processedDate: new Date().toISOString().split('T')[0] } : p
-  ));
+    // Calculate total
+    const totalAmount = requests
+      .filter(r => requestIds.includes(r.id))
+      .reduce((sum, r) => sum + (r.amount * 0.8), 0);
 
-  // If rejected, unlink the requests so they can be requested again
-  if (status === 'REJECTED') {
-    const payout = payoutRequests.find(p => p.id === id);
-    if (payout && payout.requestIds) {
-      setRequests(prev => prev.map(r => {
-        if (payout.requestIds.includes(r.id)) {
-          return { ...r, payoutId: undefined };
-        }
-        return r;
-      }));
-    }
-  }
-};
+    // Create dummy payout record
+    const dummyPayout: PayoutRequest = {
+      id: payoutId,
+      expertId: 'VARIOUS', // Or specific if we filtered
+      expertName: translations[language === 'en' ? 'en' : 'ar'].financials.manualSettlement,
+      amount: totalAmount,
+      requestDate: new Date().toISOString().split('T')[0],
+      processedDate: new Date().toISOString().split('T')[0],
+      status: 'APPROVED',
+      requestIds: requestIds
+    };
+    setPayoutRequests(prev => [dummyPayout, ...prev]);
 
-const manualSettle = (requestIds: string[]) => {
-  // Create a dummy approved payout
-  const payoutId = `SETTLE-MANUAL-${Date.now()}`;
-
-  // Calculate total
-  const totalAmount = requests
-    .filter(r => requestIds.includes(r.id))
-    .reduce((sum, r) => sum + (r.amount * 0.8), 0);
-
-  // Create dummy payout record
-  const dummyPayout: PayoutRequest = {
-    id: payoutId,
-    expertId: 'VARIOUS', // Or specific if we filtered
-    expertName: translations[language === 'en' ? 'en' : 'ar'].financials.manualSettlement,
-    amount: totalAmount,
-    requestDate: new Date().toISOString().split('T')[0],
-    processedDate: new Date().toISOString().split('T')[0],
-    status: 'APPROVED',
-    requestIds: requestIds
+    // Link Requests
+    setRequests(prev => prev.map(r => {
+      if (requestIds.includes(r.id)) {
+        return { ...r, payoutId: payoutId };
+      }
+      return r;
+    }));
   };
-  setPayoutRequests(prev => [dummyPayout, ...prev]);
 
-  // Link Requests
-  setRequests(prev => prev.map(r => {
-    if (requestIds.includes(r.id)) {
-      return { ...r, payoutId: payoutId };
+  // Usage Limit Implementation
+  const checkUsageLimit = (type: 'TRANSACTIONS' | 'REVENUE') => {
+    if (!user || user.role !== 'CLIENT') return false;
+
+    // For now, assume a basic plan if not found.
+    // In real app, we'd fetch plan details linked to user subscription.
+    // Let's cycle limits for demo:
+    // If client email contains 'limit', we trigger limit.
+    // Or just random for now? No, let's use a hardcoded logic based on plan name if available, or just mock it.
+
+    // Mock Limits
+    const MAX_TRANSACTIONS = 5; // Low limit to trigger easily
+    const MAX_REVENUE = 50000;
+
+    // Count current usage (Mock: count requests)
+    const currentTransactions = requests.filter(r => r.clientId === user.id).length;
+
+    if (type === 'TRANSACTIONS') {
+      // If user has > 5 requests, trigger limit
+      return currentTransactions >= MAX_TRANSACTIONS;
     }
-    return r;
-  }));
-};
 
-// Usage Limit Implementation
-const checkUsageLimit = (type: 'TRANSACTIONS' | 'REVENUE') => {
-  if (!user || user.role !== 'CLIENT') return false;
-
-  // For now, assume a basic plan if not found.
-  // In real app, we'd fetch plan details linked to user subscription.
-  // Let's cycle limits for demo:
-  // If client email contains 'limit', we trigger limit.
-  // Or just random for now? No, let's use a hardcoded logic based on plan name if available, or just mock it.
-
-  // Mock Limits
-  const MAX_TRANSACTIONS = 5; // Low limit to trigger easily
-  const MAX_REVENUE = 50000;
-
-  // Count current usage (Mock: count requests)
-  const currentTransactions = requests.filter(r => r.clientId === user.id).length;
-
-  if (type === 'TRANSACTIONS') {
-    // If user has > 5 requests, trigger limit
-    return currentTransactions >= MAX_TRANSACTIONS;
-  }
-
-  return false;
-};
-
-// State for Platform Settings and Permissions
-const [settings, setSettings] = useState<PlatformSettings>({
-  id: 'global',
-  showExpertsPage: true,
-  showServicesPage: true,
-  careersEnabled: false,
-  careersTitle: '',
-  careersSubtitle: '',
-  pageVisibility: '{}',
-  sitePages: '[]'
-});
-
-// Per-Client Permissions (Locked features)
-const [clientPermissions, setClientPermissions] = useState<Record<string, ClientFeaturePermissions>>({});
-
-const getPermissions = (clientId: string): ClientFeaturePermissions => {
-  return clientPermissions[clientId] || {
-    id: 'default',
-    clientId: clientId,
-    canViewReports: true,
-    canUploadDocs: true,
-    canDownloadInvoices: true,
-    canRequestCalls: true,
-    canSubmitTickets: true,
-    canViewMarketplace: false // Private by default
+    return false;
   };
-};
 
-const updatePermissions = async (clientId: string, newPerms: Partial<ClientFeaturePermissions>) => {
-  const updated = { ...getPermissions(clientId), ...newPerms };
+  // State for Platform Settings and Permissions
+  const [settings, setSettings] = useState<PlatformSettings>({
+    id: 'global',
+    showExpertsPage: true,
+    showServicesPage: true,
+    careersEnabled: false,
+    careersTitle: '',
+    careersSubtitle: '',
+    pageVisibility: '{}',
+    sitePages: '[]'
+  });
 
-  // Optimistic Update
-  setClientPermissions(prev => ({
-    ...prev,
-    [clientId]: updated
-  }));
+  // Per-Client Permissions (Locked features)
+  const [clientPermissions, setClientPermissions] = useState<Record<string, ClientFeaturePermissions>>({});
 
-  // Persist
-  try {
-    await fetch(`${API_BASE_URL}/api/permissions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId, permissions: updated })
-    });
-  } catch (e) {
-    console.error('Failed to persist permissions', e);
-  }
-};
+  const getPermissions = (clientId: string): ClientFeaturePermissions => {
+    return clientPermissions[clientId] || {
+      id: 'default',
+      clientId: clientId,
+      canViewReports: true,
+      canUploadDocs: true,
+      canDownloadInvoices: true,
+      canRequestCalls: true,
+      canSubmitTickets: true,
+      canViewMarketplace: false // Private by default
+    };
+  };
 
-const updateSettings = async (newSettings: Partial<PlatformSettings>) => {
-  setSettings(prev => ({ ...prev, ...newSettings }));
+  const updatePermissions = async (clientId: string, newPerms: Partial<ClientFeaturePermissions>) => {
+    const updated = { ...getPermissions(clientId), ...newPerms };
 
-  // Persist
-  try {
-    await fetch(`${API_BASE_URL}/api/settings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...settings, ...newSettings })
-    });
-  } catch (e) {
-    console.error('Failed to persist settings', e);
-  }
-};
+    // Optimistic Update
+    setClientPermissions(prev => ({
+      ...prev,
+      [clientId]: updated
+    }));
 
-return (
-  <AppContext.Provider value={{
-    user, login, logout, language, setLanguage, t, register,
-    clients, experts, requests, services, plans, admins, payoutRequests,
-    addRequest, updateRequestStatus, assignRequest, updateExpertStatus, updateRequest,
-    updateClient, updateExpert, addClient, addExpert, submitReview,
-    addAdmin, updateAdmin, deleteAdmin,
-    updateService, addService, deleteService, updatePlan,
-    requestPayout, processPayout, manualSettle, checkUsageLimit,
-    settings, updateSettings, clientPermissions, getPermissions, updatePermissions,
-    updateSitePages: async (pages) => {
-      await updateSettings({ sitePages: JSON.stringify(pages) });
-    },
-    isRestoringSession,
-    refreshData: initBackend
-  }}>
-    {children}
-  </AppContext.Provider>
-);
+    // Persist
+    try {
+      await fetch(`${API_BASE_URL}/api/permissions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId, permissions: updated })
+      });
+    } catch (e) {
+      console.error('Failed to persist permissions', e);
+    }
+  };
+
+  const updateSettings = async (newSettings: Partial<PlatformSettings>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }));
+
+    // Persist
+    try {
+      await fetch(`${API_BASE_URL}/api/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...settings, ...newSettings })
+      });
+    } catch (e) {
+      console.error('Failed to persist settings', e);
+    }
+  };
+
+  return (
+    <AppContext.Provider value={{
+      user, login, logout, language, setLanguage, t, register,
+      clients, experts, requests, services, plans, admins, payoutRequests,
+      addRequest, updateRequestStatus, assignRequest, updateExpertStatus, updateRequest,
+      updateClient, updateExpert, addClient, addExpert, submitReview,
+      addAdmin, updateAdmin, deleteAdmin,
+      updateService, addService, deleteService, updatePlan,
+      requestPayout, processPayout, manualSettle, checkUsageLimit,
+      settings, updateSettings, clientPermissions, getPermissions, updatePermissions,
+      updateSitePages: async (pages) => {
+        await updateSettings({ sitePages: JSON.stringify(pages) });
+      },
+      isRestoringSession,
+      refreshData: initBackend
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
 };
 
 export const useAppContext = () => {
