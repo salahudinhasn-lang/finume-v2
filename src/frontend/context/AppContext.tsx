@@ -628,19 +628,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) { console.error(e); }
   };
 
-  const submitReview = (requestId: string, review: Review) => {
+  const submitReview = async (requestId: string, review: Review) => {
+    // 1. Optimistic Update
     setRequests(prev => prev.map(r => r.id === requestId ? { ...r, review } : r));
-    const request = requests.find(r => r.id === requestId);
-    if (request && request.assignedExpertId) {
-      setExperts(prev => prev.map(e => {
-        if (e.id === request.assignedExpertId) {
-          const totalRatings = 10;
-          const currentSum = e.rating * totalRatings;
-          const newRating = (currentSum + review.expertRating) / (totalRatings + 1);
-          return { ...e, rating: Math.min(5, Math.max(0, newRating)) };
+
+    // 2. Persist to API
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId,
+          expertId: review.expertId, // Ensure review object has this
+          rating: review.expertRating, // Mapping UI 'expertRating' to API 'rating'
+          comment: review.comment
+        })
+      });
+
+      if (res.ok) {
+        console.log("Review saved to DB");
+        // Optionally refetch experts to get updated rating?
+        // For now, let's just optimistically update expert rating locally too
+        const request = requests.find(r => r.id === requestId);
+        if (request && request.assignedExpertId) {
+          setExperts(prev => prev.map(e => {
+            if (e.id === request.assignedExpertId) {
+              const totalRatings = e.totalReviews || 0; // Use DB field if available
+              const currentAvg = e.rating || 0;
+              // Approx update
+              const newAvg = ((currentAvg * totalRatings) + review.expertRating) / (totalRatings + 1);
+              return { ...e, rating: newAvg, totalReviews: totalRatings + 1 };
+            }
+            return e;
+          }));
         }
-        return e;
-      }));
+      }
+    } catch (e) {
+      console.error("Failed to save review DB", e);
     }
   };
 
