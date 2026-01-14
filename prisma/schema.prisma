@@ -100,6 +100,8 @@ model ClientProfile {
   billingAddress String?
   requests       Request[]
   invoices       Invoice[]
+  permissions    ClientFeaturePermissions?
+  gamification   GamificationProfile?
 }
 
 model ExpertProfile {
