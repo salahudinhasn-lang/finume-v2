@@ -5,21 +5,32 @@ import { prisma } from '@/lib/prisma';
 export async function GET(request: Request) {
     try {
         const users = await prisma.user.findMany({
-            include: { permissions: true }
+            include: {
+                clientProfile: {
+                    include: { permissions: true }
+                },
+                expertProfile: true
+            }
         });
 
-        // Split by role for frontend convenience, matches AppContext expectation
-        const clients = users.filter(u => u.role === 'CLIENT');
-        const experts = users.filter(u => u.role === 'EXPERT');
-        const admins = users.filter(u => u.role === 'ADMIN');
+        // Helper to clean user object
+        const cleanUser = (u: any) => {
+            const { passwordHash, ...rest } = u;
+            return {
+                ...rest,
+                permissions: u.clientProfile?.permissions || null
+            };
+        };
 
-        // Remove passwords
-        const cleanUsers = (list: any[]) => list.map(({ password, ...rest }) => rest);
+        // Split by role for frontend convenience, matches AppContext expectation
+        const clients = users.filter(u => u.role === 'CLIENT').map(cleanUser);
+        const experts = users.filter(u => u.role === 'EXPERT').map(cleanUser);
+        const admins = users.filter(u => u.role === 'ADMIN').map(cleanUser);
 
         return NextResponse.json({
-            clients: cleanUsers(clients),
-            experts: cleanUsers(experts),
-            admins: cleanUsers(admins)
+            clients,
+            experts,
+            admins
         });
     } catch (error) {
         return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
