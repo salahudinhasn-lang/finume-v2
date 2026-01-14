@@ -13,8 +13,8 @@ const SERVICES = [
 
 const PLANS = [
   {
-    id: 'basic',
-    name: 'CR Guard (Basic)',
+    id: 'Plan-0001',
+    name: 'CR Guard',
     price: 250,
     description: 'Dormant / Low-Activity CRs',
     tagline: '"Keep my CR Active"',
@@ -23,8 +23,8 @@ const PLANS = [
     color: 'border-gray-200'
   },
   {
-    id: 'standard',
-    name: 'ZATCA Shield (Standard)',
+    id: 'Plan-0002',
+    name: 'ZATCA Shield',
     price: 1300,
     description: 'Active Shops / Cafes',
     tagline: '"No VAT Fines"',
@@ -34,8 +34,8 @@ const PLANS = [
     color: 'border-primary-500'
   },
   {
-    id: 'pro',
-    name: 'Audit Proof (Pro)',
+    id: 'Plan-0003',
+    name: 'Audit Proof',
     price: 5000,
     description: 'Funded Startups / Contractors',
     tagline: '"CFO-Level Reporting"',
@@ -93,7 +93,38 @@ async function main() {
   console.log('Start seeding ...');
   const password = "12121212";
 
-  // 1. SERVICES
+  // 1. CLEAN UP
+  // We clean up everything to ensure fresh IDs and no stale data.
+  try {
+    console.log('Cleaning up database...');
+    // Order matters due to foreign keys
+    await prisma.fileBatch.deleteMany({}); // Delete FileBatches (depends on Request) - wait, Request depends on User/Plan/Service
+    // Request -> Client(User), Service, Plan, Expert(User)
+    // FileBatch -> Request
+    // UploadedFile -> User, FileBatch...
+
+    // Let's try to delete in order of dependency (Leafs first)
+    await prisma.transaction.deleteMany({});
+    await prisma.complianceLog.deleteMany({});
+    await prisma.gamificationProfile.deleteMany({});
+    await prisma.chatMessage.deleteMany({});
+    await prisma.uploadedFile.deleteMany({});
+    await prisma.fileBatch.deleteMany({});
+    await prisma.request.deleteMany({});
+
+    await prisma.clientFeaturePermissions.deleteMany({});
+    await prisma.payoutRequest.deleteMany({});
+
+    await prisma.user.deleteMany({});
+    await prisma.pricingPlan.deleteMany({});
+    // await prisma.service.deleteMany({}); // Optional, services are stable usually, but consistent to clear.
+
+    console.log('Database cleaned.');
+  } catch (e) {
+    console.warn('Cleanup warning (non-fatal):', e);
+  }
+
+  // 2. SERVICES
   for (const s of SERVICES) {
     await prisma.service.upsert({
       where: { id: s.id },
@@ -103,54 +134,20 @@ async function main() {
   }
   console.log('Services seeded.');
 
-  // 2. PLANS
+  // 3. PLANS (New IDs)
   for (const p of PLANS) {
-    await prisma.pricingPlan.upsert({
-      where: { id: p.id },
-      update: {},
-      create: p,
+    await prisma.pricingPlan.create({ // We can use create because we cleared table
+      data: p
     });
   }
   console.log('Plans seeded.');
-
-  // 3. CLEAN UP & SEED USERS
-  // We clean up specific emails if they exist to start fresh, or just upsert. 
-  // User asked to "remove all users". To stay safe from constraint crashes, we will try to delete these specific ones first or just upsert.
-  // Actually, to fulfill "remove all users", we should deleteMany. But Request table might link to them. A fresh start implies cleaning Requests too?
-  // Let's delete Requests first, then Users? Dangerous if data matters.
-  // The user prompt is "in the database remove all users and create...".
-  // I'll try to delete all. If it fails due to foreign keys, I will catch it.
-
-  try {
-    // Optional: Clear requests if we want a truly clean slate, but user didn't explicitly say "clear requests".
-    // However, cannot delete users if requests exist.
-    // I'll assume this is a dev reset.
-    await prisma.request.deleteMany({}); // Clear requests to allow user deletion
-    await prisma.clientFeaturePermissions.deleteMany({});
-    await prisma.user.deleteMany({});
-    console.log('All users deleted.');
-  } catch (e) {
-    console.warn('Could not delete all users (likely constraints). Proceeding to Upsert specific users.', e);
-  }
 
   // 4. USERS
   for (const u of USERS) {
     const { permissions, ...userData } = u;
 
-    // Hash password? The app uses bcrypt, but fallback logic allows plaintext '12121212'.
-    // We will stick to plaintext for consistency with the request instructions "password: 12121212".
-    // If we wanted to hash: const hashedPassword = await bcrypt.hash(password, 10);
-    // But this script runs in Node without bcrypt explicit dep in this file maybe?
-    // Let's rely on the plaintext fallback I saw in login route.
-
-    await prisma.user.upsert({
-      where: { email: u.email },
-      update: {
-        password: password,
-        role: u.role,
-        name: u.name
-      },
-      create: {
+    await prisma.user.create({
+      data: {
         ...userData,
         password: password,
         permissions: permissions
