@@ -71,6 +71,7 @@ model User {
   name         String?
   email        String   @unique
   passwordHash String
+  avatarUrl    String?
   role         Role     @default(CLIENT)
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())

@@ -101,6 +101,7 @@ export async function POST(request: Request) {
                 email,
                 passwordHash: hashedPassword,
                 role,
+                avatarUrl,
                 isActive: true,
 
                 // Create Profile based on Role
