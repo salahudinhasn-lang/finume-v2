@@ -160,7 +160,7 @@ async function main() {
       data: {
         ...baseUser,
         role: role,
-        passwordHash: "$2a$10$y.X.t.L.e.s.s.s.e.c.r.e.t", // dummy bcrypt hash for "12121212" or similar
+        passwordHash: await require('bcryptjs').hash("12121212", 10), // Real hash for "12121212"
         // Correctly nest profile creation
         ...(role === 'CLIENT' ? {
           clientProfile: {
