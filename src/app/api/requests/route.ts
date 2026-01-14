@@ -40,7 +40,9 @@ export async function POST(req: Request) {
                         id: serviceId,
                         nameEn: 'Custom Service',
                         nameAr: 'خدمة مخصصة',
-                        price: amount,
+                        basePrice: amount,
+                        slug: `custom-${serviceId}`,
+                        type: 'ONE_TIME',
                         description: description || 'Custom Request'
                     }
                 });
