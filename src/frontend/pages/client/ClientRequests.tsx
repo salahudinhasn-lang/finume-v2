@@ -50,8 +50,10 @@ const ClientRequests = () => {
         if (reviewRequest) {
             const review: Review = {
                 requestId: reviewRequest.id,
+                expertId: reviewRequest.assignedExpertId || '',
                 expertRating: reviewData.rating,
-                expertComment: reviewData.expertFeedback,
+                comment: reviewData.expertFeedback, // Main comment field
+                expertComment: reviewData.expertFeedback, // Keep legacy populated
                 adminNps: reviewData.nps,
                 adminComment: reviewData.adminFeedback,
                 date: new Date().toISOString().split('T')[0]
