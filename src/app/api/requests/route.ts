@@ -35,6 +35,29 @@ export async function POST(req: Request) {
         // Ensure Client Exists
         const userExists = await prisma.user.findUnique({ where: { id: clientId } });
         if (!userExists) {
+            // Generate new CUS- ID
+            const lastClient = await prisma.user.findFirst({
+                where: { role: 'CLIENT', id: { startsWith: 'CUS-' } },
+                orderBy: { id: 'desc' },
+                select: { id: true }
+            });
+            let nextSerial = 1;
+            if (lastClient?.id) {
+                const parts = lastClient.id.split('-');
+                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+                    nextSerial = Number(parts[1]) + 1;
+                }
+            }
+            const newClientId = `CUS-${nextSerial.toString().padStart(6, '0')}`;
+
+            // Override the provided clientId with the new one if we are creating a new user
+            // But wait, if they provided a clientId, they probably expect THAT ID to be used?
+            // The prompt says "In the USER table make the ID for client cus-000001".
+            // If the request comes with specific clientId, we should probably check if it matches format.
+            // But if it's a stub "client-123", we should probably replace it.
+            // However, the POST request body has "clientId". If we change it, we must update the Request too.
+            clientId = newClientId;
+
             await prisma.user.create({
                 data: {
                     id: clientId,
@@ -42,6 +65,11 @@ export async function POST(req: Request) {
                     name: 'Client ' + clientId,
                     role: 'CLIENT',
                     passwordHash: 'placeholder-hash-for-stub-user',
+                    clientProfile: {
+                        create: {
+                            companyName: 'New Company',
+                        }
+                    }
                 }
             });
         }

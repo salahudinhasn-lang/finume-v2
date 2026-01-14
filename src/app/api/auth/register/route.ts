@@ -88,6 +88,25 @@ export async function POST(request: Request) {
                 }
             }
             userId = `EXP-${nextSerial.toString().padStart(6, '0')}`;
+        } else if (role === 'ADMIN') {
+            // Find last admin ID
+            const lastAdmin = await prisma.user.findFirst({
+                where: {
+                    role: 'ADMIN',
+                    id: { startsWith: 'ADM-' }
+                },
+                orderBy: { id: 'desc' },
+                select: { id: true }
+            });
+
+            let nextSerial = 1;
+            if (lastAdmin && lastAdmin.id) {
+                const parts = lastAdmin.id.split('-');
+                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+                    nextSerial = Number(parts[1]) + 1;
+                }
+            }
+            userId = `ADM-${nextSerial.toString().padStart(6, '0')}`;
         }
 
         // 4. Create User
