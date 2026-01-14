@@ -113,7 +113,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     setIsRestoringSession(false);
 
-
     const initBackend = async () => {
       try {
         // Fetch Settings
@@ -181,12 +180,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Fetch Requests
         await fetchRequests();
 
-        // Fetch Pool (API will return 403 if not expert, or empty. Safe to call, or check valid user? No user yet in initBackend variable scope?
-        // Actually initBackend runs once. User might not be logged in yet? 
-        // Logic issue: initBackend runs on mount. login() sets user.
-        // We should trigger fetch on user change?
-        // AppContext Lines 116.
-        // Let's call it. If 403, it catches.
+        // Fetch Pool
         await fetchPool();
 
         // Fetch Services
@@ -211,8 +205,84 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.warn('Backend not available:', e);
       }
     };
+
     initBackend(); // Call initBackend here
-  }, []);
+  }, []); // useEffect dependency array empty -> runs once
+
+  const refreshData = async () => {
+    // We need to access the logic inside initBackend. 
+    // The previous implementation failed because initBackend was scoped inside useEffect.
+    // The fixed implementation above simply defines it and calls it inside the effect... wait.
+    // ReplaceFileContent REPLACES lines. I need to make sure I am defining it outside.
+
+    // To truly fix this efficiently in one step:
+    // I need to define initBackend as a const function in the component body (before useEffect),
+    // and then call it inside useEffect.
+    // BUT "fetchRequests" and "fetchPool" are defined AFTER this block in the original file (lines 320+).
+    // So initBackend cannot be defined here if it uses fetchRequests.
+
+    // Solution: Move fetchRequests/fetchPool UP, or move initBackend DOWN or define initBackend relying on hoisted functions (which const aren't).
+
+    // Let's look at the file structure again.
+    // Lines 117-215 contained initBackend inside useEffect.
+    // Lines 320+ contain fetchRequests.
+
+    // Javascript/Typescript: "const fetchRequests =" is NOT hoisted. 
+    // If I move initBackend out, I must move it BELOW fetchRequests/fetchPool definitions.
+    // OR create a useEffect that calls a function defined later? No.
+
+    // Best Approach:
+    // 1. Rename the complex logic inside useEffect to a new standalone function `loadAllData`.
+    // 2. Move `loadAllData` to be defined AFTER `fetchRequests` and `fetchPool`.
+    // 3. Call `loadAllData` inside `useEffect`.
+    // 4. Call `loadAllData` inside `refreshData`.
+
+    // This tool call is replacing lines 117-216. I can replace it with just the useEffect calling a placeholder,
+    // and then insert the function definition later.
+    // OR, since I can't do multiple moves easily, I will inline the logic into `refreshData` as well? No, duplication.
+
+    // Actually, `fetchRequests` uses `setRequests` which is available.
+    // I will replace this block with just the useEffect call, and rely on `refreshData` (which I will rename to `initData` perhaps?)
+    // Wait, I can't effectively move the code block down with one replace.
+
+    // Alternative: Move `fetchRequests` and `fetchPool` UP to before this block.
+    // They are lines 320-389.
+
+    // Correct plan:
+    // 1. Delete the `useEffect` block here (lines 117-216). Replaced with `useEffect(() => { refreshData(); }, []);`
+    // 2. Define `refreshData` (which contains the logic) *after* `fetchPool` is defined (around line 390).
+    // 3. In step 2, I also need to make sure `refreshData` is exposed in context.
+
+    // Let's do step 1 (Update the useEffect to call refreshData, and remove the inline definition).
+    // Note: refreshData is defined below at 217. It needs to be updated to have the body.
+    // BUT `fetchRequests` is defined at 320. `refreshData` at 217 cannot call `fetchRequests` (const) unless `fetchRequests` is moved up or `refreshData` moved down.
+
+    // I will move `refreshData` definition to line ~400 (after fetchPool).
+    // And for lines 117-216, I will just call it? No, it's not defined yet.
+
+    // I will use `useCallback` or just define `fetchRequests` and `fetchPool` using `function` keyword (hoisted)? 
+    // They are `const = async ...` currently.
+
+    // Easiest fix for now: Copy the logic into `refreshData` (wait, duplicates).
+    // Better: Just make `fetchRequests` and `fetchPool` defined BEFORE `useEffect`.
+
+    // Let's try to verify if `fetchRequests` is hoisted. `const` is not.
+
+    // I will move the component body organization:
+    // 1. State definitions
+    // 2. Helper functions (fetchRequests, fetchPool)
+    // 3. `refreshData` / `initBackend` logic.
+    // 4. `useEffect` calling `initBackend`.
+
+    // This requires moving large chunks.
+
+    // A simpler way:
+    // Define `fetchRequests` and `fetchPool` using `function` keyword (so they are hoisted).
+    // Then `initBackend` can stay where it is (or move out) and call them.
+    // But they are inside a functional component, so function hoisting applies to the scope of the component.
+
+    // Let's try changing `const fetchRequests` to `async function fetchRequests`.
+  };
 
   const refreshData = async () => {
     await initBackend();
@@ -393,6 +463,95 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error('Failed to fetch pool', e);
     }
   };
+
+  async function initBackend() {
+    try {
+      // Fetch Settings
+      const settingsRes = await fetch(`${API_BASE_URL}/api/settings`);
+      if (settingsRes.ok) {
+        setSettings(await settingsRes.json());
+      }
+
+      // Fetch Users (including permissions)
+      const usersRes = await fetch(`${API_BASE_URL}/api/users`);
+      if (usersRes.ok) {
+        const usersData = await usersRes.json();
+
+        // Sanitize Experts
+        if (usersData.experts?.length > 0) {
+          const sanitizedExperts: Expert[] = usersData.experts.map((e: any) => ({
+            ...e,
+            specializations: (Array.isArray(e.specializations) ? e.specializations : [])
+              .filter((s: any) => typeof s === 'string'),
+            rating: typeof e.rating === 'number' ? e.rating : 0,
+            totalEarned: typeof e.totalEarned === 'number' ? e.totalEarned : 0,
+            status: e.status || 'VETTING',
+            bio: e.bio || '',
+            yearsExperience: typeof e.yearsExperience === 'number' ? e.yearsExperience : 0,
+            hourlyRate: typeof e.hourlyRate === 'number' ? e.hourlyRate : 0,
+            isPremium: !!e.isPremium,
+            isFeatured: !!e.isFeatured,
+            name: e.name || 'Unknown Expert',
+            email: e.email || '',
+            role: 'EXPERT',
+            avatarUrl: e.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.id || Math.random()}`
+          }));
+          setExperts(sanitizedExperts);
+        }
+
+        // Sanitize Clients
+        if (usersData.clients?.length > 0) {
+          const sanitizedClients: Client[] = usersData.clients.map((c: any) => ({
+            ...c,
+            role: 'CLIENT',
+            companyName: c.companyName || 'Unknown Company',
+            industry: c.industry || 'Other',
+            totalSpent: typeof c.totalSpent === 'number' ? c.totalSpent : 0,
+            zatcaStatus: c.zatcaStatus || 'GREEN',
+            name: c.name || 'Unknown Client',
+            email: c.email || '',
+            avatarUrl: c.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${c.id || Math.random()}`
+          }));
+          setClients(sanitizedClients);
+        }
+
+        if (usersData.admins?.length > 0) setAdmins(usersData.admins);
+
+        // Hydrate client permissions map
+        const permsMap: Record<string, ClientFeaturePermissions> = {};
+        (usersData.clients as Client[] || []).forEach((c: any) => {
+          if (c.permissions) {
+            permsMap[c.id] = c.permissions;
+          }
+        });
+        setClientPermissions(permsMap);
+      }
+
+      // Fetch Requests & Pool
+      await fetchRequests();
+      await fetchPool();
+
+      // Fetch Services
+      const servicesRes = await fetch(`${API_BASE_URL}/api/services`);
+      if (servicesRes.ok) {
+        setServices(await servicesRes.json());
+      }
+
+      // Fetch Plans
+      const plansRes = await fetch(`${API_BASE_URL}/api/plans`);
+      if (plansRes.ok) {
+        const plansData = await plansRes.json();
+        const parsedPlans = plansData.map((p: any) => ({
+          ...p,
+          features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
+          attributes: typeof p.attributes === 'string' ? JSON.parse(p.attributes) : p.attributes
+        }));
+        setPlans(parsedPlans);
+      }
+    } catch (e) {
+      console.warn('Backend not available:', e);
+    }
+  }
 
   const addRequest = async (req: Request): Promise<Request | null> => {
     // 1. Optimistic UI Update
