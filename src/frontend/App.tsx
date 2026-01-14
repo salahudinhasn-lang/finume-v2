@@ -23,7 +23,6 @@ import AdminClients from './pages/admin/AdminClients';
 import AdminExperts from './pages/admin/AdminExperts';
 import AdminRequests from './pages/admin/AdminRequests';
 import AdminFinancials from './pages/admin/AdminFinancials';
-import AdminFinancials from './pages/admin/AdminFinancials';
 import AdminSitePages from './pages/admin/AdminSitePages';
 import AdminSettings from './pages/admin/AdminSettings'; // New
 import AdminProfiles from './pages/admin/AdminProfiles';
