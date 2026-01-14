@@ -4,11 +4,11 @@ const prisma = new PrismaClient();
 
 // CONSTANTS
 const SERVICES = [
-  { id: 'S1', nameEn: 'VAT Filing', nameAr: 'إقرار ضريبة القيمة المضافة', price: 500, description: 'Complete VAT return filing with ZATCA' },
-  { id: 'S2', nameEn: 'Bookkeeping (Monthly)', nameAr: 'مسك الدفاتر (شهري)', price: 2500, description: 'Monthly financial record keeping' },
-  { id: 'S3', nameEn: 'Financial Audit', nameAr: 'تدقيق مالي', price: 15000, description: 'Full annual financial audit' },
-  { id: 'S4', nameEn: 'Zakat Advisory', nameAr: 'استشارات الزكاة', price: 1000, description: 'Consultation on Zakat calculation' },
-  { id: 'S5', nameEn: 'CFO Advisory', nameAr: 'استشارات المدير المالي', price: 5000, description: 'Strategic financial planning' },
+  { id: 'S1', nameEn: 'VAT Filing', nameAr: 'إقرار ضريبة القيمة المضافة', basePrice: 500, slug: 'vat-filing', type: 'RECURRING', description: 'Complete VAT return filing with ZATCA' },
+  { id: 'S2', nameEn: 'Bookkeeping (Monthly)', nameAr: 'مسك الدفاتر (شهري)', basePrice: 2500, slug: 'monthly-bookkeeping', type: 'RECURRING', description: 'Monthly financial record keeping' },
+  { id: 'S3', nameEn: 'Financial Audit', nameAr: 'تدقيق مالي', basePrice: 15000, slug: 'financial-audit', type: 'ONE_TIME', description: 'Full annual financial audit' },
+  { id: 'S4', nameEn: 'Zakat Advisory', nameAr: 'استشارات الزكاة', basePrice: 1000, slug: 'zakat-advisory', type: 'ONE_TIME', description: 'Consultation on Zakat calculation' },
+  { id: 'S5', nameEn: 'CFO Advisory', nameAr: 'استشارات المدير المالي', basePrice: 5000, slug: 'cfo-advisory', type: 'RECURRING', description: 'Strategic financial planning' },
 ];
 
 const PLANS = [
