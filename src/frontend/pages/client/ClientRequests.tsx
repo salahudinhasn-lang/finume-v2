@@ -3,13 +3,13 @@ import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/UI';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Eye, CheckCircle, Star, ThumbsUp, X, FileText, Download, Clock, Check, Plus } from 'lucide-react';
+import { Search, Filter, Eye, CheckCircle, Star, ThumbsUp, X, FileText, Download, Clock, Check, Plus, RefreshCw } from 'lucide-react';
 import { Request, Review, FileBatch, DocumentCategory, UploadedFile } from '../../types';
 import { DocumentBatchList } from '../../components/DocumentBatchList';
 import { SmartUploadWidget } from '../../components/SmartUploadWidget';
 
 const ClientRequests = () => {
-    const { user, requests, updateRequestStatus, submitReview, updateRequest, updateClient, clients } = useAppContext();
+    const { user, requests, updateRequestStatus, submitReview, updateRequest, updateClient, clients, refreshData } = useAppContext();
     const navigate = useNavigate();
     const [filter, setFilter] = useState('All');
     const [search, setSearch] = useState('');

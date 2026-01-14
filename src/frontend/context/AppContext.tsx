@@ -59,6 +59,7 @@ interface AppContextType {
   updatePermissions: (clientId: string, permissions: Partial<ClientFeaturePermissions>) => Promise<void>;
   updateSitePages: (pages: SitePage[]) => Promise<void>;
   isRestoringSession: boolean;
+  refreshData: () => Promise<void>;
 }
 
 // Define API Base URL
@@ -212,6 +213,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     initBackend(); // Call initBackend here
   }, []);
+
+  const refreshData = async () => {
+    await initBackend();
+  };
 
   const login = async (email: string, role?: string, newUser?: User, password?: string) => {
     // 1. If newUser passed (from Register instant login), use it
