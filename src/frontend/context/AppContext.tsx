@@ -284,10 +284,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Let's try changing `const fetchRequests` to `async function fetchRequests`.
   };
 
-  const refreshData = async () => {
-    await initBackend();
-  };
-
   const login = async (email: string, role?: string, newUser?: User, password?: string) => {
     // 1. If newUser passed (from Register instant login), use it
     if (newUser) {
