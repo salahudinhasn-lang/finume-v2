@@ -13,7 +13,7 @@ export async function POST(request: Request) {
         // 1. Find User
         const user = await prisma.user.findUnique({
             where: { email },
-            include: { permissions: true } // Include permissions if client
+            // include: { permissions: true } // Removed as per schema
         });
 
         if (!user) {

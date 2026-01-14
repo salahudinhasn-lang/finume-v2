@@ -9,9 +9,17 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     try {
         const id = params.id;
         const body = await request.json();
-        const { password, ...otherUpdates } = body;
+        const {
+            password,
+            // Expert Fields
+            bio, hourlyRate, specializations, iban, kycStatus,
+            // Client Fields
+            companyName, vatNumber, industry, billingAddress,
+            // User Fields
+            ...userFields
+        } = body;
 
-        const dataToUpdate: any = { ...otherUpdates };
+        const dataToUpdate: any = { ...userFields };
 
         // If password is provided, hash it
         if (password) {
@@ -19,12 +27,39 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                 return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
             }
             const hashedPassword = await bcrypt.hash(password, 10);
-            dataToUpdate.password = hashedPassword;
+            dataToUpdate.passwordHash = hashedPassword; // Schema uses passwordHash, not password
+        }
+
+        // Prepare Expert Profile Update
+        const expertUpdates: any = {};
+        if (bio !== undefined) expertUpdates.bio = bio;
+        if (hourlyRate !== undefined) expertUpdates.hourlyRate = hourlyRate;
+        if (specializations !== undefined) expertUpdates.specializations = specializations;
+        if (iban !== undefined) expertUpdates.iban = iban;
+
+        if (Object.keys(expertUpdates).length > 0) {
+            dataToUpdate.expertProfile = {
+                update: expertUpdates
+            };
+        }
+
+        // Prepare Client Profile Update
+        const clientUpdates: any = {};
+        if (companyName !== undefined) clientUpdates.companyName = companyName;
+        if (vatNumber !== undefined) clientUpdates.vatNumber = vatNumber;
+        if (industry !== undefined) clientUpdates.industry = industry;
+        if (billingAddress !== undefined) clientUpdates.billingAddress = billingAddress;
+
+        if (Object.keys(clientUpdates).length > 0) {
+            dataToUpdate.clientProfile = {
+                update: clientUpdates
+            };
         }
 
         const updatedUser = await prisma.user.update({
             where: { id },
             data: dataToUpdate,
+            include: { expertProfile: true, clientProfile: true }
         });
 
         // Remove password from response
