@@ -150,6 +150,7 @@ async function main() {
       bio, specializations, yearsExperience, hourlyRate, // Expert props
       adminRole, // Admin props
       role,
+      status, // Excluded from baseUser (not in User schema)
       ...baseUser
     } = u;
 
