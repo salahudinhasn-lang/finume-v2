@@ -164,20 +164,23 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
                                             onClick={() => {
                                                 if (user) {
                                                     const discount = billingCycle === 'yearly' ? (settings?.yearlyDiscountPercentage || 20) / 100 : 0;
-                                                    const finalPrice = billingCycle === 'yearly' ? Math.round(plan.price * (1 - discount)) : plan.price;
+                                                    // Calculate monthly equivalent first for display consistency
+                                                    const monthlyEquivalent = billingCycle === 'yearly' ? Math.round(plan.price * (1 - discount)) : plan.price;
+                                                    // Calculate total amount to charge
+                                                    const totalAmount = billingCycle === 'yearly' ? monthlyEquivalent * 12 : plan.price;
 
                                                     const newReq: any = {
                                                         id: `SUB-${Date.now()}`,
                                                         pricingPlanId: plan.id,
-                                                        serviceName: `${plan.name} (${billingCycle})`,
+                                                        serviceName: `${plan.name} (${billingCycle === 'yearly' ? 'Yearly' : 'Monthly'})`,
                                                         clientId: user.id,
                                                         clientName: user.name,
                                                         expertId: null,
                                                         expertName: null,
                                                         status: 'PENDING_PAYMENT',
                                                         dateCreated: new Date().toISOString(),
-                                                        amount: finalPrice,
-                                                        description: `Subscription to ${plan.name} plan. Billed ${billingCycle}.`,
+                                                        amount: totalAmount,
+                                                        description: `Subscription to ${plan.name} plan. ${billingCycle === 'yearly' ? 'Billed Annually' : 'Billed Monthly'}.`,
                                                         batches: []
                                                     };
 
