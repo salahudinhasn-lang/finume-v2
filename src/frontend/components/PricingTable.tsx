@@ -14,6 +14,7 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
     const { settings, plans, user, addRequest } = useAppContext();
     const [internalBilling, setInternalBilling] = useState<'monthly' | 'yearly'>('monthly');
     const [showOverage, setShowOverage] = useState(false);
+    const [submittingId, setSubmittingId] = useState<string | null>(null);
 
     const billingCycle = externalBilling || internalBilling;
 
@@ -161,7 +162,10 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
                                 return (
                                     <td key={plan.id} className={`p-4 border-l border-gray-200 ${isHighlighted ? 'bg-blue-50/50' : ''}`}>
                                         <button
+                                            disabled={submittingId === plan.id}
                                             onClick={() => {
+                                                if (submittingId) return;
+                                                setSubmittingId(plan.id);
                                                 if (user) {
                                                     const discount = billingCycle === 'yearly' ? (settings?.yearlyDiscountPercentage || 20) / 100 : 0;
                                                     // Calculate monthly equivalent first for display consistency
@@ -195,9 +199,9 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
                                             className={`block w-full py-3 text-center rounded-xl font-bold transition-all shadow-sm hover:shadow-md ${plan.isPopular || isHighlighted
                                                 ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
                                                 : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300'
-                                                } ${isHighlighted ? 'transform scale-105 ring-4 ring-blue-500/20' : ''}`}
+                                                } ${isHighlighted ? 'transform scale-105 ring-4 ring-blue-500/20' : ''} ${submittingId === plan.id ? 'opacity-75 cursor-not-allowed' : ''}`}
                                         >
-                                            Choose {plan.name?.split(' ')[0]}
+                                            {submittingId === plan.id ? 'Processing...' : `Choose ${plan.name?.split(' ')[0]}`}
                                         </button>
                                     </td>
                                 )

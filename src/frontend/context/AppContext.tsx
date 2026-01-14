@@ -347,7 +347,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (Array.isArray(parsedData) && parsedData.length > 0) {
           setRequests(prev => {
             const newIds = new Set(parsedData.map((d: any) => d.id));
-            const filteredPrev = prev.filter(p => !newIds.has(p.id) && p.id.startsWith('R-'));
+            // Keep items that are NOT in the new data, OR are optimistic (SUB/NEW)
+            const filteredPrev = prev.filter(p => !newIds.has(p.id) && (p.id.startsWith('SUB-') || p.id.startsWith('NEW-') || p.id.startsWith('REQ-') || p.id.startsWith('R-')));
             return [...parsedData, ...filteredPrev];
           });
         }
