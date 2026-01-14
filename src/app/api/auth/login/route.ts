@@ -26,7 +26,11 @@ export async function POST(request: Request) {
         // A. Try Bcrypt
         // If password doesn't look like a hash (e.g. is '12121212'), bcrypt.compare calls might error or fail gracefully.
         // It's safer to try compare.
-        isValid = await bcrypt.compare(password, user.password);
+        try {
+            isValid = await bcrypt.compare(password, user.password);
+        } catch (e) {
+            isValid = false;
+        }
 
         // B. Fallback to plain text (DEV ONLY - for seed compatibility)
         if (!isValid && user.password === password) {
