@@ -74,6 +74,25 @@ export async function POST(req: Request) {
         if (!clientId || (!serviceId && !pricingPlanId) || !amount) {
             return NextResponse.json({ error: 'Missing Required Fields (Service or Plan)' }, { status: 400, headers: corsHeaders });
         }
+        // Deduplication Check
+        // Check if a request with same clientId and same plan/service was created in the last 10 seconds
+        const duplicateCheck = await prisma.request.findFirst({
+            where: {
+                clientId,
+                OR: [
+                    { pricingPlanId: pricingPlanId || undefined },
+                    { serviceId: serviceId || undefined }
+                ],
+                createdAt: {
+                    gte: new Date(Date.now() - 10 * 1000) // 10 seconds ago
+                }
+            }
+        });
+
+        if (duplicateCheck) {
+            console.log('Duplicate request detected, returning existing one.');
+            return NextResponse.json(duplicateCheck, { headers: corsHeaders });
+        }
 
         // Generate Custom Sequential ID (REQ-000001)
         const lastRequest = await prisma.request.findFirst({
