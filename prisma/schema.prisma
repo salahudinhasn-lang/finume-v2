@@ -106,10 +106,24 @@ model ExpertProfile {
   yearsExperience Int?
   linkedinUrl     String?
   specializations Json?     // Array of strings
+  rating          Decimal   @default(0)
+  totalReviews    Int       @default(0)
   
   assignedRequests Request[]      @relation("AssignedExpert")
   poolInvites      ProviderPool[]
   payouts          PayoutRequest[]
+  reviews          Review[]
+}
+
+model Review {
+  id        String        @id @default(cuid())
+  requestId String        @unique
+  request   Request       @relation(fields: [requestId], references: [id])
+  expertId  String
+  expert    ExpertProfile @relation(fields: [expertId], references: [userId])
+  rating    Int
+  comment   String?
+  createdAt DateTime      @default(now())
 }
 
 model AdminProfile {
