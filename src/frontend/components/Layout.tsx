@@ -61,6 +61,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         { icon: LayoutTemplate, label: 'Site Pages', path: '/admin/pages' },
         { icon: DollarSign, label: t('sidebar.financials'), path: '/admin/financials' },
         { icon: Shield, label: t('sidebar.adminProfiles'), path: '/admin/profiles' },
+        { icon: Settings, label: t('sidebar.settings'), path: '/admin/settings' },
       ];
     }
   };

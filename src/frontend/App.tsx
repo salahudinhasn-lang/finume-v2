@@ -23,7 +23,9 @@ import AdminClients from './pages/admin/AdminClients';
 import AdminExperts from './pages/admin/AdminExperts';
 import AdminRequests from './pages/admin/AdminRequests';
 import AdminFinancials from './pages/admin/AdminFinancials';
-import AdminSitePages from './pages/admin/AdminSitePages'; // New
+import AdminFinancials from './pages/admin/AdminFinancials';
+import AdminSitePages from './pages/admin/AdminSitePages';
+import AdminSettings from './pages/admin/AdminSettings'; // New
 import AdminProfiles from './pages/admin/AdminProfiles';
 import AdminServices from './pages/admin/AdminServices';
 import Layout from './components/Layout';
@@ -271,6 +273,13 @@ const AppContent = () => {
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <Layout title="Admin Profiles">
               <AdminProfiles />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/settings" element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <Layout title="Admin Settings">
+              <AdminSettings />
             </Layout>
           </ProtectedRoute>
         } />

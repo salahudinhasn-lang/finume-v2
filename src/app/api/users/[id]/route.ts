@@ -1,46 +1,57 @@
 
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
-
-export async function PATCH(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
+// PATCH /api/users/[id]
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
     try {
-        const { id } = await params;
+        const id = params.id;
         const body = await request.json();
+        const { password, ...otherUpdates } = body;
 
-        // Prevent updating sensitive fields if necessary, but for Admin use it's fine.
-        // We might want to remove 'id' or 'email' if those shouldn't change, 
-        // but let's just pass body for now as it's partial.
-        const { id: _id, emails, ...updates } = body; // Strip ID to be safe
+        const dataToUpdate: any = { ...otherUpdates };
+
+        // If password is provided, hash it
+        if (password) {
+            if (password.length < 6) {
+                return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+            }
+            const hashedPassword = await bcrypt.hash(password, 10);
+            dataToUpdate.password = hashedPassword;
+        }
 
         const updatedUser = await prisma.user.update({
             where: { id },
-            data: updates
+            data: dataToUpdate,
         });
 
-        return NextResponse.json(updatedUser);
+        // Remove password from response
+        const { password: _, ...userWithoutPassword } = updatedUser;
+
+        return NextResponse.json(userWithoutPassword);
     } catch (error) {
-        console.error("Failed to update user:", error);
+        console.error('Failed to update user:', error);
         return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
     }
 }
 
-export async function DELETE(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
+// GET /api/users/[id] (Optional, useful for fetching fresh data)
+export async function GET(request: Request, { params }: { params: { id: string } }) {
     try {
-        const { id } = await params;
-        await prisma.user.delete({
-            where: { id }
+        const id = params.id;
+        const user = await prisma.user.findUnique({
+            where: { id },
+            include: { permissions: true }
         });
-        return NextResponse.json({ success: true });
+
+        if (!user) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
+
+        const { password: _, ...userWithoutPassword } = user;
+        return NextResponse.json(userWithoutPassword);
     } catch (error) {
-        console.error("Failed to delete user:", error);
-        return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 });
     }
 }

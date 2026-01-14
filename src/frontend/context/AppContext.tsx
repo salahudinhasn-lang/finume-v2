@@ -513,8 +513,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAdmins(prev => [...prev, admin]);
   };
 
-  const updateAdmin = (id: string, updates: Partial<Admin>) => {
+  const updateAdmin = async (id: string, updates: Partial<Admin>) => {
+    // 1. Optimistic Update
     setAdmins(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+
+    // Update local user session if the admin is updating themselves
+    if (user && user.id === id) {
+      setUser(prev => prev ? { ...prev, ...updates } as User : null);
+      // Update LocalStorage to keep session fresh
+      const stored = localStorage.getItem('finume_user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        localStorage.setItem('finume_user', JSON.stringify({ ...parsed, ...updates }));
+      }
+    }
+
+    // 2. Persist to API
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+
+      if (!res.ok) {
+        console.error("Failed to persist admin update");
+        // Optionally revert optimistic update here
+      }
+    } catch (e) {
+      console.error("Network error updating admin", e);
+    }
   };
 
   const deleteAdmin = (id: string) => {
