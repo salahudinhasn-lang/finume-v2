@@ -26,6 +26,7 @@ export async function POST(req: Request) {
                     email: `user-${clientId}@example.com`,
                     name: 'Client ' + clientId,
                     role: 'CLIENT',
+                    passwordHash: 'placeholder-hash-for-stub-user',
                 }
             });
         }
