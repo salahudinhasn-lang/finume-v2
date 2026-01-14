@@ -163,9 +163,12 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
                                     <td key={plan.id} className={`p-4 border-l border-gray-200 ${isHighlighted ? 'bg-blue-50/50' : ''}`}>
                                         <button
                                             disabled={submittingId === plan.id}
-                                            onClick={() => {
+                                            onClick={async () => {
                                                 if (submittingId) return;
                                                 setSubmittingId(plan.id);
+
+                                                // Artificial delay to prevent race conditions or double taps processing
+                                                await new Promise(r => setTimeout(r, 100));
                                                 if (user) {
                                                     const discount = billingCycle === 'yearly' ? (settings?.yearlyDiscountPercentage || 20) / 100 : 0;
                                                     // Calculate monthly equivalent first for display consistency
