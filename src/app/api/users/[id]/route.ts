@@ -92,7 +92,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        const { password: _, ...userWithoutPassword } = user;
+        const { passwordHash: _, ...userWithoutPassword } = user;
         return NextResponse.json(userWithoutPassword);
     } catch (error) {
         return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 });
