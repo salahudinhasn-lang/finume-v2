@@ -127,7 +127,7 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                                 >
                                     {activeRequests.map(req => (
                                         <option key={req.id} value={req.id}>
-                                            {req.serviceName} ({req.id})
+                                            {req.serviceName} ({req.displayId || req.id})
                                         </option>
                                     ))}
                                 </select>
