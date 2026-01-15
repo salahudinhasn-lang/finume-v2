@@ -472,18 +472,6 @@ const ClientRequests = () => {
                     </div>
                 </div>
             )}
-            {/* Debug Info Footer */}
-            <div className="mt-8 p-4 bg-gray-100 rounded-lg border border-gray-200 text-xs font-mono text-gray-500">
-                <p><strong>Debug Info:</strong></p>
-                <p>User ID: {user?.id || 'NULL'}</p>
-                <p>User Role: {user?.role || 'NULL'}</p>
-                <p>Total Requests in State: {requests.length}</p>
-                <p>My Requests (Filtered): {myRequests.length}</p>
-                <p>Current Filter: {filter}</p>
-                <Button size="sm" variant="secondary" onClick={() => refreshData()} className="mt-2 h-6 text-xs">
-                    <RefreshCw size={12} className="mr-1" /> Force Refresh Data
-                </Button>
-            </div>
         </div>
     );
 };
