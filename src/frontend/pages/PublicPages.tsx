@@ -54,12 +54,30 @@ export const ServicesPage = () => {
         return Briefcase;
     };
 
-    const handleBookService = (serviceId: string) => {
-        const path = `/client/checkout?serviceId=${serviceId}`;
+    const handleBookService = async (serviceId: string) => {
         if (user) {
-            navigate(path);
+            const service = services.find(s => s.id === serviceId);
+            if (!service) return;
+
+            const newReq: any = {
+                id: `REQ-${Date.now()}`,
+                serviceId: service.id,
+                serviceName: service.nameEn,
+                clientId: user.id,
+                clientName: user.name,
+                expertId: null,
+                expertName: null,
+                status: 'PENDING_PAYMENT',
+                dateCreated: new Date().toISOString(),
+                amount: service.price,
+                description: service.description,
+                batches: []
+            };
+
+            await addRequest(newReq);
+            navigate(`/client/request-received/${newReq.id}`);
         } else {
-            navigate(`/login?redirect=${encodeURIComponent(path)}`);
+            navigate(`/login?redirect=${encodeURIComponent('/client/services')}`);
         }
     };
 
@@ -167,12 +185,33 @@ export const PricingPage = () => {
         comparisonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
-    const handleSelectPlan = (planId: string) => {
-        const path = `/client/checkout?planId=${planId}&billing=${billing}`;
+    const handleSelectPlan = async (planId: string) => {
         if (user) {
-            navigate(path);
+            const plan = plans.find(p => p.id === planId);
+            if (!plan) return;
+
+            const discount = billing === 'YEARLY' ? (settings?.yearlyDiscountPercentage || 20) / 100 : 0;
+            const finalPrice = billing === 'YEARLY' ? Math.round(plan.price * 12 * (1 - discount)) : plan.price;
+
+            const newReq: any = {
+                id: `SUB-${Date.now()}`,
+                serviceId: plan.id,
+                serviceName: `${plan.name} (${billing})`,
+                clientId: user.id,
+                clientName: user.name,
+                expertId: null,
+                expertName: null,
+                status: 'PENDING_PAYMENT',
+                dateCreated: new Date().toISOString(),
+                amount: finalPrice,
+                description: `Subscription to ${plan.name} plan. Billed ${billing}.`,
+                batches: []
+            };
+
+            await addRequest(newReq);
+            navigate(`/client/request-received/${newReq.id}`);
         } else {
-            navigate(`/login?redirect=${encodeURIComponent(path)}`);
+            navigate(`/login?redirect=${encodeURIComponent('/pricing')}`);
         }
     };
 

@@ -9,7 +9,7 @@ interface TierCalculatorProps {
 
 const TierCalculator: React.FC<TierCalculatorProps> = ({ onRecommend }) => {
     const navigate = useNavigate();
-    const { plans, user } = useAppContext();
+    const { plans, user, addRequest, settings } = useAppContext();
 
     // Inputs
     const [revenue, setRevenue] = useState(200000);
@@ -41,7 +41,7 @@ const TierCalculator: React.FC<TierCalculatorProps> = ({ onRecommend }) => {
     if (!recommendation || !recommendation.plan) return null;
     const { plan, reason } = recommendation;
 
-    const handleGetStarted = (overridePlanId?: string) => {
+    const handleGetStarted = async (overridePlanId?: string) => {
         const targetPlanId = overridePlanId || plan.id;
 
         if (onRecommend && !overridePlanId) {
@@ -49,11 +49,32 @@ const TierCalculator: React.FC<TierCalculatorProps> = ({ onRecommend }) => {
             return;
         }
 
-        const path = `/client/checkout?planId=${targetPlanId}&billing=YEARLY`;
         if (user) {
-            navigate(path);
+            const selectedPlan = plans.find(p => p.id === targetPlanId);
+            if (!selectedPlan) return;
+
+            const discount = (settings?.yearlyDiscountPercentage || 20) / 100;
+            const finalPrice = Math.round(selectedPlan.price * 12 * (1 - discount));
+
+            const newReq: any = {
+                id: `SUB-${Date.now()}`,
+                serviceId: selectedPlan.id,
+                serviceName: `${selectedPlan.name} (YEARLY)`,
+                clientId: user.id,
+                clientName: user.name,
+                expertId: null,
+                expertName: null,
+                status: 'PENDING_PAYMENT',
+                dateCreated: new Date().toISOString(),
+                amount: finalPrice,
+                description: `Subscription to ${selectedPlan.name} plan. Billed YEARLY.`,
+                batches: []
+            };
+
+            await addRequest(newReq);
+            navigate(`/client/request-received/${newReq.id}`);
         } else {
-            navigate(`/login?redirect=${encodeURIComponent(path)}`);
+            navigate(`/login?redirect=${encodeURIComponent('/pricing')}`);
         }
     };
 

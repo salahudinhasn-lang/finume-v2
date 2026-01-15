@@ -165,11 +165,31 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
                                         <button
                                             disabled={submittingId === plan.id}
                                             onClick={async () => {
-                                                const path = `/client/checkout?planId=${plan.id}&billing=${billingCycle.toUpperCase()}`;
                                                 if (user) {
-                                                    navigate(path);
+                                                    setSubmittingId(plan.id);
+                                                    const discount = billingCycle === 'yearly' ? (settings?.yearlyDiscountPercentage || 20) / 100 : 0;
+                                                    const finalPrice = billingCycle === 'yearly' ? Math.round(plan.price * 12 * (1 - discount)) : plan.price;
+
+                                                    const newReq: any = {
+                                                        id: `SUB-${Date.now()}`,
+                                                        serviceId: plan.id,
+                                                        serviceName: `${plan.name} (${billingCycle.toUpperCase()})`,
+                                                        clientId: user.id,
+                                                        clientName: user.name,
+                                                        expertId: null,
+                                                        expertName: null,
+                                                        status: 'PENDING_PAYMENT',
+                                                        dateCreated: new Date().toISOString(),
+                                                        amount: finalPrice,
+                                                        description: `Subscription to ${plan.name} plan. Billed ${billingCycle.toUpperCase()}.`,
+                                                        batches: []
+                                                    };
+
+                                                    await addRequest(newReq);
+                                                    setSubmittingId(null);
+                                                    navigate(`/client/request-received/${newReq.id}`);
                                                 } else {
-                                                    navigate(`/login?redirect=${encodeURIComponent(path)}`);
+                                                    navigate(`/login?redirect=${encodeURIComponent('/pricing')}`);
                                                 }
                                             }}
                                             className={`block w-full py-3 text-center rounded-xl font-bold transition-all shadow-sm hover:shadow-md ${plan.isPopular || isHighlighted
