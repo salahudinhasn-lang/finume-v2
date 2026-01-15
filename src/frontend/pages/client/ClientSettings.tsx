@@ -156,11 +156,11 @@ const ClientSettings = () => {
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('client.name')}</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
                                     <input
                                         type="text"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        value={formData.company}
+                                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                                         className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 transition-all"
                                     />
                                 </div>        <div>
