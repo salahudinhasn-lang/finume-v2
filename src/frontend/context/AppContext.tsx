@@ -557,7 +557,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       // Fetch Requests & Pool
-      await fetchRequests();
+      let currentUserId = user?.id;
+      if (!currentUserId) {
+        const stored = localStorage.getItem('finume_user');
+        if (stored) {
+          try {
+            const p = JSON.parse(stored);
+            currentUserId = p.id;
+          } catch (e) { }
+        }
+      }
+      await fetchRequests(currentUserId);
       await fetchPool();
 
       // Fetch Services
