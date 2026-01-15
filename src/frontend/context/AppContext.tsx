@@ -207,6 +207,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     initBackend(); // Call initBackend here
   }, []); // useEffect dependency array empty -> runs once
 
+  // Reactive Data Fetching: Ensure we fetch user data when user state initializes/changes
+  useEffect(() => {
+    if (user?.id) {
+      // Re-fetch requests specifically for this user to ensure we have their data
+      // This fixes race conditions where initBackend runs before user is restored
+      fetchRequests(user.id);
+    }
+  }, [user?.id]);
+
   const refreshData = async () => {
     // We need to access the logic inside initBackend. 
     // The previous implementation failed because initBackend was scoped inside useEffect.
