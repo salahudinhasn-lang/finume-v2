@@ -175,7 +175,7 @@ const TierCalculator: React.FC<TierCalculatorProps> = ({ onRecommend }) => {
 
                             <div className="flex items-center gap-4">
                                 <button
-                                    onClick={() => handleGetStarted()}
+                                    onClick={handleGetStarted}
                                     className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg text-white shadow-lg transition-transform hover:-translate-y-1 flex items-center justify-center gap-2 ${plan.name.includes('Audit') ? 'bg-purple-600 hover:bg-purple-700 shadow-purple-200' : plan.name.includes('ZATCA') ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-slate-900 hover:bg-slate-800 shadow-slate-200'}`}
                                 >
                                     Get Started <ChevronRight size={20} />
