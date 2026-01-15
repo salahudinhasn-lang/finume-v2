@@ -25,6 +25,15 @@ const ClientRequests = () => {
     });
 
     const myRequests = requests.filter(r => r.clientId === user?.id);
+
+    // DEBUG LOG
+    console.log('DEBUG: ClientRequests Render', {
+        userId: user?.id,
+        totalRequests: requests.length,
+        myRequestsCount: myRequests.length,
+        firstRequest: requests[0],
+        matchExample: requests.find(r => r.clientId === user?.id)
+    });
     // Get full client object to access gamification
     const currentClient = clients.find(c => c.id === user?.id);
     const clientGamification = currentClient?.gamification;
