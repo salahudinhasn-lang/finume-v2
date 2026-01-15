@@ -380,7 +380,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Fetch Requests from Backend
   const fetchRequests = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/requests`);
+      const res = await fetch(`${API_BASE_URL}/api/requests`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
 
