@@ -87,41 +87,39 @@ const PaymentPage = () => {
 
     if (!pendingRequest) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto" /> Loading Order...</div>;
 
-    const handlePay = () => {
+    const handlePay = async () => {
         setIsProcessing(true);
-
-        // Simulate API call
-        setTimeout(() => {
+        try {
             if (pendingRequest) {
-                // Check if request already exists in 'requests' (need to import requests from context)
-                // Since we don't have 'requests' in scope, we can rely on ID convention or just try to update first.
-                // But updateRequest only updates state if ID matches.
-                // Best approach: Try to update. If it's a new plan subscription (generated here), add it.
-                // If it came from navigation state (ClientServices), it was likely already added as PENDING.
+                // Determine if we should update an existing request or create a new one
+                // If the request ID is temporary (REQ-...) and not in DB, addRequest calls API.
+                // However, we rely on context.
 
-                // However, ClientServices DOES add it.
-                // So we should Update.
-                // But PaymentPage also handles "New Plan" directly from URL params?
-                // In that case (useEffect logic), we generated a new ID but didn't add it to context yet.
-
-                // Let's assume: If it came from state (ClientServices), it's in DB.
-                // If constructed here (Plan), it's not.
-
-                // Better yet: we can check 'requests' if we import it.
-                // Let's add 'requests' to the destructuring at the top.
-
-                // For now, let's implement the logic assuming we have 'requests' available (will add to destructuring).
+                // CRITICAL: Ensure we wait for the DB save.
+                // Check if it already exists in the context to avoid duplicates if user double clicks
                 const isExisting = requests.some(r => r.id === pendingRequest.id);
 
+                let result;
                 if (isExisting) {
-                    updateRequest(pendingRequest.id, { status: 'NEW' });
+                    result = await updateRequest(pendingRequest.id, { status: 'NEW' });
                 } else {
-                    addRequest({ ...pendingRequest, status: 'NEW' });
+                    // Add Status NEW
+                    result = await addRequest({ ...pendingRequest, status: 'NEW' });
+                }
+
+                if (result) {
+                    setIsSuccess(true);
+                } else {
+                    // Alert handled by context
+                    // Stay on payment page
                 }
             }
+        } catch (e) {
+            console.error(e);
+            alert('Payment processing failed. Please try again.');
+        } finally {
             setIsProcessing(false);
-            setIsSuccess(true);
-        }, 2000);
+        }
     };
 
     if (isSuccess) {
