@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../components/UI';
 import { CheckCircle, Users, Shield, TrendingUp, ArrowRight, Briefcase, UserPlus, MapPin, Activity, ShieldCheck, Star, Clock, Zap, Globe, MessageSquare, Play } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
@@ -11,6 +11,15 @@ const HomePage = () => {
   const isRtl = language === 'ar';
   const [highlightedPlan, setHighlightedPlan] = React.useState<string | null>(null);
   const pricingRef = React.useRef<HTMLDivElement>(null);
+  const { state } = useLocation();
+
+  React.useEffect(() => {
+    if (state?.scrollTo === 'pricing' && pricingRef.current) {
+      setTimeout(() => {
+        pricingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 500);
+    }
+  }, [state]);
 
   const handleRecommendation = (planId: string) => {
     setHighlightedPlan(planId);

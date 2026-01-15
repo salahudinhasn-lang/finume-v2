@@ -182,11 +182,8 @@ const ClientRequests = () => {
 
                 <div className="flex flex-1 max-w-md gap-2 w-full">
                     <div className="relative flex-1 flex gap-2">
-                        <Button
-                            onClick={() => navigate('/pricing')}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md text-sm whitespace-nowrap"
-                        >
-                            <Plus size={16} className="mr-2" /> Add Request
+                        <Button onClick={() => navigate('/', { state: { scrollTo: 'pricing' } })} className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-blue-500/30">
+                            <Plus size={20} className="mr-2" /> Add Request
                         </Button>
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
