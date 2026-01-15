@@ -29,43 +29,11 @@ export async function POST(req: Request) {
         }
 
         // Ensure Client Exists
-        const userExists = await prisma.user.findUnique({ where: { id: clientId } });
-        if (!userExists) {
-            // New user generation logic (now handled correctly in register route, but this is a fallback for requests potentially creating users?) 
-            // The prompt implies we primarily want to control IDs. 
-            // If this code path is hit, we should respect the new ID format.
-            // But usually requests come from logged in users.
-            // Let's assume for now this stub logic should also be updated or just use the same logic.
+        const clientExists = await prisma.client.findUnique({ where: { id: clientId } });
 
-            const lastClient = await prisma.user.findFirst({
-                where: { role: 'CLIENT', id: { startsWith: 'cus-' } }, // Updated to lowercase
-                orderBy: { id: 'desc' },
-                select: { id: true }
-            });
-            let nextSerial = 1;
-            if (lastClient?.id) {
-                const parts = lastClient.id.split('-');
-                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
-                    nextSerial = Number(parts[1]) + 1;
-                }
-            }
-            const newClientId = `cus-${nextSerial.toString().padStart(6, '0')}`;
-            clientId = newClientId;
-
-            await prisma.user.create({
-                data: {
-                    id: clientId,
-                    email: `user-${clientId}@example.com`,
-                    name: 'Client ' + clientId,
-                    role: 'CLIENT',
-                    passwordHash: 'placeholder-hash-for-stub-user', // Should rely on real auth
-                    clientProfile: {
-                        create: {
-                            companyName: 'New Company',
-                        }
-                    }
-                }
-            });
+        // If client doesn't exist, we should probably error out rather than auto-create in a requests endpoint
+        if (!clientExists) {
+            return NextResponse.json({ error: 'Client not found' }, { status: 404, headers: corsHeaders });
         }
 
         // Validate Services or Plans
@@ -186,12 +154,8 @@ export async function GET(req: Request) {
                 transactions: true,
                 service: true,
                 pricingPlan: true,
-                client: {
-                    include: { user: true }
-                },
-                assignedExpert: {
-                    include: { user: true }
-                }
+                client: true,
+                assignedExpert: true
             },
             orderBy: { createdAt: 'desc' }
         });

@@ -1,84 +1,8 @@
-
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
-// PATCH /api/users/[id]
-export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
-    const params = await props.params;
-    try {
-        const id = params.id;
-        const body = await request.json();
-        const {
-            password,
-            // Expert Fields
-            bio, hourlyRate, specializations, iban, kycStatus,
-            // Client Fields
-            companyName, vatNumber, industry, billingAddress,
-            // User Fields
-            ...userFields
-        } = body;
-
-        const dataToUpdate: any = { ...userFields };
-
-        // If password is provided, hash it
-        if (password) {
-            if (password.length < 6) {
-                return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
-            }
-            const hashedPassword = await bcrypt.hash(password, 10);
-            dataToUpdate.passwordHash = hashedPassword; // Schema uses passwordHash, not password
-        }
-
-        // Prepare Expert Profile Update
-        const expertUpdates: any = {};
-        if (bio !== undefined) expertUpdates.bio = bio;
-        if (hourlyRate !== undefined) expertUpdates.hourlyRate = hourlyRate;
-        if (specializations !== undefined) expertUpdates.specializations = specializations;
-        if (iban !== undefined) expertUpdates.iban = iban;
-
-        if (Object.keys(expertUpdates).length > 0) {
-            dataToUpdate.expertProfile = {
-                upsert: {
-                    create: expertUpdates,
-                    update: expertUpdates
-                }
-            };
-        }
-
-        // Prepare Client Profile Update
-        const clientUpdates: any = {};
-        if (companyName !== undefined) clientUpdates.companyName = companyName;
-        if (vatNumber !== undefined) clientUpdates.vatNumber = vatNumber;
-        if (industry !== undefined) clientUpdates.industry = industry;
-        if (billingAddress !== undefined) clientUpdates.billingAddress = billingAddress;
-
-        if (Object.keys(clientUpdates).length > 0) {
-            dataToUpdate.clientProfile = {
-                upsert: {
-                    create: clientUpdates,
-                    update: clientUpdates
-                }
-            };
-        }
-
-        const updatedUser = await prisma.user.update({
-            where: { id },
-            data: dataToUpdate,
-            include: { expertProfile: true, clientProfile: true }
-        });
-
-        // Remove password hash from response
-        const { passwordHash: _, ...userWithoutPassword } = updatedUser;
-
-        return NextResponse.json(userWithoutPassword);
-    } catch (error) {
-        console.error('Failed to update user:', error);
-        return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
-    }
-}
-
-// GET /api/users/[id] (Optional, useful for fetching fresh data)
+// GET /api/users/[id]
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     try {
@@ -86,10 +10,9 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
         const user = await prisma.user.findUnique({
             where: { id },
             include: {
-                clientProfile: {
-                    include: { permissions: true }
-                },
-                expertProfile: true
+                clientProfile: { include: { permissions: true } },
+                expertProfile: true,
+                adminProfile: true
             }
         });
 
@@ -97,16 +20,102 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        const { passwordHash: _, ...userWithoutPassword } = user;
+        // Flatten for frontend
+        const { passwordHash, clientProfile, expertProfile, adminProfile, ...baseUser } = user;
+        let finalUser: any = { ...baseUser };
 
-        // Flatten permissions for frontend compatibility if needed
-        const responseData = {
-            ...userWithoutPassword,
-            permissions: user.clientProfile?.permissions || null
-        };
+        if (user.role === 'CLIENT' && clientProfile) {
+            finalUser = { ...finalUser, ...clientProfile, role: 'CLIENT' };
+        } else if (user.role === 'EXPERT' && expertProfile) {
+            finalUser = { ...finalUser, ...expertProfile, role: 'EXPERT' };
+        } else if (user.role === 'ADMIN' && adminProfile) {
+            finalUser = { ...finalUser, ...adminProfile, role: 'ADMIN' };
+        }
 
-        return NextResponse.json(responseData);
+        return NextResponse.json(finalUser);
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 });
+        console.error('Error fetching user:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
+
+// PATCH /api/users/[id]
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
+    try {
+        const id = params.id;
+        const body = await request.json();
+        const { password, ...updates } = body;
+
+        // Split data into User (Auth/Common) and Profile (Client/Expert/Admin)
+        // Common User fields that can be updated
+        const { name, email, mobileNumber, avatarUrl, ...profileData } = updates;
+
+        let userUpdateData: any = {};
+        if (name) userUpdateData.name = name;
+        if (email) userUpdateData.email = email;
+        if (mobileNumber) userUpdateData.mobileNumber = mobileNumber;
+        if (avatarUrl) userUpdateData.avatarUrl = avatarUrl;
+
+        // Handle Password
+        if (password) {
+            if (password.length < 6) {
+                return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+            }
+            userUpdateData.passwordHash = await bcrypt.hash(password, 10);
+        }
+
+        // Determine Profile update based on ID prefix
+        if (id.startsWith('cus-')) {
+            // Client Update
+            userUpdateData.clientProfile = {
+                update: {
+                    ...profileData,
+                    permissions: profileData.permissions ? { update: profileData.permissions } : undefined
+                }
+            };
+        } else if (id.startsWith('exp-')) {
+            // Expert Update
+            // Handle specializations JSON if needed
+            const { specializations, ...expertFields } = profileData;
+            userUpdateData.expertProfile = {
+                update: {
+                    ...expertFields,
+                    specializations: specializations
+                }
+            };
+        } else if (id.startsWith('adm-')) {
+            userUpdateData.adminProfile = {
+                update: profileData
+            };
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { id },
+            data: userUpdateData,
+            include: {
+                clientProfile: { include: { permissions: true } },
+                expertProfile: true,
+                adminProfile: true
+            }
+        });
+
+        // Flatten response
+        const { passwordHash, clientProfile, expertProfile, adminProfile, ...baseUser } = updatedUser;
+        let finalUser: any = { ...baseUser };
+
+        if (updatedUser.role === 'CLIENT' && clientProfile) {
+            finalUser = { ...finalUser, ...clientProfile, role: 'CLIENT' };
+        } else if (updatedUser.role === 'EXPERT' && expertProfile) {
+            finalUser = { ...finalUser, ...expertProfile, role: 'EXPERT' };
+        } else if (updatedUser.role === 'ADMIN' && adminProfile) {
+            finalUser = { ...finalUser, ...adminProfile, role: 'ADMIN' };
+        }
+
+        return NextResponse.json(finalUser);
+
+    } catch (error) {
+        console.error('Failed to update user:', error);
+        return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
     }
 }

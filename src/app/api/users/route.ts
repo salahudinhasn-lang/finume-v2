@@ -6,26 +6,27 @@ export async function GET(request: Request) {
     try {
         const users = await prisma.user.findMany({
             include: {
-                clientProfile: {
-                    include: { permissions: true }
-                },
-                expertProfile: true
+                clientProfile: { include: { permissions: true } },
+                expertProfile: true,
+                adminProfile: true
             }
         });
 
-        // Helper to clean user object
-        const cleanUser = (u: any) => {
-            const { passwordHash, ...rest } = u;
-            return {
-                ...rest,
-                permissions: u.clientProfile?.permissions || null
-            };
-        };
+        const clients: any[] = [];
+        const experts: any[] = [];
+        const admins: any[] = [];
 
-        // Split by role for frontend convenience, matches AppContext expectation
-        const clients = users.filter(u => u.role === 'CLIENT').map(cleanUser);
-        const experts = users.filter(u => u.role === 'EXPERT').map(cleanUser);
-        const admins = users.filter(u => u.role === 'ADMIN').map(cleanUser);
+        for (const user of users) {
+            const { passwordHash, clientProfile, expertProfile, adminProfile, ...baseUser } = user;
+
+            if (user.role === 'CLIENT' && clientProfile) {
+                clients.push({ ...baseUser, ...clientProfile, role: 'CLIENT' });
+            } else if (user.role === 'EXPERT' && expertProfile) {
+                experts.push({ ...baseUser, ...expertProfile, role: 'EXPERT' });
+            } else if (user.role === 'ADMIN' && adminProfile) {
+                admins.push({ ...baseUser, ...adminProfile, role: 'ADMIN' });
+            }
+        }
 
         return NextResponse.json({
             clients,
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
             admins
         });
     } catch (error) {
+        console.error('Failed to fetch users:', error);
         return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
     }
 }

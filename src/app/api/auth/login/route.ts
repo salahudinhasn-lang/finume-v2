@@ -10,32 +10,31 @@ export async function POST(request: Request) {
     try {
         const { email, password } = await request.json();
 
-        // 1. Find User
+        // 1. Find User (Central Table)
         const user = await prisma.user.findUnique({
             where: { email },
-            // include: { permissions: true } // Removed as per schema
+            include: {
+                clientProfile: { include: { permissions: true } },
+                expertProfile: true,
+                adminProfile: true
+            }
         });
 
         if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        // 2. Compare Password (backward compat with plain text '12121212' common in seeds)
+        // 2. Compare Password
         let isValid = false;
-
-        // A. Try Bcrypt
-        // If password doesn't look like a hash (e.g. is '12121212'), bcrypt.compare calls might error or fail gracefully.
-        // It's safer to try compare.
-        // A. Try Bcrypt
         try {
             isValid = await bcrypt.compare(password, user.passwordHash);
         } catch (e) {
             isValid = false;
         }
 
-        // B. Fallback to plain text (DEV ONLY - for seed compatibility)
+        // Fallback for seed data (plain text) CHECK
         if (!isValid && user.passwordHash === password) {
-            console.warn(`User ${email} logged in with PLAIN TEXT password. Please migrate to hash.`);
+            console.warn(`User ${email} logged in with plain text password.`);
             isValid = true;
         }
 
@@ -50,11 +49,21 @@ export async function POST(request: Request) {
             { expiresIn: '7d' }
         );
 
-        // 4. Return User (clean) + Token
-        const { passwordHash: _, ...userWithoutPassword } = user;
+        // 4. Construct Response (Flatten for Frontend compatibility)
+        const { passwordHash, clientProfile, expertProfile, adminProfile, ...baseUser } = user;
+
+        let finalUser: any = { ...baseUser };
+
+        if (user.role === 'CLIENT' && clientProfile) {
+            finalUser = { ...finalUser, ...clientProfile, role: 'CLIENT' };
+        } else if (user.role === 'EXPERT' && expertProfile) {
+            finalUser = { ...finalUser, ...expertProfile, role: 'EXPERT' };
+        } else if (user.role === 'ADMIN' && adminProfile) {
+            finalUser = { ...finalUser, ...adminProfile, role: 'ADMIN' };
+        }
 
         return NextResponse.json({
-            user: userWithoutPassword,
+            user: finalUser,
             token
         });
 

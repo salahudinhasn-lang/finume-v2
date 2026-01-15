@@ -46,34 +46,48 @@ const PLANS = [
 ];
 
 // USERS TO SEED
-const USERS = [
+const ADMINS = [
   {
     id: 'adm-000001',
     email: 'admin@finume.com',
     name: 'Main Admin',
     role: 'ADMIN',
-    adminRole: 'SUPER_ADMIN',
+    adminLevel: 'OPS', // Valid enum value
     avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=0ea5e9&color=fff'
-  },
+  }
+];
+
+const EXPERTS = [
   {
     id: 'exp-000001',
     email: 'expert@finume.com',
     name: 'Main Expert',
     role: 'EXPERT',
-    status: 'ACTIVE',
     specializations: JSON.stringify(['VAT', 'Audit']),
     bio: 'Senior Financial Expert',
     yearsExperience: 10,
     hourlyRate: 200,
-    avatarUrl: 'https://ui-avatars.com/api/?name=Expert&background=10b981&color=fff'
-  },
+    avatarUrl: 'https://ui-avatars.com/api/?name=Expert&background=10b981&color=fff',
+    kycStatus: 'APPROVED'
+  }
+];
+
+const CLIENTS = [
   {
     id: 'cus-000001',
     email: 'client@finume.com',
-    name: 'Business Owner',
+    name: 'Aly Al Mohsen',
+    jobTitle: 'CEO',
+    mobileNumber: '+966 555555555',
     role: 'CLIENT',
-    companyName: 'My Business Ltd',
-    industry: 'Retail',
+    companyName: 'Ayen Platform',
+    industry: 'General',
+    website: 'https://',
+    foundedYear: 'YYYY',
+    crNumber: '1010...',
+    vatNumber: '3...',
+    nationalAddress: 'Building, Street, District...',
+    legalStructure: 'LLC',
     avatarUrl: 'https://ui-avatars.com/api/?name=Client&background=f59e0b&color=fff',
     // Default Permissions
     permissions: {
@@ -91,19 +105,12 @@ const USERS = [
 
 async function main() {
   console.log('Start seeding ...');
-  const password = "12121212";
+  // Hash for "12121212"
+  const passwordHash = await require('bcryptjs').hash("12121212", 10);
 
   // 1. CLEAN UP
-  // We clean up everything to ensure fresh IDs and no stale data.
   try {
     console.log('Cleaning up database...');
-    // Order matters due to foreign keys
-    await prisma.fileBatch.deleteMany({}); // Delete FileBatches (depends on Request) - wait, Request depends on User/Plan/Service
-    // Request -> Client(User), Service, Plan, Expert(User)
-    // FileBatch -> Request
-    // UploadedFile -> User, FileBatch...
-
-    // Let's try to delete in order of dependency (Leafs first)
     await prisma.transaction.deleteMany({});
     await prisma.complianceLog.deleteMany({});
     await prisma.gamificationProfile.deleteMany({});
@@ -111,22 +118,22 @@ async function main() {
     await prisma.uploadedFile.deleteMany({});
     await prisma.fileBatch.deleteMany({});
     await prisma.request.deleteMany({});
-
     await prisma.clientFeaturePermissions.deleteMany({});
     await prisma.payoutRequest.deleteMany({});
+    await prisma.teamMember.deleteMany({});
 
-    // Delete Profiles first due to FK constraints
-    await prisma.adminProfile.deleteMany({});
-    await prisma.expertProfile.deleteMany({});
-    await prisma.clientProfile.deleteMany({});
-
+    // Delete Users (Cascades to profiles)
     await prisma.user.deleteMany({});
+    // await prisma.admin.deleteMany({}); // Optional if cascade works
+    // await prisma.expert.deleteMany({});
+    // await prisma.client.deleteMany({});
+
     await prisma.pricingPlan.deleteMany({});
-    // await prisma.service.deleteMany({}); // Optional, services are stable usually, but consistent to clear.
+    // await prisma.service.deleteMany({}); 
 
     console.log('Database cleaned.');
   } catch (e) {
-    console.warn('Cleanup warning (non-fatal):', e);
+    console.warn('Cleanup warning:', e);
   }
 
   // 2. SERVICES
@@ -139,65 +146,83 @@ async function main() {
   }
   console.log('Services seeded.');
 
-  // 3. PLANS (New IDs)
+  // 3. PLANS
   for (const p of PLANS) {
-    await prisma.pricingPlan.create({ // We can use create because we cleared table
-      data: p
-    });
+    await prisma.pricingPlan.create({ data: p });
   }
   console.log('Plans seeded.');
 
-  // 4. USERS
-  for (const u of USERS) {
-    const {
-      permissions, // separating out to ignore or handle separately if schema supported (it doesn't currently)
-      industry, companyName, // Client props: Destructure companyName to exclude from baseUser
-      bio, specializations, yearsExperience, hourlyRate, // Expert props
-      adminRole, // Admin props
-      role,
-      status, // Excluded from baseUser (not in User schema)
-      ...baseUser
-    } = u;
-
-    console.log(`Seeding user ${baseUser.email}...`);
-
+  // 4. ADMINS
+  for (const a of ADMINS) {
+    console.log(`Seeding admin ${a.email}...`);
+    // 1. Create User
     await prisma.user.create({
       data: {
-        ...baseUser,
-        role: role,
-        passwordHash: await require('bcryptjs').hash("12121212", 10), // Real hash for "12121212"
-        // Correctly nest profile creation
-        ...(role === 'CLIENT' ? {
-          clientProfile: {
-            create: {
-              name: baseUser.name,
-              industry,
-              billingAddress: 'Riyadh, KSA'
-            }
+        id: a.id,
+        email: a.email,
+        name: a.name,
+        passwordHash,
+        role: 'ADMIN',
+        avatarUrl: a.avatarUrl,
+        adminProfile: {
+          create: {
+            adminLevel: a.adminLevel
           }
-        } : {}),
-        ...(role === 'EXPERT' ? {
-          expertProfile: {
-            create: {
-              bio,
-              yearsExperience,
-              hourlyRate,
-              specializations: specializations, // It's already JSON string in USERS array
-              kycStatus: 'APPROVED'
-            }
-          }
-        } : {}),
-        ...(role === 'ADMIN' ? {
-          adminProfile: {
-            create: {
-              adminLevel: 'OPS' // Defaulting to OPS since schema uses enum, USERS had string
-            }
-          }
-        } : {})
+        }
       }
     });
   }
-  console.log('Specific users seeded.');
+
+  // 5. EXPERTS
+  for (const e of EXPERTS) {
+    console.log(`Seeding expert ${e.email}...`);
+    await prisma.user.create({
+      data: {
+        id: e.id,
+        email: e.email,
+        name: e.name,
+        passwordHash,
+        role: 'EXPERT',
+        avatarUrl: e.avatarUrl,
+        expertProfile: {
+          create: {
+            bio: e.bio,
+            hourlyRate: e.hourlyRate,
+            yearsExperience: e.yearsExperience,
+            specializations: JSON.parse(e.specializations), // Json parsing if needed, or if schema expects string[]
+            kycStatus: 'APPROVED'
+          }
+        }
+      }
+    });
+  }
+
+  // 6. CLIENTS
+  for (const c of CLIENTS) {
+    console.log(`Seeding client ${c.email}...`);
+    const { id, permissions, name, email, role, avatarUrl, mobileNumber, jobTitle, ...profileData } = c;
+
+    await prisma.user.create({
+      data: {
+        id: c.id,
+        email: email,
+        name: name,
+        passwordHash,
+        role: 'CLIENT',
+        mobileNumber: mobileNumber,
+        avatarUrl: avatarUrl,
+        clientProfile: {
+          create: {
+            ...profileData, // companyName, industry, etc.
+            jobTitle: jobTitle,
+            permissions: {
+              create: permissions.create
+            }
+          }
+        }
+      }
+    });
+  }
 
   console.log('Seeding finished.');
 }

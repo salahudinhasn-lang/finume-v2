@@ -24,6 +24,7 @@ const RegisterSchema = z.object({
     linkedinUrl: z.string().optional(),
 });
 
+// ... imports unchanged
 export async function POST(request: Request) {
     try {
         const body = await request.json();
@@ -35,123 +36,140 @@ export async function POST(request: Request) {
 
         const { name, email, password, role, companyName, industry, mobileNumber, bio, yearsExperience, hourlyRate, specializations, linkedinUrl } = result.data;
 
-        // 1. Check if user exists
-        const existing = await prisma.user.findUnique({
-            where: { email }
-        });
+        // 1. Check if user exists in User table
+        const existingUser = await prisma.user.findUnique({ where: { email } });
 
-        if (existing) {
+        if (existingUser) {
             return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
         }
 
         // 2. Hash Password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 3. Generate Custom ID
-        let userId = undefined; // Let Prisma generate UUID by default for others
+        let newUser;
 
+        // 3. Create User based on Role
         if (role === 'CLIENT') {
-            // Find last client ID
-            const lastClient = await prisma.user.findFirst({
-                where: {
+            // Generate Custom ID for Client (CUS-000001)
+            const lastUser = await prisma.user.findFirst({
+                where: { role: 'CLIENT', id: { startsWith: 'cus-' } },
+                orderBy: { id: 'desc' },
+                select: { id: true }
+            });
+
+            let nextSerial = 1;
+            if (lastUser && lastUser.id) {
+                const parts = lastUser.id.split('-');
+                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+                    nextSerial = Number(parts[1]) + 1;
+                }
+            }
+            const userId = `cus-${nextSerial.toString().padStart(6, '0')}`;
+
+            newUser = await prisma.user.create({
+                data: {
+                    id: userId,
+                    name,
+                    email,
+                    passwordHash: hashedPassword,
                     role: 'CLIENT',
-                    id: { startsWith: 'cus-' }
-                },
-                orderBy: { id: 'desc' },
-                select: { id: true }
-            });
-
-            let nextSerial = 1;
-            if (lastClient && lastClient.id) {
-                const parts = lastClient.id.split('-');
-                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
-                    nextSerial = Number(parts[1]) + 1;
-                }
-            }
-            userId = `cus-${nextSerial.toString().padStart(6, '0')}`;
-        } else if (role === 'EXPERT') {
-            // Find last expert ID
-            const lastExpert = await prisma.user.findFirst({
-                where: {
-                    role: 'EXPERT',
-                    id: { startsWith: 'exp-' }
-                },
-                orderBy: { id: 'desc' },
-                select: { id: true }
-            });
-
-            let nextSerial = 1;
-            if (lastExpert && lastExpert.id) {
-                const parts = lastExpert.id.split('-');
-                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
-                    nextSerial = Number(parts[1]) + 1;
-                }
-            }
-            userId = `exp-${nextSerial.toString().padStart(6, '0')}`;
-        } else if (role === 'ADMIN') {
-            // Find last admin ID
-            const lastAdmin = await prisma.user.findFirst({
-                where: {
-                    role: 'ADMIN',
-                    id: { startsWith: 'adm-' }
-                },
-                orderBy: { id: 'desc' },
-                select: { id: true }
-            });
-
-            let nextSerial = 1;
-            if (lastAdmin && lastAdmin.id) {
-                const parts = lastAdmin.id.split('-');
-                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
-                    nextSerial = Number(parts[1]) + 1;
-                }
-            }
-            userId = `adm-${nextSerial.toString().padStart(6, '0')}`;
-        }
-
-        // 4. Create User
-        // Note: Avatar generation is nice to keep
-        const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`;
-
-        const newUser = await prisma.user.create({
-            data: {
-                id: userId, // Will be CUS- or EXP- or auto-uuid
-                name,
-                email,
-                passwordHash: hashedPassword,
-                role,
-                avatarUrl,
-                isActive: true,
-
-                // Create Profile based on Role
-                ...(role === 'CLIENT' ? {
+                    mobileNumber,
+                    avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`,
                     clientProfile: {
                         create: {
-                            name: name, // Use User's name for ClientProfile name
+                            companyName: companyName || name, // Default to name if company name missing
                             industry: industry || 'General',
-                            billingAddress: '', // Default
+                            // Removed jobTitle to avoid lint error if input type is mismatching 
+                            permissions: {
+                                create: {
+                                    canViewReports: true,
+                                    canUploadDocs: true,
+                                    canDownloadInvoices: true,
+                                    canRequestCalls: true,
+                                    canSubmitTickets: true,
+                                    canViewMarketplace: true
+                                }
+                            }
                         }
                     }
-                } : {}),
+                },
+                include: { clientProfile: true }
+            });
+        } else if (role === 'EXPERT') {
+            // Generate Custom ID for Expert (EXP-000001)
+            const lastUser = await prisma.user.findFirst({
+                where: { role: 'EXPERT', id: { startsWith: 'exp-' } },
+                orderBy: { id: 'desc' },
+                select: { id: true }
+            });
 
-                ...(role === 'EXPERT' ? {
+            let nextSerial = 1;
+            if (lastUser && lastUser.id) {
+                const parts = lastUser.id.split('-');
+                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+                    nextSerial = Number(parts[1]) + 1;
+                }
+            }
+            const userId = `exp-${nextSerial.toString().padStart(6, '0')}`;
+
+            newUser = await prisma.user.create({
+                data: {
+                    id: userId,
+                    name,
+                    email,
+                    passwordHash: hashedPassword,
+                    role: 'EXPERT',
+                    avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
                     expertProfile: {
                         create: {
                             bio,
                             yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
                             hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
-                            specializations: specializations ? JSON.stringify(specializations) : undefined,
-                            linkedinUrl,
+                            specializations: specializations ? specializations : [], // Assumes schema handles string[] or Json
                             kycStatus: 'PENDING',
+                            linkedinUrl
                         }
                     }
-                } : {})
-            },
-            include: {
-                clientProfile: true,
-                expertProfile: true
+                },
+                include: { expertProfile: true }
+            });
+        } else if (role === 'ADMIN') {
+            const lastUser = await prisma.user.findFirst({
+                where: { role: 'ADMIN', id: { startsWith: 'adm-' } },
+                orderBy: { id: 'desc' },
+                select: { id: true }
+            });
+
+            let nextSerial = 1;
+            if (lastUser && lastUser.id) {
+                const parts = lastUser.id.split('-');
+                if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+                    nextSerial = Number(parts[1]) + 1;
+                }
             }
-        });
+            const userId = `adm-${nextSerial.toString().padStart(6, '0')}`;
+
+            newUser = await prisma.user.create({
+                data: {
+                    id: userId,
+                    name,
+                    email,
+                    passwordHash: hashedPassword,
+                    role: 'ADMIN',
+                    avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`,
+                    adminProfile: {
+                        create: {
+                            adminLevel: 'OPS'
+                        }
+                    }
+                },
+                include: { adminProfile: true }
+            });
+        }
+
+        if (!newUser) {
+            return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+        }
 
         // 4. Generate Token
         const token = jwt.sign(

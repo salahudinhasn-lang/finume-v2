@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import { Client } from '../../types';
 import { Card, Button } from '../../components/UI';
 import { User, Building, Mail, Save, FileText, MapPin, Phone, Hash, Upload, CheckCircle, Users, Bell, ToggleLeft, Trash2, Plus } from 'lucide-react';
 
@@ -13,20 +14,20 @@ const ClientSettings = () => {
         // Basic Profile
         name: user?.name || '',
         email: user?.email || '',
-        phone: (user as any).mobileNumber || '',
-        position: '',
+        phone: (user as Client).mobileNumber || '',
+        position: (user as Client).jobTitle || '',
 
         // Company Details
-        company: (user as any).companyName || '',
-        industry: (user as any).industry || '',
-        website: '',
-        foundedYear: '',
+        company: (user as Client).companyName || '',
+        industry: (user as Client).industry || '',
+        website: (user as Client).website || '',
+        foundedYear: (user as Client).foundedYear || '',
 
         // KYC / Legal
-        crNumber: '',
-        vatNumber: '',
-        nationalAddress: '',
-        legalStructure: 'LLC',
+        crNumber: (user as Client).crNumber || '',
+        vatNumber: (user as Client).vatNumber || '',
+        nationalAddress: (user as Client).nationalAddress || '',
+        legalStructure: (user as Client).legalStructure || 'LLC',
     });
 
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
@@ -61,16 +62,27 @@ const ClientSettings = () => {
         // In a real app, we would upload files to storage here
         // and update the user profile with URLs.
         // For now, we simulate success and update text fields.
+        console.log('Submitting Client Settings Form...');
+
 
         let updates: any = {
             name: formData.name,
-            // email: formData.email, // Usually immutable or separate flow
+            mobileNumber: formData.phone,
+            // email: formData.email, // Immutable
         };
 
         if (user && user.role === 'CLIENT') {
             updates.companyName = formData.company;
             updates.industry = formData.industry;
-            // Persist other fields if backend supported them
+            updates.jobTitle = formData.position;
+            updates.website = formData.website;
+            updates.foundedYear = formData.foundedYear;
+
+            // Legal / KYC
+            updates.crNumber = formData.crNumber;
+            updates.vatNumber = formData.vatNumber;
+            updates.nationalAddress = formData.nationalAddress;
+            updates.legalStructure = formData.legalStructure;
         }
 
         updateClient(user!.id, updates);

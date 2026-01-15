@@ -131,20 +131,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (usersData.experts?.length > 0) {
             const sanitizedExperts: Expert[] = usersData.experts.map((e: any) => ({
               ...e,
-              specializations: (Array.isArray(e.specializations) ? e.specializations : [])
-                .filter((s: any) => typeof s === 'string'),
-              rating: typeof e.rating === 'number' ? e.rating : 0,
-              totalEarned: typeof e.totalEarned === 'number' ? e.totalEarned : 0,
-              status: e.status || 'VETTING',
-              bio: e.bio || '',
-              yearsExperience: typeof e.yearsExperience === 'number' ? e.yearsExperience : 0,
-              hourlyRate: typeof e.hourlyRate === 'number' ? e.hourlyRate : 0,
-              isPremium: !!e.isPremium,
-              isFeatured: !!e.isFeatured,
-              name: e.name || 'Unknown Expert',
-              email: e.email || '',
+              // Ensure fields exist
+              specializations: Array.isArray(e.specializations) ? e.specializations : [],
+              rating: Number(e.rating) || 0,
+              totalReviews: Number(e.totalReviews) || 0,
               role: 'EXPERT',
-              avatarUrl: e.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.id || Math.random()}`
+              name: e.name || 'Unknown Expert',
+              avatarUrl: e.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.id}`
             }));
             setExperts(sanitizedExperts);
           }
@@ -154,13 +147,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             const sanitizedClients: Client[] = usersData.clients.map((c: any) => ({
               ...c,
               role: 'CLIENT',
-              name: c.clientProfile?.name || c.name || 'Unknown Client',
-              companyName: c.clientProfile?.name || c.name || 'Unknown Client', // Fallback for legacy props? type expects name now
-              industry: c.clientProfile?.industry || 'General',
-              totalSpent: typeof c.totalSpent === 'number' ? c.totalSpent : 0,
-              zatcaStatus: c.zatcaStatus || 'GREEN',
-              email: c.email || '',
-              avatarUrl: c.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${c.id || Math.random()}`
+              name: c.name || 'Unknown Client',
+              companyName: c.companyName || c.name || 'Unknown Company',
+              industry: c.industry || 'General',
+              avatarUrl: c.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${c.id}`
             }));
             setClients(sanitizedClients);
           }
@@ -696,13 +686,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 2. Persist
     try {
-      await fetch(`${API_BASE_URL}/api/users/${id}`, {
+      console.log('Persisting Client Update to DB:', updates);
+      const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
+      if (!res.ok) {
+        const errData = await res.json();
+        console.error('API Error:', errData);
+        alert('Failed to save changes: ' + (errData.error || 'Unknown server error'));
+      } else {
+        console.log('Successfully saved to DB');
+      }
     } catch (e) {
       console.error('Failed to update client DB', e);
+      alert('Network error: Could not connect to server.');
     }
   };
 

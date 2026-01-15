@@ -15,11 +15,27 @@ export interface User {
 
 export interface Client extends User {
   role: 'CLIENT';
-  name: string;
+  name: string; // Representative Name
+  jobTitle?: string;
+
+  // Company Info
+  companyName: string;
   industry: string;
+  website?: string;
+  foundedYear?: string;
+
+  // Legal
+  crNumber?: string;
+  vatNumber?: string;
+  nationalAddress?: string;
+  legalStructure?: string;
+  crDocumentUrl?: string;
+  vatDocumentUrl?: string;
+
   totalSpent: number;
   zatcaStatus: 'GREEN' | 'YELLOW' | 'RED';
   gamification?: ClientGamification;
+  permissions?: ClientFeaturePermissions;
 }
 
 export interface Expert extends User {
@@ -114,14 +130,22 @@ export interface PlatformSettings {
 }
 
 export interface ClientFeaturePermissions {
-  id: string;
-  clientId: string;
   canViewReports: boolean;
   canUploadDocs: boolean;
   canDownloadInvoices: boolean;
   canRequestCalls: boolean;
   canSubmitTickets: boolean;
-  canViewMarketplace: boolean; // New: View Experts/Services
+  canViewMarketplace: boolean;
+}
+
+export interface TeamMember {
+  id: string;
+  clientId: string;
+  name: string;
+  email: string;
+  role: 'VIEWER' | 'EDITOR' | 'ADMIN';
+  status: 'INVITED' | 'ACTIVE';
+  createdAt: string;
 }
 
 export interface Review {
