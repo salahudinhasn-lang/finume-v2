@@ -32,7 +32,7 @@ const ExpertTasks = () => {
         const searchMatch =
             (req.serviceName || '').toLowerCase().includes(search.toLowerCase()) ||
             req.clientName.toLowerCase().includes(search.toLowerCase()) ||
-            req.id.toLowerCase().includes(search.toLowerCase());
+            (req.displayId?.toLowerCase() || req.id.toLowerCase()).includes(search.toLowerCase());
         return searchMatch;
     });
 
@@ -162,7 +162,7 @@ const ExpertTasks = () => {
                             <Card key={req.id} className={`flex flex-col md:flex-row justify-between gap-6 transition-all hover:shadow-md cursor-pointer group ${isOpen ? 'border-purple-200 bg-purple-50/10' : ''}`} onClick={() => setSelectedTask(req)}>
                                 <div className="flex-1 space-y-2">
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-0.5 rounded">{req.id}</span>
+                                        <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-0.5 rounded">{req.displayId || req.id}</span>
                                         {isOpen ? <Badge status="NEW" label="Available Request" /> : <Badge status={req.status} />}
                                         {isSubTaskAssignee && (
                                             <span className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold border border-indigo-100">
@@ -254,7 +254,7 @@ const ExpertTasks = () => {
                                                     className={`bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md cursor-pointer transition-all group relative ${isOpen ? 'ring-2 ring-purple-100' : ''}`}
                                                 >
                                                     <div className="flex justify-between items-start mb-2">
-                                                        <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{req.id}</span>
+                                                        <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{req.displayId || req.id}</span>
                                                         {isOpen && <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">OPEN</span>}
                                                         {/* Timer in Board View */}
                                                         {req.status === 'IN_PROGRESS' && req.workStartedAt && (

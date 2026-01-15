@@ -166,6 +166,7 @@ model CommissionRule {
 
 model Request {
   id               String        @id @default(cuid())
+  displayId        String?       @unique // Optional for migration safety, but logic will populate it
   clientId         String
   client           ClientProfile @relation(fields: [clientId], references: [userId]) // Link to ClientProfile via userId or id? User relations usually easier via Profile or User. Let's link to ClientProfile.id for now or cleaner to userId if profile is 1:1.
   // Actually, let's link ClientProfile.id for referential integrity if we want to ensure only profiled users request.

@@ -179,6 +179,7 @@ export interface FileBatch {
 
 export interface Request {
   id: string;
+  displayId?: string; // e.g. REQ-000001
   clientId: string;
   clientName: string; // Denormalized for ease
   // Services & Plans (Mutually Exclusive usually)

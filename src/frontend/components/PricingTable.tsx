@@ -195,8 +195,10 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
                                                         };
 
                                                         if (addRequest) {
-                                                            addRequest(newReq);
-                                                            navigate(`/client/request-received/${newReq.id}`);
+                                                            const createdReq = await addRequest(newReq);
+                                                            if (createdReq) {
+                                                                navigate(`/client/request-received/${createdReq.id}`);
+                                                            }
                                                         }
                                                     } else {
                                                         navigate(`/login?redirect=/pricing`);

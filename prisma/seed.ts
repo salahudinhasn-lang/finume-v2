@@ -48,7 +48,7 @@ const PLANS = [
 // USERS TO SEED
 const USERS = [
   {
-    id: 'ADMIN_MAIN',
+    id: 'adm-000001',
     email: 'admin@finume.com',
     name: 'Main Admin',
     role: 'ADMIN',
@@ -56,7 +56,7 @@ const USERS = [
     avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=0ea5e9&color=fff'
   },
   {
-    id: 'EXPERT_MAIN',
+    id: 'exp-000001',
     email: 'expert@finume.com',
     name: 'Main Expert',
     role: 'EXPERT',
@@ -68,7 +68,7 @@ const USERS = [
     avatarUrl: 'https://ui-avatars.com/api/?name=Expert&background=10b981&color=fff'
   },
   {
-    id: 'CLIENT_MAIN',
+    id: 'cus-000001',
     email: 'client@finume.com',
     name: 'Business Owner',
     role: 'CLIENT',
@@ -114,6 +114,11 @@ async function main() {
 
     await prisma.clientFeaturePermissions.deleteMany({});
     await prisma.payoutRequest.deleteMany({});
+
+    // Delete Profiles first due to FK constraints
+    await prisma.adminProfile.deleteMany({});
+    await prisma.expertProfile.deleteMany({});
+    await prisma.clientProfile.deleteMany({});
 
     await prisma.user.deleteMany({});
     await prisma.pricingPlan.deleteMany({});

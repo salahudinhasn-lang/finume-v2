@@ -57,8 +57,8 @@ const RequestReceived = () => {
                     return (
                         <div key={i} className="flex flex-col items-center gap-2 bg-gray-50 px-2 box-decoration-clone">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-colors ${isActive ? 'bg-green-500 border-green-500 text-white' :
-                                    isCompleted ? 'bg-green-500 border-green-500 text-white' :
-                                        'bg-white border-gray-300 text-gray-400'
+                                isCompleted ? 'bg-green-500 border-green-500 text-white' :
+                                    'bg-white border-gray-300 text-gray-400'
                                 }`}>
                                 {isCompleted ? <CheckCircle size={16} /> : stepNum}
                             </div>
@@ -80,7 +80,7 @@ const RequestReceived = () => {
                 <div className="bg-white rounded-3xl p-8 shadow-sm text-left mb-12 max-w-4xl mx-auto">
                     <h3 className="font-bold text-gray-900 text-xl mb-8 flex items-center justify-between">
                         Request Details
-                        <span className="text-xs font-normal text-gray-400 bg-gray-50 px-3 py-1 rounded-full border">ID: {request.id}</span>
+                        <span className="text-xs font-normal text-gray-400 bg-gray-50 px-3 py-1 rounded-full border">ID: {request.displayId || request.id}</span>
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">

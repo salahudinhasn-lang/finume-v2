@@ -32,7 +32,7 @@ const ClientRequests = () => {
     const filteredRequests = myRequests.filter(req => {
         const matchesFilter = filter === 'All' ? true : req.status === filter;
         const matchesSearch = (req.serviceName?.toLowerCase() || '').includes(search.toLowerCase()) ||
-            (req.id?.toLowerCase() || '').includes(search.toLowerCase());
+            (req.displayId?.toLowerCase() || req.id?.toLowerCase() || '').includes(search.toLowerCase());
         return matchesFilter && matchesSearch;
     });
 
@@ -224,7 +224,7 @@ const ClientRequests = () => {
                         <tbody className="divide-y divide-gray-100">
                             {filteredRequests.map(req => (
                                 <tr key={req.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 font-mono font-medium text-gray-500">{req.id}</td>
+                                    <td className="px-6 py-4 font-mono font-medium text-gray-500">{req.displayId || req.id}</td>
                                     <td className="px-6 py-4">
                                         <p className="font-bold text-gray-900">{req.serviceName || (req as any).service?.nameEn || 'Unknown Service'}</p>
                                         <p className="text-xs text-gray-500">{new Date(req.createdAt || req.dateCreated).toLocaleDateString()}</p>
@@ -281,7 +281,7 @@ const ClientRequests = () => {
                         <div className="bg-gray-50 p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 z-10">
                             <div>
                                 <h3 className="text-xl font-bold text-gray-900">{selectedRequest.serviceName}</h3>
-                                <p className="text-gray-500 text-sm font-mono">{selectedRequest.id}</p>
+                                <p className="text-gray-500 text-sm font-mono">{selectedRequest.displayId || selectedRequest.id}</p>
                             </div>
                             <button onClick={() => setSelectedRequest(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><X size={20} /></button>
                         </div>

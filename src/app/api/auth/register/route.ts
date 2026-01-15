@@ -55,7 +55,7 @@ export async function POST(request: Request) {
             const lastClient = await prisma.user.findFirst({
                 where: {
                     role: 'CLIENT',
-                    id: { startsWith: 'CUS-' }
+                    id: { startsWith: 'cus-' }
                 },
                 orderBy: { id: 'desc' },
                 select: { id: true }
@@ -68,13 +68,13 @@ export async function POST(request: Request) {
                     nextSerial = Number(parts[1]) + 1;
                 }
             }
-            userId = `CUS-${nextSerial.toString().padStart(6, '0')}`;
+            userId = `cus-${nextSerial.toString().padStart(6, '0')}`;
         } else if (role === 'EXPERT') {
             // Find last expert ID
             const lastExpert = await prisma.user.findFirst({
                 where: {
                     role: 'EXPERT',
-                    id: { startsWith: 'EXP-' }
+                    id: { startsWith: 'exp-' }
                 },
                 orderBy: { id: 'desc' },
                 select: { id: true }
@@ -87,13 +87,13 @@ export async function POST(request: Request) {
                     nextSerial = Number(parts[1]) + 1;
                 }
             }
-            userId = `EXP-${nextSerial.toString().padStart(6, '0')}`;
+            userId = `exp-${nextSerial.toString().padStart(6, '0')}`;
         } else if (role === 'ADMIN') {
             // Find last admin ID
             const lastAdmin = await prisma.user.findFirst({
                 where: {
                     role: 'ADMIN',
-                    id: { startsWith: 'ADM-' }
+                    id: { startsWith: 'adm-' }
                 },
                 orderBy: { id: 'desc' },
                 select: { id: true }
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
                     nextSerial = Number(parts[1]) + 1;
                 }
             }
-            userId = `ADM-${nextSerial.toString().padStart(6, '0')}`;
+            userId = `adm-${nextSerial.toString().padStart(6, '0')}`;
         }
 
         // 4. Create User
