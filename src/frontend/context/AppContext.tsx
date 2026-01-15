@@ -168,7 +168,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
 
         // Fetch Requests
-        await fetchRequests();
+        // Use the ID from local storage parsing if available, as 'user' state update is async
+        let currentUserId = user?.id;
+        if (!currentUserId && savedUser) {
+          try {
+            const p = JSON.parse(savedUser);
+            currentUserId = p.id;
+          } catch (e) { }
+        }
+        await fetchRequests(currentUserId);
 
         // Fetch Pool
         await fetchPool();
@@ -378,9 +386,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Fetch Requests from Backend
-  const fetchRequests = async () => {
+  // Fetch Requests from Backend
+  async function fetchRequests(clientIdFiltered?: string) {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/requests`, { cache: 'no-store' });
+      // Determine if we should filter by specific client
+      let url = `${API_BASE_URL}/api/requests`;
+
+      // If clientId passed explicitly (e.g. from initBackend after login)
+      if (clientIdFiltered) {
+        url += `?clientId=${clientIdFiltered}`;
+      }
+      // Fallback: If no arg but user is logged in as client in state (might be null during init)
+      else if (user?.role === 'CLIENT' && user.id) {
+        url += `?clientId=${user.id}`;
+      }
+
+      const res = await fetch(url, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
 
@@ -405,20 +426,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           requiredSkills: typeof d.requiredSkills === 'string' ? JSON.parse(d.requiredSkills) : (d.requiredSkills || [])
         }));
 
-        if (Array.isArray(parsedData) && parsedData.length > 0) {
-          setRequests(prev => {
-            const newIds = new Set(parsedData.map((d: any) => d.id));
-            // Keep items that are NOT in the new data, OR are optimistic (SUB/NEW)
-            const filteredPrev = prev.filter(p => !newIds.has(p.id) && (p.id.startsWith('SUB-') || p.id.startsWith('NEW-') || p.id.startsWith('REQ-') || p.id.startsWith('R-')));
-            return [...parsedData, ...filteredPrev];
-          });
-        }
-        console.log('Fetched requests from DB:', parsedData);
+        setRequests(prev => {
+          // Always MERGE with existing to avoid wiping optimistic updates
+          // But if this is a "Filtered" fetch, we might want to ensure we don't show irrelevant ones?
+          // Actually, keep safe merge logic.
+          const newIds = new Set(parsedData.map((d: any) => d.id));
+          const filteredPrev = prev.filter(p => !newIds.has(p.id) && (p.id.startsWith('SUB-') || p.id.startsWith('REQ-') || p.id.startsWith('NEW-')));
+          return [...parsedData, ...filteredPrev];
+        });
+
+        console.log('Fetched requests from DB:', parsedData.length);
       }
     } catch (e) {
       console.error('Failed to fetch requests', e);
     }
-  };
+  }
 
   // Fetch Pool (for Experts)
   const fetchPool = async () => {
