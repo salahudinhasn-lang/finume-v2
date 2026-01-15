@@ -96,7 +96,8 @@ export const generateClients = (count: number): Client[] => {
   return Array.from({ length: count }).map((_, i) => ({
     id: `C${i + 1}`,
     email: `client${i + 1}@example.com`,
-    name: `Company ${i + 1} ${cities[i % cities.length]}`,
+    name: `Client Representative ${i + 1}`,
+    companyName: `Company ${i + 1} ${cities[i % cities.length]}`,
     role: 'CLIENT',
     industry: industries[i % industries.length],
     totalSpent: Math.floor(Math.random() * 50000),
