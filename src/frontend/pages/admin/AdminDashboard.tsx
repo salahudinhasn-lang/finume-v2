@@ -436,7 +436,7 @@ const AdminDashboard = () => {
                                         </span>
                                         <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-md"><img src={client?.avatarUrl} alt="" className="w-full h-full object-cover" /></div>
                                         <div className="flex flex-col">
-                                            <span className="truncate w-24 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors" title={client?.companyName}>{client?.companyName}</span>
+                                            <span className="truncate w-24 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors" title={client?.name}>{client?.name}</span>
                                             <span className="text-[10px] text-purple-500 font-bold">{client.value.toLocaleString()} SAR</span>
                                         </div>
                                     </div>
@@ -460,7 +460,7 @@ const AdminDashboard = () => {
                                         </span>
                                         <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-md"><img src={client?.avatarUrl} alt="" className="w-full h-full object-cover" /></div>
                                         <div className="flex flex-col">
-                                            <span className="truncate w-24 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors" title={client?.companyName}>{client?.companyName}</span>
+                                            <span className="truncate w-24 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors" title={client?.name}>{client?.name}</span>
                                             <span className="text-[10px] text-orange-500 font-bold">{client.count} {t('admin.requests')}</span>
                                         </div>
                                     </div>

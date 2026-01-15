@@ -5,7 +5,7 @@ import { Card, Button } from '../../components/UI';
 import { User, Building, Mail, Save, FileText, MapPin, Phone, Hash, Upload, CheckCircle, Users, Bell, ToggleLeft, Trash2, Plus } from 'lucide-react';
 
 const ClientSettings = () => {
-    const { user, updateClient } = useAppContext();
+    const { user, updateClient, t } = useAppContext();
     const [activeTab, setActiveTab] = useState<'PROFILE' | 'KYC' | 'TEAM' | 'NOTIFICATIONS'>('PROFILE');
 
     // Real data from user context only
@@ -144,10 +144,14 @@ const ClientSettings = () => {
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                                    <input type="text" name="company" value={formData.company} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500" />
-                                </div>
-                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('client.name')}</label>
+                                    <input
+                                        type="text"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 transition-all"
+                                    />
+                                </div>        <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Industry / Sector</label>
                                     <input type="text" name="industry" value={formData.industry} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500" />
                                 </div>

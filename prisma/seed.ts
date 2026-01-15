@@ -151,7 +151,7 @@ async function main() {
   for (const u of USERS) {
     const {
       permissions, // separating out to ignore or handle separately if schema supported (it doesn't currently)
-      companyName, industry, // Client props
+      industry, companyName, // Client props: Destructure companyName to exclude from baseUser
       bio, specializations, yearsExperience, hourlyRate, // Expert props
       adminRole, // Admin props
       role,
@@ -170,7 +170,7 @@ async function main() {
         ...(role === 'CLIENT' ? {
           clientProfile: {
             create: {
-              companyName,
+              name: baseUser.name,
               industry,
               billingAddress: 'Riyadh, KSA'
             }

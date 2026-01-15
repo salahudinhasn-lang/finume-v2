@@ -98,7 +98,6 @@ export const generateClients = (count: number): Client[] => {
     email: `client${i + 1}@example.com`,
     name: `Company ${i + 1} ${cities[i % cities.length]}`,
     role: 'CLIENT',
-    companyName: `Company ${i + 1} LLC`,
     industry: industries[i % industries.length],
     totalSpent: Math.floor(Math.random() * 50000),
     zatcaStatus: zatcaStatuses[Math.floor(Math.random() * zatcaStatuses.length)],

@@ -15,7 +15,7 @@ export interface User {
 
 export interface Client extends User {
   role: 'CLIENT';
-  companyName: string;
+  name: string;
   industry: string;
   totalSpent: number;
   zatcaStatus: 'GREEN' | 'YELLOW' | 'RED';

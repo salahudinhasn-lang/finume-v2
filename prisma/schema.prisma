@@ -94,7 +94,7 @@ model ClientProfile {
   id             String @id @default(cuid())
   userId         String @unique
   user           User   @relation(fields: [userId], references: [id])
-  companyName    String?
+  name           String?
   vatNumber      String?
   industry       String?
   billingAddress String?

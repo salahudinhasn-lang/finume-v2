@@ -154,11 +154,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             const sanitizedClients: Client[] = usersData.clients.map((c: any) => ({
               ...c,
               role: 'CLIENT',
-              companyName: c.companyName || 'Unknown Company',
-              industry: c.industry || 'Other',
+              name: c.clientProfile?.name || c.name || 'Unknown Client',
+              companyName: c.clientProfile?.name || c.name || 'Unknown Client', // Fallback for legacy props? type expects name now
+              industry: c.clientProfile?.industry || 'General',
               totalSpent: typeof c.totalSpent === 'number' ? c.totalSpent : 0,
               zatcaStatus: c.zatcaStatus || 'GREEN',
-              name: c.name || 'Unknown Client',
               email: c.email || '',
               avatarUrl: c.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${c.id || Math.random()}`
             }));

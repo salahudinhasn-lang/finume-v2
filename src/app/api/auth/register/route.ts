@@ -127,7 +127,7 @@ export async function POST(request: Request) {
                 ...(role === 'CLIENT' ? {
                     clientProfile: {
                         create: {
-                            companyName,
+                            name: name, // Use User's name for ClientProfile name
                             industry: industry || 'General',
                             billingAddress: '', // Default
                         }
