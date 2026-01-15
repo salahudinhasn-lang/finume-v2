@@ -37,8 +37,8 @@ export async function POST(request: Request) {
         const totalReviews = aggs._count.rating || 0;
 
         // 3. Update Expert Profile
-        await prisma.expertProfile.update({
-            where: { userId: expertId },
+        await prisma.expert.update({
+            where: { id: expertId },
             data: {
                 rating: newRating,
                 totalReviews: totalReviews
