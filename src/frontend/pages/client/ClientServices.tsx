@@ -9,53 +9,12 @@ const ClientServices = () => {
     const { user, services, plans, addRequest, t } = useAppContext();
     const navigate = useNavigate();
 
-    const handleBookService = async (serviceId: string) => {
-        const service = services.find(s => s.id === serviceId);
-        if (!user || !service) return;
-
-        const requestId = `REQ-${Math.floor(Math.random() * 100000)}`;
-        const today = new Date().toISOString().split('T')[0];
-
-        const newRequest: Request = {
-            id: requestId,
-            clientId: user.id,
-            clientName: user.name,
-            serviceId: service.id,
-            serviceName: service.nameEn,
-            status: 'PENDING_PAYMENT',
-            amount: service.price,
-            dateCreated: today,
-            description: `Booked Service: ${service.nameEn}`,
-        };
-
-        const savedReq = await addRequest(newRequest);
-        if (savedReq) {
-            navigate(`/client/request-received/${savedReq.id}`);
-        }
+    const handleBookService = (serviceId: string) => {
+        navigate(`/client/checkout?serviceId=${serviceId}`);
     };
 
-    const handleSubscribePlan = async (planId: string) => {
-        if (!user) return;
-        const selectedPlan = (plans || []).find(p => p.id === planId);
-
-        const requestId = `SUB-${Math.floor(Math.random() * 100000)}`;
-        const today = new Date().toISOString().split('T')[0];
-
-        const newRequest: Request = {
-            id: requestId,
-            clientId: user.id,
-            clientName: user.name,
-            pricingPlanId: selectedPlan ? selectedPlan.id : undefined,
-            serviceName: selectedPlan ? `Subscription: ${selectedPlan.name}` : 'Plan Subscription',
-            status: 'PENDING_PAYMENT',
-            amount: selectedPlan ? selectedPlan.price : 0,
-            dateCreated: today,
-            description: `Subscription to ${selectedPlan?.name || 'Plan'}`,
-        };
-        const savedReq = await addRequest(newRequest);
-        if (savedReq) {
-            navigate(`/client/request-received/${savedReq.id}`);
-        }
+    const handleSubscribePlan = (planId: string) => {
+        navigate(`/client/checkout?planId=${planId}&billing=YEARLY`);
     };
 
     return (

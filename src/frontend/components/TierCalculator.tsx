@@ -41,17 +41,24 @@ const TierCalculator: React.FC<TierCalculatorProps> = ({ onRecommend }) => {
     if (!recommendation || !recommendation.plan) return null;
     const { plan, reason } = recommendation;
 
-    const handleGetStarted = () => {
-        if (onRecommend) {
-            onRecommend(plan.id);
+    const handleGetStarted = (overridePlanId?: string) => {
+        const targetPlanId = overridePlanId || plan.id;
+
+        if (onRecommend && !overridePlanId) {
+            onRecommend(targetPlanId);
             return;
         }
 
+        const path = `/client/checkout?planId=${targetPlanId}&billing=YEARLY`;
         if (user) {
-            navigate(`/client/checkout?planId=${plan.id}&billing=YEARLY`);
+            navigate(path);
         } else {
-            navigate(`/login?redirect=/client/checkout&planId=${plan.id}&billing=YEARLY`);
+            navigate(`/login?redirect=${encodeURIComponent(path)}`);
         }
+    };
+
+    const handleSelectPlan = (planId: string) => {
+        handleGetStarted(planId);
     };
 
     return (

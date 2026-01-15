@@ -183,7 +183,7 @@ const ClientRequests = () => {
                 <div className="flex flex-1 max-w-md gap-2 w-full">
                     <div className="relative flex-1 flex gap-2">
                         <Button
-                            onClick={() => navigate('/pricing')}
+                            onClick={() => navigate('/client/services')}
                             className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md text-sm whitespace-nowrap"
                         >
                             <Plus size={16} className="mr-2" /> Add Request
