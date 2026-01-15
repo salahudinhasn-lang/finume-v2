@@ -101,7 +101,8 @@ const PaymentPage = () => {
 
                 let result;
                 if (isExisting) {
-                    result = await updateRequest(pendingRequest.id, { status: 'NEW' });
+                    const success = await updateRequest(pendingRequest.id, { status: 'NEW' });
+                    result = success ? pendingRequest : null; // Mimic addRequest return for success check
                 } else {
                     // Add Status NEW
                     result = await addRequest({ ...pendingRequest, status: 'NEW' });
@@ -110,8 +111,8 @@ const PaymentPage = () => {
                 if (result) {
                     setIsSuccess(true);
                 } else {
-                    // Alert handled by context
-                    // Stay on payment page
+                    // Alert handled by context or here
+                    alert("Payment processing failed. Please try again or contact support.");
                 }
             }
         } catch (e) {

@@ -27,7 +27,7 @@ interface AppContextType {
   updateRequestStatus: (id: string, status: Request['status']) => void;
   assignRequest: (requestId: string, expertId: string) => void;
   updateExpertStatus: (expertId: string, status: Expert['status']) => void;
-  updateRequest: (id: string, updates: Partial<Request>) => void;
+  updateRequest: (id: string, updates: Partial<Request>) => Promise<boolean>;
   updateClient: (id: string, updates: Partial<Client>) => void;
   updateExpert: (id: string, updates: Partial<Expert>) => void;
   addClient: (client: Client) => void;
@@ -677,7 +677,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateRequest = async (id: string, updates: Partial<Request>) => {
+  const updateRequest = async (id: string, updates: Partial<Request>): Promise<boolean> => {
     // 1. Optimistic Update
     setRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
 
@@ -685,13 +685,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       // Map frontend fields (like objects) to what API expects if needed, 
       // but our API route handles JSON.stringify for requiredSkills if passed as object.
-      await fetch(`${API_BASE_URL}/api/requests/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/requests/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
+      return res.ok;
     } catch (e) {
       console.error('Failed to update request DB', e);
+      return false;
     }
   };
 
