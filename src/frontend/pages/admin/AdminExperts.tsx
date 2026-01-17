@@ -14,7 +14,14 @@ const AdminExperts = () => {
   const [newSkill, setNewSkill] = useState('');
   const location = useLocation();
 
-  const availableSkills: string[] = settings?.expertSkills ? JSON.parse(settings.expertSkills) : [];
+  const availableSkills: string[] = React.useMemo(() => {
+    try {
+      return settings?.expertSkills ? JSON.parse(settings.expertSkills) : [];
+    } catch (e) {
+      console.error("Failed to parse expertSkills", e);
+      return [];
+    }
+  }, [settings?.expertSkills]);
 
   const handleAddSkill = () => {
     if (!newSkill.trim()) return;
@@ -41,13 +48,14 @@ const AdminExperts = () => {
   const [expertFormData, setExpertFormData] = useState<Partial<Expert>>({});
 
   // Logic for the Funnel
-  const totalRegistered = experts.length;
-  const profileCompleted = experts.length;
-  const inVetting = experts.filter(e => e.status === 'VETTING').length;
-  const activeExperts = experts.filter(e => e.status === 'ACTIVE').length;
+  const safeExperts = experts || [];
+  const totalRegistered = safeExperts.length;
+  const profileCompleted = safeExperts.length;
+  const inVetting = safeExperts.filter(e => e.status === 'VETTING').length;
+  const activeExperts = safeExperts.filter(e => e.status === 'ACTIVE').length;
 
   // Filter Logic
-  const filteredExperts = experts.filter(e => {
+  const filteredExperts = safeExperts.filter(e => {
     if (filter !== 'ALL' && e.status !== filter) return false;
     const s = search.toLowerCase();
     const matchesSearch =
