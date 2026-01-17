@@ -80,7 +80,8 @@ const PaymentPage = () => {
     if (!pendingRequest) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
 
     // Calculate VAT
-    const subtotal = pendingRequest.amount;
+    // Calculate VAT
+    const subtotal = Number(pendingRequest.amount);
     const vat = subtotal * 0.15;
     const total = subtotal + vat;
 

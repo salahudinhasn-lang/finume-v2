@@ -145,14 +145,7 @@ const RequestReceived = () => {
                             </div>
                         </div>
 
-                        {/* Unit Type (Dynamic if available, else static placeholder) */}
-                        <div>
-                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Unit Type</p>
-                            <div className="flex items-center gap-3">
-                                <div className="text-gray-400">🏢</div>
-                                <span className="font-bold text-gray-900 text-lg">Apartment / Floor</span>
-                            </div>
-                        </div>
+
 
                         {/* First Name */}
                         <div>
