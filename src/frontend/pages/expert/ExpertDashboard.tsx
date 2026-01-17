@@ -86,7 +86,7 @@ const ExpertDashboard = () => {
                             {isVetting && <span className="text-orange-300 font-bold tracking-wider text-xs">VETTING PENDING</span>}
                         </div>
                         <h1 className="text-4xl md:text-5xl font-black mb-3 tracking-tight">
-                            {t('expert.goodMorning')}, <span className="text-blue-400">{user?.name.split(' ')[0]}</span>
+                            {t('expert.goodMorning')}, <span className="text-blue-400">{(user?.name || '').split(' ')[0]}</span>
                         </h1>
                         <p className="text-lg text-blue-100/80 max-w-xl leading-relaxed">
                             You have <strong className="text-white border-b-2 border-green-400">{activeTasks.length} active tasks</strong> requiring your attention today. Keep up the momentum!
