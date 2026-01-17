@@ -173,56 +173,11 @@ async function main() {
     });
   }
 
-  // 5. EXPERTS
-  for (const e of EXPERTS) {
-    console.log(`Seeding expert ${e.email}...`);
-    await prisma.user.create({
-      data: {
-        id: e.id,
-        email: e.email,
-        name: e.name,
-        passwordHash,
-        role: 'EXPERT',
-        avatarUrl: e.avatarUrl,
-        expertProfile: {
-          create: {
-            bio: e.bio,
-            hourlyRate: e.hourlyRate,
-            yearsExperience: e.yearsExperience,
-            specializations: JSON.parse(e.specializations), // Json parsing if needed, or if schema expects string[]
-            kycStatus: 'APPROVED'
-          }
-        }
-      }
-    });
-  }
+  // 5. EXPERTS - REMOVED FOR CLEAN START
+  // for (const e of EXPERTS) { ... }
 
-  // 6. CLIENTS
-  for (const c of CLIENTS) {
-    console.log(`Seeding client ${c.email}...`);
-    const { id, permissions, name, email, role, avatarUrl, mobileNumber, jobTitle, ...profileData } = c;
-
-    await prisma.user.create({
-      data: {
-        id: c.id,
-        email: email,
-        name: name,
-        passwordHash,
-        role: 'CLIENT',
-        mobileNumber: mobileNumber,
-        avatarUrl: avatarUrl,
-        clientProfile: {
-          create: {
-            ...profileData, // companyName, industry, etc.
-            jobTitle: jobTitle,
-            permissions: {
-              create: permissions.create
-            }
-          }
-        }
-      }
-    });
-  }
+  // 6. CLIENTS - REMOVED FOR CLEAN START
+  // for (const c of CLIENTS) { ... }
 
   console.log('Seeding finished.');
 }
