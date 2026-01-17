@@ -256,15 +256,15 @@ const AdminExperts = () => {
                           </button>
                           {expert.status === 'VETTING' && (
                             <div className="flex gap-1 ml-2">
-                              <Button size="sm" variant="outline" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-xs h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">Reject</Button>
-                              <Button size="sm" onClick={() => updateExpertStatus(expert.id, 'ACTIVE')} className="text-xs h-8 px-2 bg-green-600 hover:bg-green-700 shadow-sm">Approve</Button>
+                              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'SUSPENDED'); }} className="text-xs h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">Reject</Button>
+                              <Button size="sm" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'ACTIVE'); }} className="text-xs h-8 px-2 bg-green-600 hover:bg-green-700 shadow-sm">Approve</Button>
                             </div>
                           )}
                           {expert.status === 'ACTIVE' && (
-                            <Button size="sm" variant="danger" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-xs h-8 px-2">Suspend</Button>
+                            <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'SUSPENDED'); }} className="text-xs h-8 px-2">Suspend</Button>
                           )}
                           {expert.status === 'SUSPENDED' && (
-                            <Button size="sm" variant="secondary" onClick={() => updateExpertStatus(expert.id, 'ACTIVE')} className="text-xs h-8 px-2">Reactivate</Button>
+                            <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'ACTIVE'); }} className="text-xs h-8 px-2">Reactivate</Button>
                           )}
                         </div>
                       </td>

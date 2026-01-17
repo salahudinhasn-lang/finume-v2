@@ -77,10 +77,20 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
         } else if (id.startsWith('exp-')) {
             // Expert Update
             // Handle specializations JSON if needed
-            const { specializations, ...expertFields } = profileData;
+            // Handle specializations JSON if needed
+            const { specializations, status, ...expertFields } = profileData;
+
+            // Sync User.isActive with Expert.status
+            if (status === 'ACTIVE') {
+                userUpdateData.isActive = true;
+            } else if (status === 'SUSPENDED' || status === 'REJECTED' || status === 'VETTING') {
+                userUpdateData.isActive = false;
+            }
+
             userUpdateData.expertProfile = {
                 update: {
                     ...expertFields,
+                    status: status,
                     specializations: specializations
                 }
             };
