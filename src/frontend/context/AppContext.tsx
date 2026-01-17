@@ -513,8 +513,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (usersData.experts?.length > 0) {
           const sanitizedExperts: Expert[] = usersData.experts.map((e: any) => ({
             ...e,
-            specializations: (Array.isArray(e.specializations) ? e.specializations : [])
-              .filter((s: any) => typeof s === 'string'),
+            id: e.id || 'EXP-UNKNOWN',
+            specializations: Array.isArray(e.specializations)
+              ? e.specializations.filter((s: any) => typeof s === 'string')
+              : [],
             rating: typeof e.rating === 'number' ? e.rating : 0,
             totalEarned: typeof e.totalEarned === 'number' ? e.totalEarned : 0,
             status: e.status || 'VETTING',
@@ -525,10 +527,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             isFeatured: !!e.isFeatured,
             name: e.name || 'Unknown Expert',
             email: e.email || '',
+            mobileNumber: e.mobileNumber || '',
             role: 'EXPERT',
             avatarUrl: e.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.id || Math.random()}`
           }));
           setExperts(sanitizedExperts);
+          console.log('Experts sanitized:', sanitizedExperts);
         }
 
         // Sanitize Clients

@@ -63,7 +63,7 @@ const AdminExperts = () => {
     const matchesSearch =
       (e.name || '').toLowerCase().includes(s) ||
       (e.email || '').toLowerCase().includes(s) ||
-      (e.specializations || []).some(spec => spec.toLowerCase().includes(s));
+      (Array.isArray(e.specializations) && e.specializations.some(spec => typeof spec === 'string' && spec.toLowerCase().includes(s)));
     return matchesSearch;
   });
 
