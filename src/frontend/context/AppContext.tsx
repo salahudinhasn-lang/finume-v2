@@ -1,8 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Client, Expert, Admin, Request, Service, Review, PricingPlan, PayoutRequest, PlatformSettings, ClientFeaturePermissions, SitePage } from '../types';
-
-import { SERVICES, MOCK_PLANS } from '../mockData'; // Keep SERVICES/PLANS for now if used as fallbacks, but remove user mocks
+import { MOCK_CLIENTS, MOCK_EXPERTS, MOCK_REQUESTS, SERVICES, MOCK_ADMINS, MOCK_PLANS } from '../mockData';
 import { translations } from '../utils/translations';
 
 interface AppContextType {
@@ -72,7 +71,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isRestoringSession, setIsRestoringSession] = useState(false); // Default to false to prevent infinite spinner
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
   const [language, setLanguage] = useState<'en' | 'ar'>('en');
 
   // "Database" in state
@@ -88,6 +87,135 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     document.documentElement.lang = language;
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
   }, [language]);
+
+  useEffect(() => {
+    // Initialize Mock Data (Empty now as we cleaned it)
+    setClients(MOCK_CLIENTS);
+    setExperts(MOCK_EXPERTS);
+    setRequests(MOCK_REQUESTS);
+    setAdmins(MOCK_ADMINS);
+    setServices(SERVICES);
+    setPlans(MOCK_PLANS);
+
+    // Legacy payouts - REMOVED
+    setPayoutRequests([]); // Start empty
+
+
+    // Check LocalStorage for User Session
+    const savedUser = localStorage.getItem('finume_user');
+    console.log("Restoring session, found:", savedUser ? "YES" : "NO");
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        console.log("Session restored for:", parsed.email);
+      } catch (e) {
+        console.error('Failed to restore session');
+      }
+    }
+    setIsRestoringSession(false);
+
+    const initBackend = async () => {
+      try {
+        // Fetch Settings
+        const settingsRes = await fetch(`${API_BASE_URL}/api/settings`);
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          setSettings(settingsData);
+        }
+
+        // Fetch Users (including permissions)
+        const usersRes = await fetch(`${API_BASE_URL}/api/users`);
+        if (usersRes.ok) {
+          const usersData = await usersRes.json();
+
+          // Sanitize Experts
+          if (usersData.experts?.length > 0) {
+            const sanitizedExperts: Expert[] = usersData.experts.map((e: any) => ({
+              ...e,
+              // Ensure fields exist
+              specializations: Array.isArray(e.specializations) ? e.specializations : [],
+              rating: Number(e.rating) || 0,
+              totalReviews: Number(e.totalReviews) || 0,
+              role: 'EXPERT',
+              name: e.name || 'Unknown Expert',
+              avatarUrl: e.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.id}`
+            }));
+            setExperts(sanitizedExperts);
+          }
+
+          // Sanitize Clients
+          if (usersData.clients?.length > 0) {
+            const sanitizedClients: Client[] = usersData.clients.map((c: any) => ({
+              ...c,
+              role: 'CLIENT',
+              name: c.name || 'Unknown Client',
+              companyName: c.companyName || c.name || 'Unknown Company',
+              industry: c.industry || 'General',
+              avatarUrl: c.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${c.id}`
+            }));
+            setClients(sanitizedClients);
+          }
+
+          if (usersData.admins?.length > 0) setAdmins(usersData.admins);
+
+          // Hydrate client permissions map
+          const permsMap: Record<string, ClientFeaturePermissions> = {};
+          (usersData.clients as Client[] || []).forEach((c: any) => {
+            if (c.permissions) {
+              permsMap[c.id] = c.permissions;
+            }
+          });
+          setClientPermissions(permsMap);
+        }
+
+        // Fetch Requests
+        // Use the ID from local storage parsing if available
+        let currentUserId = user?.id;
+
+        if (user?.role === 'CLIENT' && !currentUserId && savedUser) {
+          try {
+            const p = JSON.parse(savedUser);
+            if (p.role === 'CLIENT') currentUserId = p.id;
+          } catch (e) { }
+        }
+
+        // Only filter by ID if the user is a CLIENT. Admins/Experts should see all (or their own specific view).
+        // Experts might need their own filter later (assignments), but for now fetch all and filter in UI or backend.
+        if (user?.role === 'CLIENT' || (savedUser && JSON.parse(savedUser).role === 'CLIENT')) {
+          await fetchRequests(currentUserId);
+        } else {
+          await fetchRequests(); // Fetch all for Admin/Expert
+        }
+
+        // Fetch Pool
+        await fetchPool();
+
+        // Fetch Services
+        const servicesRes = await fetch(`${API_BASE_URL}/api/services`);
+        if (servicesRes.ok) {
+          setServices(await servicesRes.json());
+        }
+
+        // Fetch Plans
+        const plansRes = await fetch(`${API_BASE_URL}/api/plans`);
+        if (plansRes.ok) {
+          const plansData = await plansRes.json();
+          // Parse features/attributes if they are strings (from DB)
+          const parsedPlans = plansData.map((p: any) => ({
+            ...p,
+            features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
+            attributes: typeof p.attributes === 'string' ? JSON.parse(p.attributes) : p.attributes
+          }));
+          setPlans(parsedPlans);
+        }
+      } catch (e) {
+        console.warn('Backend not available:', e);
+      }
+    };
+
+    initBackend(); // Call initBackend here
+  }, []); // useEffect dependency array empty -> runs once
 
   // Reactive Data Fetching: Ensure we fetch user data when user state initializes/changes
   useEffect(() => {
@@ -490,32 +618,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 
     } catch (e) {
-      console.warn('Backend init failed:', e);
+      console.warn('Backend not available:', e);
     }
-  };
-
-  useEffect(() => {
-    console.log('AppProvider mounted, checking session...');
-    // Check LocalStorage for User Session
-    const savedUser = localStorage.getItem('finume_user');
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser);
-        console.log('Restoring session for user:', parsed.id);
-        setUser(parsed);
-      } catch (e) {
-        console.error('Failed to restore session');
-      }
-    } else {
-      console.log('No session found in localStorage');
-    }
-
-    setIsRestoringSession(false); // Enable rendering
-
-    // Initialize Data
-    console.log('Initializing backend data...');
-    initBackend();
-  }, []);
+  }
 
   const addRequest = async (req: Request): Promise<Request | null> => {
     // 1. Optimistic UI Update

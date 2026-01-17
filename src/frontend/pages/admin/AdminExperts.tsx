@@ -142,7 +142,14 @@ const AdminExperts = () => {
                 onClick={() => setFilter('ALL')}
                 color="blue"
               />
-
+              <FunnelStep
+                label="Profile Ready"
+                count={profileCompleted}
+                icon={UserCheck}
+                isActive={false}
+                onClick={() => { }}
+                color="indigo"
+              />
               <FunnelStep
                 label="In Vetting"
                 count={inVetting}
@@ -192,7 +199,7 @@ const AdminExperts = () => {
               <table className="w-full text-sm text-left">
                 <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 font-semibold uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-4">Expert</th>
+                    <th className="px-6 py-4">Expert Profile</th>
                     <th className="px-6 py-4">Specialization</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-right">Actions</th>
@@ -204,7 +211,7 @@ const AdminExperts = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4 cursor-pointer" onClick={() => handleEdit(expert)}>
                           <div className="relative">
-                            <img src={expert.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${expert.id}`} alt="" className="w-10 h-10 rounded-full bg-gray-200 object-cover ring-2 ring-white shadow-sm" />
+                            <img src={expert.avatarUrl} alt="" className="w-10 h-10 rounded-full bg-gray-200 object-cover ring-2 ring-white shadow-sm" />
                             <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${expert.status === 'ACTIVE' ? 'bg-green-500' : expert.status === 'VETTING' ? 'bg-orange-500' : 'bg-red-500'}`}></span>
                           </div>
                           <div>
@@ -216,10 +223,10 @@ const AdminExperts = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">
-                          {(expert.specializations || []).slice(0, 2).map((s, i) => (
+                          {expert.specializations.slice(0, 2).map((s, i) => (
                             <span key={i} className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-md border border-gray-200">{s}</span>
                           ))}
-                          {(expert.specializations || []).length > 2 && <span className="text-xs text-gray-400 px-1">+{(expert.specializations || []).length - 2}</span>}
+                          {expert.specializations.length > 2 && <span className="text-xs text-gray-400 px-1">+{expert.specializations.length - 2}</span>}
                         </div>
                       </td>
                       <td className="px-6 py-4"><Badge status={expert.status} /></td>
