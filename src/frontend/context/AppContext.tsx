@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Client, Expert, Admin, Request, Service, Review, PricingPlan, PayoutRequest, PlatformSettings, ClientFeaturePermissions, SitePage } from '../types';
-import { MOCK_CLIENTS, MOCK_EXPERTS, MOCK_REQUESTS, SERVICES, MOCK_ADMINS, MOCK_PLANS } from '../mockData';
+
+import { SERVICES, MOCK_PLANS } from '../mockData'; // Keep SERVICES/PLANS for now if used as fallbacks, but remove user mocks
 import { translations } from '../utils/translations';
 
 interface AppContextType {
@@ -89,13 +90,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [language]);
 
   useEffect(() => {
-    // Initialize Mock Data (Empty now as we cleaned it)
-    setClients(MOCK_CLIENTS);
-    setExperts(MOCK_EXPERTS);
-    setRequests(MOCK_REQUESTS);
-    setAdmins(MOCK_ADMINS);
-    setServices(SERVICES);
-    setPlans(MOCK_PLANS);
+    // Initialize Data - Start Empty, Fetch from DB
+    // setClients([]);
+    // setExperts([]);
+    // setRequests([]);
+    // setAdmins([]);
+    // setServices(SERVICES); // Services currently static/hybrid, but fetched later
+    // setPlans(MOCK_PLANS); // Plans hybrid
 
     // Legacy payouts - REMOVED
     setPayoutRequests([]); // Start empty
