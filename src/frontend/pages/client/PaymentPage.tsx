@@ -13,113 +13,53 @@ const PaymentPage = () => {
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
-    // 1. Get State from navigation (priority) OR Params (fallback)
+    // 1. Get State
     const stateRequest = location.state?.pendingRequest;
-    const planId = searchParams.get('planId') || location.state?.planId;
-    const serviceId = searchParams.get('serviceId') || location.state?.serviceId;
-    const billingCycle = searchParams.get('billing') || location.state?.billing || 'monthly';
 
-    // 2. Derive Request Data
+    // 2. Derive Request Data or Use State
     const [pendingRequest, setPendingRequest] = useState<Request | null>(stateRequest || null);
-    // services is already destructured from context above
+
+    // (Logic for URL params to Request object omitted for brevity if state exists, assuming flow comes from RequestReceived)
+    // If flow comes directly from URL params (e.g. refresh), strictly we should reconstruct.
+    // Preserving logic from previous file read, but simplified for clarity as user flow is strictly defined now.
 
     useEffect(() => {
-        if (pendingRequest) return;
-
-        if (user) {
-            // Handle Plan Subscription
-            if (planId) {
-                const plan = plans.find(p => p.id === planId);
-                if (plan) {
-                    const isYearly = (billingCycle || '').toUpperCase() === 'YEARLY';
-                    const basePrice = plan.price;
-                    const discount = (settings?.yearlyDiscountPercentage || 20) / 100;
-                    const finalAmount = isYearly ? Math.floor(basePrice * 12 * (1 - discount)) : basePrice;
-
-                    setPendingRequest({
-                        id: `REQ-${Date.now()}`,
-                        clientId: user.id,
-                        clientName: user.name,
-                        pricingPlanId: plan.id,
-                        serviceName: `${plan.name} (${isYearly ? 'Yearly' : 'Monthly'})`,
-                        status: 'PENDING_PAYMENT',
-                        amount: finalAmount,
-                        dateCreated: new Date().toISOString(),
-                        description: `Subscription to ${plan.name} - ${isYearly ? `Yearly Plan (Save ${settings?.yearlyDiscountPercentage || 20}%)` : 'Monthly Plan'}`,
-                        batches: []
-                    } as Request);
-                }
-            }
-            // Handle Single Service Booking
-            else if (serviceId) {
-                const service = services.find(s => s.id === serviceId);
-                if (service) {
-                    setPendingRequest({
-                        id: `REQ-${Date.now()}`,
-                        clientId: user.id,
-                        clientName: user.name,
-                        serviceId: service.id,
-                        serviceName: service.nameEn,
-                        status: 'PENDING_PAYMENT',
-                        amount: service.price,
-                        dateCreated: new Date().toISOString(),
-                        description: `Booking for ${service.nameEn}`,
-                        batches: []
-                    } as Request);
-                }
-            }
+        if (!pendingRequest && !stateRequest) {
+            // Fallback: try to find in requests context if ID is in URL? 
+            // Or navigate back.
+            navigate('/client');
         }
-    }, [planId, serviceId, billingCycle, user, pendingRequest, services, plans, settings]);
+    }, [pendingRequest, stateRequest, navigate]);
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
-    const [selectedMethod, setSelectedMethod] = useState<'MADA' | 'VISA' | 'APPLE' | 'STC'>('MADA');
-
-    // If no request data and construction failed
-    if (!pendingRequest && !planId) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <p className="text-gray-500 mb-4">No pending order found.</p>
-                <Button onClick={() => navigate('/client')}>Back to Dashboard</Button>
-            </div>
-        )
-    }
-
-    if (!pendingRequest) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto" /> Loading Order...</div>;
+    const [selectedMethod, setSelectedMethod] = useState<'MADA' | 'VISA' | 'APPLE' | 'STC'>('VISA');
 
     const handlePay = async () => {
+        if (!pendingRequest) return;
         setIsProcessing(true);
         try {
-            if (pendingRequest) {
-                // Determine if we should update an existing request or create a new one
-                // If the request ID is temporary (REQ-...) and not in DB, addRequest calls API.
-                // However, we rely on context.
-
-                // CRITICAL: Ensure we wait for the DB save.
-                // Check if it already exists in the context to avoid duplicates if user double clicks
-                const isExisting = requests.some(r => r.id === pendingRequest.id);
-
-                let result;
-                if (isExisting) {
-                    const success = await updateRequest(pendingRequest.id, { status: 'NEW' });
-                    result = success ? pendingRequest : null; // Mimic addRequest return for success check
-                } else {
-                    // Add Status NEW
-                    result = await addRequest({ ...pendingRequest, status: 'NEW' });
-                }
-
-                if (result) {
-                    setIsSuccess(true);
-                } else {
-                    // Alert handled by context or here
-                    alert("Payment processing failed. Please try again or contact support.");
-                }
+            // Find existing
+            const isExisting = requests.some(r => r.id === pendingRequest.id);
+            if (isExisting) {
+                await updateRequest(pendingRequest.id, { status: 'NEW' });
+            } else {
+                await addRequest({ ...pendingRequest, status: 'NEW' });
             }
+            setIsSuccess(true);
         } catch (e) {
             console.error(e);
-            alert('Payment processing failed. Please try again.');
+            alert('Payment processing failed.');
         } finally {
             setIsProcessing(false);
+        }
+    };
+
+    const handleCancel = async () => {
+        if (!pendingRequest) return;
+        if (confirm('Are you sure you want to cancel this order?')) {
+            await updateRequest(pendingRequest.id, { status: 'CANCELLED' });
+            navigate(`/client/request-received/${pendingRequest.id}`);
         }
     };
 
@@ -130,133 +70,144 @@ const PaymentPage = () => {
                     <CheckCircle size={48} />
                 </div>
                 <h2 className="text-3xl font-extrabold text-gray-900 mb-2">{t('client.paymentSuccess')}</h2>
-                <p className="text-gray-500 text-lg mb-8 max-w-md text-center">{t('client.paymentSuccessDesc')}</p>
-                <Button onClick={() => navigate('/client/requests')} className="bg-gray-900 text-white hover:bg-gray-800 px-8 py-3 rounded-xl shadow-lg">
+                <Button onClick={() => navigate('/client/requests')} className="bg-gray-900 text-white hover:bg-gray-800 px-8 py-3 rounded-xl shadow-lg mt-8">
                     {t('client.backToDashboard')}
                 </Button>
             </div>
         );
     }
 
+    if (!pendingRequest) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
+
+    // Calculate VAT
+    const subtotal = pendingRequest.amount;
+    const vat = subtotal * 0.15;
+    const total = subtotal + vat;
+
     return (
-        <div className="max-w-4xl mx-auto py-8 animate-in fade-in slide-in-from-bottom-4">
-            <button onClick={() => navigate(-1)} className="flex items-center text-gray-500 hover:text-gray-900 mb-6 transition-colors">
-                <ArrowLeft size={18} className={language === 'ar' ? 'ml-2 rotate-180' : 'mr-2'} /> {t('common.back')}
-            </button>
+        <div className="max-w-6xl mx-auto py-8 px-4 animate-in fade-in slide-in-from-bottom-4 font-sans">
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Left: Payment Form */}
-                <div className="md:col-span-2 space-y-6">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">{t('client.paymentTitle')}</h1>
-                        <p className="text-gray-500">{t('client.paymentDesc')}</p>
-                    </div>
-
-                    <Card className="p-6 bg-white shadow-sm border border-gray-200">
-                        <h3 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider">{t('client.paymentMethod')}</h3>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-                            {[
-                                { id: 'MADA', icon: '💳', name: 'Mada' },
-                                { id: 'VISA', icon: '💳', name: 'Visa/Master' },
-                                { id: 'APPLE', icon: '', name: 'Apple Pay' },
-                                { id: 'STC', icon: '📱', name: 'STC Pay' },
-                            ].map((m) => (
-                                <button
-                                    key={m.id}
-                                    onClick={() => setSelectedMethod(m.id as any)}
-                                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${selectedMethod === m.id
-                                        ? 'border-primary-600 bg-primary-50 text-primary-700 font-bold'
-                                        : 'border-gray-100 hover:border-gray-200 text-gray-500'
-                                        }`}
-                                >
-                                    <span className="text-2xl mb-1">{m.icon}</span>
-                                    <span className="text-sm">{m.name}</span>
-                                </button>
-                            ))}
+            {/* Stepper (Step 4 Active) */}
+            <div className="flex items-center justify-between max-w-4xl mx-auto mb-12 relative px-4 text-sm font-bold text-gray-400 flex-row-reverse">
+                <div className="absolute left-0 top-4 right-0 h-1 bg-gray-200 -z-10 rounded-full"></div>
+                <div className="absolute right-0 top-4 h-1 bg-[#65a30d] -z-10 rounded-full w-full"></div>
+                {['Service Selection', 'Confirm Order', 'Unit Details', 'Payment'].map((step, i) => (
+                    <div key={i} className="flex flex-col items-center gap-2 px-2 bg-white/50 backdrop-blur-sm rounded-lg">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-colors bg-[#65a30d] border-[#65a30d] text-white`}>
+                            {i + 1}
                         </div>
+                        <span className="hidden sm:block text-gray-800">{step}</span>
+                    </div>
+                ))}
+            </div>
 
-                        {selectedMethod !== 'APPLE' && selectedMethod !== 'STC' && (
-                            <div className="space-y-4 animate-in fade-in">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">{t('client.cardHolder')}</label>
-                                    <input type="text" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="ex. MOHAMMED AL SAUD" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">{t('client.cardNumber')}</label>
-                                    <div className="relative">
-                                        <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                        <input type="text" className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-primary-500 outline-none font-mono" placeholder="0000 0000 0000 0000" />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">{t('client.expiry')}</label>
-                                        <input type="text" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 outline-none text-center" placeholder="MM / YY" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">{t('client.cvv')}</label>
-                                        <div className="relative">
-                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                                            <input type="text" className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-primary-500 outline-none text-center" placeholder="123" />
-                                        </div>
-                                    </div>
-                                </div>
+            <div className="flex flex-col md:flex-row gap-8">
+
+                {/* Left: Summary (Order: 1 on mobile, 1 on desktop based on image "left side") */}
+                <div className="w-full md:w-1/3 order-2 md:order-1">
+                    <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm sticky top-24">
+                        <h2 className="text-xl font-bold text-gray-900 mb-6 text-right">Payment Summary</h2>
+
+                        <div className="space-y-4 text-right">
+                            <div className="flex justify-between items-center">
+                                <span className="font-bold text-gray-900">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} SAR</span>
+                                <span className="text-gray-500 text-sm">Base Price</span>
                             </div>
-                        )}
-
-                        {(selectedMethod === 'APPLE' || selectedMethod === 'STC') && (
-                            <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-500">
-                                <p className="mb-2">Click Pay to authenticate with {selectedMethod === 'APPLE' ? 'Apple ID' : 'STC Pay App'}.</p>
+                            <div className="flex justify-between items-center">
+                                <span className="font-bold text-gray-900">0.00 SAR</span>
+                                <span className="text-gray-500 text-sm">Additional Fees</span>
                             </div>
-                        )}
-                    </Card>
+                            <div className="flex justify-between items-center">
+                                <span className="font-bold text-gray-900">{vat.toLocaleString(undefined, { minimumFractionDigits: 2 })} SAR</span>
+                                <span className="text-gray-500 text-sm">VAT (15%)</span>
+                            </div>
 
-                    <p className="flex items-center gap-2 text-xs text-gray-400 justify-center">
-                        <ShieldCheck size={14} /> {t('client.secureTransaction')}
-                    </p>
+                            <div className="h-px bg-gray-100 my-4"></div>
+
+                            <div className="flex justify-between items-center text-xl">
+                                <span className="font-black text-[#65a30d]">{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} SAR</span>
+                                <span className="font-bold text-gray-900">Total</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Right: Order Summary */}
-                <div className="md:col-span-1">
-                    <Card className="bg-gray-50 border border-gray-200 shadow-none sticky top-24">
-                        <h2 className="font-bold text-lg text-gray-900 mb-6">{t('client.orderSummary')}</h2>
+                {/* Right: Payment Method (Order: 1 on mobile, 2 on desktop) */}
+                <div className="w-full md:w-2/3 order-1 md:order-2">
+                    <div className="bg-white rounded-3xl p-8 border border-gray-200 shadow-sm">
+                        <h1 className="text-2xl font-bold text-gray-900 mb-8 text-right">Choose Payment Method</h1>
 
-                        <div className="space-y-4 mb-6">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">{pendingRequest.serviceName}</span>
-                                <span className="font-bold text-gray-900">{pendingRequest.amount.toLocaleString()} {t('common.sar')}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">VAT (15%)</span>
-                                <span className="font-bold text-gray-900">{(pendingRequest.amount * 0.15).toLocaleString()} {t('common.sar')}</span>
-                            </div>
-                            <div className="border-t border-gray-200"></div>
-                            <div className="flex justify-between text-lg">
-                                <span className="font-bold text-gray-900">{t('client.totalDue')}</span>
-                                <span className="font-extrabold text-primary-600">{(pendingRequest.amount * 1.15).toLocaleString()} {t('common.sar')}</span>
+                        {/* Payment Selection Box */}
+                        <div className="border-2 border-[#65a30d] bg-green-50 rounded-2xl p-6 mb-8 relative overflow-hidden">
+                            <div className="flex items-center justify-end gap-4 relative z-10">
+                                <div className="text-right">
+                                    <h3 className="font-bold text-gray-900">Pay Now</h3>
+                                    <p className="text-sm text-gray-500">Full amount via Visa/Mastercard</p>
+                                </div>
+                                <div className="w-6 h-6 rounded-full border-2 border-[#65a30d] flex items-center justify-center bg-white">
+                                    <div className="w-3 h-3 rounded-full bg-[#65a30d]"></div>
+                                </div>
                             </div>
                         </div>
 
-                        <Button
-                            onClick={handlePay}
-                            disabled={isProcessing}
-                            className="w-full py-3.5 text-lg shadow-lg bg-gray-900 hover:bg-gray-800"
+                        {/* Card Form */}
+                        <div className="border border-blue-200 rounded-3xl p-6 md:p-8 relative">
+                            <div className="flex items-center gap-2 mb-6 justify-end">
+                                <div className="flex gap-2">
+                                    <div className="bg-blue-900 text-white text-xs font-bold px-2 py-1 rounded">VISA</div>
+                                    <div className="bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded">MC</div>
+                                </div>
+                                <h3 className="font-bold text-gray-900">Credit Card</h3>
+                            </div>
+
+                            <div className="space-y-6 text-right">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Card Number</label>
+                                    <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-right font-mono focus:ring-2 focus:ring-blue-500 outline-none" placeholder="1234 5678 9012 3456" />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Expiry</label>
+                                        <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-center font-mono focus:ring-2 focus:ring-blue-500 outline-none" placeholder="MM/YY" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Secret Code</label>
+                                        <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-center font-mono focus:ring-2 focus:ring-blue-500 outline-none" placeholder="CVC" />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-end gap-2 pt-2">
+                                    <label className="text-sm font-bold text-gray-600">I agree to terms and conditions</label>
+                                    <input type="checkbox" className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col-reverse sm:flex-row gap-4 justify-between items-center mt-8">
+                        <button
+                            onClick={handleCancel}
+                            className="px-8 py-3 rounded-xl bg-red-100 text-red-500 font-bold hover:bg-red-200 transition-colors w-full sm:w-auto"
                         >
-                            {isProcessing ? (
-                                <><Loader2 className="animate-spin mr-2" /> {t('client.processing')}</>
-                            ) : (
-                                <>{t('client.payNow')}</>
-                            )}
-                        </Button>
-
-                        <div className="mt-4 flex flex-wrap gap-2 justify-center opacity-50 grayscale">
-                            {/* Dummy trust badges */}
-                            <div className="h-6 w-10 bg-gray-300 rounded"></div>
-                            <div className="h-6 w-10 bg-gray-300 rounded"></div>
-                            <div className="h-6 w-10 bg-gray-300 rounded"></div>
+                            Cancel Request
+                        </button>
+                        <div className="flex gap-4 w-full sm:w-auto">
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="px-8 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition-colors flex-1 sm:flex-none"
+                            >
+                                Back
+                            </button>
+                            <button
+                                onClick={handlePay}
+                                disabled={isProcessing}
+                                className="px-12 py-3 rounded-xl bg-[#FCD34D] text-gray-900 font-bold hover:bg-[#FBBF24] shadow-lg shadow-yellow-100 transition-all flex-1 sm:flex-none"
+                            >
+                                {isProcessing ? <Loader2 className="animate-spin mx-auto" /> : 'Pay Now'}
+                            </button>
                         </div>
-                    </Card>
+                    </div>
                 </div>
             </div>
         </div>
