@@ -201,8 +201,6 @@ const AdminExperts = () => {
                   <tr>
                     <th className="px-6 py-4">Expert Profile</th>
                     <th className="px-6 py-4">Specialization</th>
-                    <th className="px-6 py-4">Performance</th>
-                    <th className="px-6 py-4">Financials</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
@@ -230,13 +228,6 @@ const AdminExperts = () => {
                           {expert.specializations.length > 2 && <span className="text-xs text-gray-400 px-1">+{expert.specializations.length - 2}</span>}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1 font-medium text-gray-700">
-                          <Star size={16} className="text-yellow-400 fill-current" />
-                          <span>{expert.rating.toFixed(1)}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 font-mono text-gray-600 font-medium">{expert.totalEarned.toLocaleString()} SAR</td>
                       <td className="px-6 py-4"><Badge status={expert.status} /></td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
@@ -256,16 +247,16 @@ const AdminExperts = () => {
                           >
                             <LifeBuoy size={18} />
                           </button>
-                          {expert.status === 'VETTING' && (
+                          {(expert.status || '').toUpperCase() === 'VETTING' && (
                             <div className="flex gap-1 ml-2">
                               <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'SUSPENDED'); }} className="text-xs h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">Reject</Button>
                               <Button size="sm" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'ACTIVE'); }} className="text-xs h-8 px-2 bg-green-600 hover:bg-green-700 shadow-sm">Approve</Button>
                             </div>
                           )}
-                          {expert.status === 'ACTIVE' && (
+                          {(expert.status || '').toUpperCase() === 'ACTIVE' && (
                             <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'SUSPENDED'); }} className="text-xs h-8 px-2">Suspend</Button>
                           )}
-                          {expert.status === 'SUSPENDED' && (
+                          {(expert.status || '').toUpperCase() === 'SUSPENDED' && (
                             <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'ACTIVE'); }} className="text-xs h-8 px-2">Reactivate</Button>
                           )}
                         </div>
