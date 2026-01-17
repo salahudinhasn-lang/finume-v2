@@ -13,36 +13,40 @@ const RequestReceived = () => {
     const [request, setRequest] = useState<Request | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // Memoize the found request so we don't need complex effect logic for it
+    const foundRequest = requests.find(r => r.id === id);
+
     useEffect(() => {
-        let mounted = true;
-        const findRequest = async () => {
-            // Try finding in existing requests
-            const found = requests.find(r => r.id === id);
-            if (found) {
-                setRequest(found);
-                setLoading(false);
-                return;
-            }
+        if (foundRequest) {
+            setRequest(foundRequest);
+            setLoading(false);
+        } else if (user?.id) {
+            // Not found in current context list, and user is logged in.
+            // Attempt fetch only if we haven't exhausted attempts (optional, but for now just fetch once per mount/id)
+            const doFetch = async () => {
+                try {
+                    await fetchRequests(user.id);
+                } catch (e) {
+                    console.error("Error fetching request:", e);
+                } finally {
+                    // Turn off loading after fetch attempt, whether found or not
+                    setLoading(false);
+                }
+            };
+            doFetch();
+        } else {
+            // No user or no request, stop loading eventually
+            const timer = setTimeout(() => setLoading(false), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [id, user?.id, foundRequest, fetchRequests]); // Dependency on foundRequest is key
 
-            // If not found, force fetch
-            if (user?.id) {
-                await fetchRequests(user.id);
-                // Check again after fetch
-                // Note: requests prop might not update immediately in this closure context, 
-                // so we rely on the dependency array to re-trigger or we need to access the latest state.
-                // Better to just rely on the effect re-running when `requests` changes.
-            }
-
-            // Timeout to stop loading if not found
-            setTimeout(() => {
-                if (mounted && !request) setLoading(false);
-            }, 3000);
-        };
-
-        findRequest();
-
-        return () => { mounted = false; };
-    }, [id, requests, user]); // Re-run when requests update
+    // Sync state if foundRequest changes (e.g. after fetch)
+    useEffect(() => {
+        if (foundRequest) {
+            setRequest(foundRequest);
+        }
+    }, [foundRequest]);
 
     const handleCancel = async () => {
         if (request) {
