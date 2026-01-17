@@ -119,6 +119,7 @@ export async function POST(request: Request) {
                     email,
                     passwordHash: hashedPassword,
                     role: 'EXPERT',
+                    mobileNumber, // Added missing field
                     isActive: false, // Experts must be vetted
                     avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
                     expertProfile: {

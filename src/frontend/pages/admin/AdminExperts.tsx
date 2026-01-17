@@ -217,6 +217,7 @@ const AdminExperts = () => {
                           <div>
                             <p className="font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{expert.name}</p>
                             <p className="text-xs text-gray-500">{expert.email}</p>
+                            {expert.mobileNumber && <p className="text-xs text-gray-400 mt-0.5">{expert.mobileNumber}</p>}
                           </div>
                         </div>
                       </td>
