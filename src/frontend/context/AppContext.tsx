@@ -89,10 +89,112 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
   }, [language]);
 
+  const initBackend = async () => {
+    try {
+      // Fetch Settings
+      const settingsRes = await fetch(`${API_BASE_URL}/api/settings`);
+      if (settingsRes.ok) {
+        setSettings(await settingsRes.json());
+      }
+
+      // Fetch Users (including permissions)
+      const usersRes = await fetch(`${API_BASE_URL}/api/users`);
+      if (usersRes.ok) {
+        const usersData = await usersRes.json();
+
+        // Sanitize Experts
+        if (usersData.experts?.length > 0) {
+          const sanitizedExperts: Expert[] = usersData.experts.map((e: any) => ({
+            ...e,
+            specializations: Array.isArray(e.specializations) ? e.specializations : [],
+            rating: Number(e.rating) || 0,
+            totalReviews: Number(e.totalReviews) || 0,
+            role: 'EXPERT',
+            name: e.name || 'Unknown Expert',
+            avatarUrl: e.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.id}`
+          }));
+          setExperts(sanitizedExperts);
+        }
+
+        // Sanitize Clients
+        if (usersData.clients?.length > 0) {
+          const sanitizedClients: Client[] = usersData.clients.map((c: any) => ({
+            ...c,
+            role: 'CLIENT',
+            name: c.name || 'Unknown Client',
+            companyName: c.companyName || c.name || 'Unknown Company',
+            industry: c.industry || 'General',
+            avatarUrl: c.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${c.id}`
+          }));
+          setClients(sanitizedClients);
+        }
+
+        if (usersData.admins?.length > 0) setAdmins(usersData.admins);
+
+        // Hydrate permissions
+        const permsMap: Record<string, ClientFeaturePermissions> = {};
+        (usersData.clients as Client[] || []).forEach((c: any) => {
+          if (c.permissions) permsMap[c.id] = c.permissions;
+        });
+        setClientPermissions(permsMap);
+      }
+
+      // Fetch Requests (Filter logic handled in separate effect or here)
+      const savedUser = localStorage.getItem('finume_user');
+      let currentUserId = user?.id;
+      let userRole = user?.role;
+
+      if (!currentUserId && savedUser) {
+        try {
+          const p = JSON.parse(savedUser);
+          currentUserId = p.id;
+          userRole = p.role;
+        } catch (e) { }
+      }
+
+      if (userRole === 'CLIENT') {
+        await fetchRequests(currentUserId);
+      } else {
+        await fetchRequests();
+      }
+
+      await fetchPool();
+
+      // Services & Plans
+      const servicesRes = await fetch(`${API_BASE_URL}/api/services`);
+      if (servicesRes.ok) setServices(await servicesRes.json());
+
+      const plansRes = await fetch(`${API_BASE_URL}/api/plans`);
+      if (plansRes.ok) {
+        const plansData = await plansRes.json();
+        setPlans(plansData.map((p: any) => ({
+          ...p,
+          features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
+          attributes: typeof p.attributes === 'string' ? JSON.parse(p.attributes) : p.attributes
+        })));
+      }
+
+    } catch (e) {
+      console.warn('Backend init failed:', e);
+    }
+  };
+
   useEffect(() => {
-    // Initialize Data - Fetch from DB
+    // Check LocalStorage for User Session
+    const savedUser = localStorage.getItem('finume_user');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+      } catch (e) {
+        console.error('Failed to restore session');
+      }
+    }
+    setIsRestoringSession(false); // Enable rendering
+
+    // Initialize Data
     initBackend();
-  }, []); // useEffect dependency array empty -> runs once
+  }, []);
 
   // Reactive Data Fetching: Ensure we fetch user data when user state initializes/changes
   useEffect(() => {
