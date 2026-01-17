@@ -74,8 +74,12 @@ export const ServicesPage = () => {
                 batches: []
             };
 
-            await addRequest(newReq);
-            navigate(`/client/request-received/${newReq.id}`);
+            const createdRequest = await addRequest(newReq);
+            if (createdRequest) {
+                navigate(`/client/request-received/${createdRequest.id}`);
+            } else {
+                console.error("Failed to create request");
+            }
         } else {
             navigate(`/login?redirect=${encodeURIComponent('/client/services')}`);
         }

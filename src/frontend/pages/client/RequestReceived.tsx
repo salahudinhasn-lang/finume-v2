@@ -147,21 +147,12 @@ const RequestReceived = () => {
 
 
 
-                        {/* First Name */}
+                        {/* Customer Name */}
                         <div>
-                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">First Name</p>
+                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Customer Name</p>
                             <div className="flex items-center gap-3">
                                 <div className="text-gray-400">👤</div>
-                                <span className="font-bold text-gray-900 text-lg">{user?.name?.split(' ')[0] || 'Client'}</span>
-                            </div>
-                        </div>
-
-                        {/* Last Name */}
-                        <div>
-                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Last Name</p>
-                            <div className="flex items-center gap-3">
-                                <div className="text-gray-400">👤</div>
-                                <span className="font-bold text-gray-900 text-lg">{user?.name?.split(' ').slice(1).join(' ') || ''}</span>
+                                <span className="font-bold text-gray-900 text-lg">{user?.name || 'Client'}</span>
                             </div>
                         </div>
 
