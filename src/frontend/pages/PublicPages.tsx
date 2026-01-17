@@ -195,7 +195,7 @@ export const PricingPage = () => {
 
             const newReq: any = {
                 id: `SUB-${Date.now()}`,
-                serviceId: plan.id,
+                pricingPlanId: plan.id,
                 serviceName: `${plan.name} (${billing})`,
                 clientId: user.id,
                 clientName: user.name,

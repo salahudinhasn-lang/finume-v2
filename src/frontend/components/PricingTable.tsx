@@ -172,7 +172,7 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
 
                                                     const newReq: any = {
                                                         id: `SUB-${Date.now()}`,
-                                                        serviceId: plan.id,
+                                                        pricingPlanId: plan.id,
                                                         serviceName: `${plan.name} (${billingCycle.toUpperCase()})`,
                                                         clientId: user.id,
                                                         clientName: user.name,
