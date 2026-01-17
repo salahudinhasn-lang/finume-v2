@@ -174,7 +174,7 @@ const RequestReceived = () => {
                             <div className="flex items-center gap-3">
                                 <div className="text-gray-400">📞</div>
                                 <span className="font-bold text-gray-900 text-lg tracking-widest">
-                                    {user?.phone || user?.email || 'N/A'}
+                                    {user?.mobileNumber || user?.email || 'N/A'}
                                 </span>
                             </div>
                         </div>
