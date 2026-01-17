@@ -60,6 +60,7 @@ interface AppContextType {
   updateSitePages: (pages: SitePage[]) => Promise<void>;
   isRestoringSession: boolean;
   refreshData: () => Promise<void>;
+  fetchRequests: (clientIdFiltered?: string) => Promise<void>;
 }
 
 // Define API Base URL
