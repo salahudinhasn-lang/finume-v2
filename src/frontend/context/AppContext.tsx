@@ -439,7 +439,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           serviceName: d.pricingPlan ? d.pricingPlan.name : (d.service ? (language === 'en' ? d.service.nameEn : d.service.nameAr) : d.serviceName),
 
           // Map Relations to flat fields used by UI
-          clientName: d.client ? d.client.name : 'Unknown Client',
+          clientName: d.client ? (d.client.companyName || d.client.user?.name || d.client.name) : 'Unknown Client',
           expertName: d.assignedExpert ? d.assignedExpert.name : (d.expertName || ''),
 
           // Format Date (DB is ISO DateTime, UI expects YYYY-MM-DD or similar string)

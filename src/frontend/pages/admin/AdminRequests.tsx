@@ -182,7 +182,7 @@ const AdminRequests = () => {
                                     const progress = Math.min(100, Math.max(5, (getStepIndex(req.status) + 1) * 20));
                                     return (
                                         <tr key={req.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 font-mono text-gray-500 text-xs">{req.id}</td>
+                                            <td className="px-6 py-4 font-mono text-gray-500 text-xs">{req.displayId || req.id}</td>
                                             <td className="px-6 py-4 font-medium text-gray-900">{req.serviceName}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
@@ -323,7 +323,7 @@ const AdminRequests = () => {
                             <div>
                                 <h3 className="font-bold text-lg">Manage Request</h3>
                                 <p className="text-gray-400 text-sm font-mono flex items-center gap-2">
-                                    {editingRequest.id}
+                                    {editingRequest.displayId || editingRequest.id}
                                     <span className="w-1 h-1 bg-gray-500 rounded-full"></span>
                                     {editingRequest.serviceName}
                                 </p>

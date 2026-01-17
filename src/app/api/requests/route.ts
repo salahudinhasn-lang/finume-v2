@@ -154,7 +154,11 @@ export async function GET(req: Request) {
                 transactions: true,
                 service: true,
                 pricingPlan: true,
-                client: true,
+                client: {
+                    include: {
+                        user: true
+                    }
+                },
                 assignedExpert: true
             },
             orderBy: { createdAt: 'desc' }
