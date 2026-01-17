@@ -1103,7 +1103,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         await updateSettings({ sitePages: JSON.stringify(pages) });
       },
       isRestoringSession,
-      refreshData: initBackend
+      refreshData: initBackend,
+      fetchRequests
     }}>
       {children}
     </AppContext.Provider>
