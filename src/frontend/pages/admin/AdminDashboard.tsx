@@ -14,6 +14,24 @@ import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
     const { clients, experts, requests, payoutRequests, updateExpertStatus, t } = useAppContext();
+    const [stats, setStats] = React.useState<{
+        totalExperts: number;
+        activeExperts: number;
+        totalClients: number;
+    } | null>(null);
+
+    React.useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await fetch('/api/admin/stats');
+                if (res.ok) {
+                    setStats(await res.json());
+                }
+            } catch (e) { console.error("Failed to fetch admin stats", e) }
+        };
+        fetchStats();
+    }, []);
+
     const navigate = useNavigate();
 
     // --- 1. Dynamic Financial Metrics ---
@@ -41,10 +59,11 @@ const AdminDashboard = () => {
         ? (currentPeriodRevenue > 0 ? 100 : 0)
         : ((currentPeriodRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100;
 
-    // --- 2. User Stats ---
-    const activeExperts = experts.filter(e => e.status === 'ACTIVE' || e.kycStatus === 'APPROVED');
+    // --- 2. User Stats (Prefer DB Stats if available, else Context Fallback) ---
+    const activeExpertsCount = stats?.activeExperts ?? experts.filter(e => e.status === 'ACTIVE' || e.kycStatus === 'APPROVED').length;
+    const totalExpertsCount = stats?.totalExperts ?? experts.length;
     const pendingExperts = experts.filter(e => e.status === 'VETTING');
-    const totalClients = clients.length;
+    const totalClients = stats?.totalClients ?? clients.length;
 
     // --- 3. Request & Payout Stats ---
     const pendingRequests = requests.filter(r => r.status === 'NEW');
@@ -206,15 +225,15 @@ const AdminDashboard = () => {
                             <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
                                 <Briefcase size={24} />
                             </div>
-                            <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-700">{t('admin.total')}: {experts.length}</span>
+                            <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-700">{t('admin.total')}: {totalExpertsCount}</span>
                         </div>
                         <p className="text-gray-500 text-sm font-medium">{t('admin.expertsNetwork')}</p>
                         <div className="flex items-baseline gap-2 mt-1">
-                            <h3 className="text-3xl font-extrabold text-gray-900">{activeExperts.length}</h3>
+                            <h3 className="text-3xl font-extrabold text-gray-900">{activeExpertsCount}</h3>
                             <span className="text-sm text-gray-400">{t('admin.active')}</span>
                         </div>
                         <div className="mt-3 w-full bg-gray-100 rounded-full h-1.5">
-                            <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${(activeExperts.length / experts.length) * 100}%` }}></div>
+                            <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${totalExpertsCount > 0 ? (activeExpertsCount / totalExpertsCount) * 100 : 0}%` }}></div>
                         </div>
                     </div>
                 </div>
