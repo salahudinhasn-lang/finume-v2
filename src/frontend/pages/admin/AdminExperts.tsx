@@ -142,14 +142,7 @@ const AdminExperts = () => {
                 onClick={() => setFilter('ALL')}
                 color="blue"
               />
-              <FunnelStep
-                label="Profile Ready"
-                count={profileCompleted}
-                icon={UserCheck}
-                isActive={false}
-                onClick={() => { }}
-                color="indigo"
-              />
+
               <FunnelStep
                 label="In Vetting"
                 count={inVetting}
@@ -199,7 +192,7 @@ const AdminExperts = () => {
               <table className="w-full text-sm text-left">
                 <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 font-semibold uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-4">Expert Profile</th>
+                    <th className="px-6 py-4">Expert</th>
                     <th className="px-6 py-4">Specialization</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-right">Actions</th>
