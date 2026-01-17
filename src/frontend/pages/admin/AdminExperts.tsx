@@ -8,8 +8,8 @@ import { Expert } from '../../types';
 
 const AdminExperts = () => {
   const { experts, updateExpertStatus, updateExpert, settings, updateSettings } = useAppContext();
-  console.log('Experts in AdminExperts:', experts);
-  const [filter, setFilter] = useState('ALL');
+  // console.log('Experts in AdminExperts:', experts); // Removed debug log
+  const [filter, setFilter] = useState('VETTING'); // Default to VETTING view
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'EXPERTS' | 'SKILLS'>('EXPERTS');
   const [newSkill, setNewSkill] = useState('');
@@ -52,12 +52,13 @@ const AdminExperts = () => {
   const safeExperts = experts || [];
   const totalRegistered = safeExperts.length;
   const profileCompleted = safeExperts.length;
-  const inVetting = safeExperts.filter(e => e.status === 'VETTING').length;
-  const activeExperts = safeExperts.filter(e => e.status === 'ACTIVE').length;
+  const inVetting = safeExperts.filter(e => (e.status || '').toUpperCase() === 'VETTING').length;
+  const activeExperts = safeExperts.filter(e => (e.status || '').toUpperCase() === 'ACTIVE').length;
 
   // Filter Logic
   const filteredExperts = safeExperts.filter(e => {
-    if (filter !== 'ALL' && e.status !== filter) return false;
+    const status = (e.status || '').toUpperCase();
+    if (filter !== 'ALL' && status !== filter) return false;
     const s = search.toLowerCase();
     const matchesSearch =
       (e.name || '').toLowerCase().includes(s) ||
