@@ -169,15 +169,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
 
         // Fetch Requests
-        // Use the ID from local storage parsing if available, as 'user' state update is async
+        // Use the ID from local storage parsing if available
         let currentUserId = user?.id;
-        if (!currentUserId && savedUser) {
+
+        if (user?.role === 'CLIENT' && !currentUserId && savedUser) {
           try {
             const p = JSON.parse(savedUser);
-            currentUserId = p.id;
+            if (p.role === 'CLIENT') currentUserId = p.id;
           } catch (e) { }
         }
-        await fetchRequests(currentUserId);
+
+        // Only filter by ID if the user is a CLIENT. Admins/Experts should see all (or their own specific view).
+        // Experts might need their own filter later (assignments), but for now fetch all and filter in UI or backend.
+        if (user?.role === 'CLIENT' || (savedUser && JSON.parse(savedUser).role === 'CLIENT')) {
+          await fetchRequests(currentUserId);
+        } else {
+          await fetchRequests(); // Fetch all for Admin/Expert
+        }
 
         // Fetch Pool
         await fetchPool();
@@ -211,9 +219,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Reactive Data Fetching: Ensure we fetch user data when user state initializes/changes
   useEffect(() => {
     if (user?.id) {
-      // Re-fetch requests specifically for this user to ensure we have their data
-      // This fixes race conditions where initBackend runs before user is restored
-      fetchRequests(user.id);
+      // Re-fetch requests. 
+      // If CLIENT: filter by their ID.
+      // If ADMIN/EXPERT: fetch all (no filter arg).
+      if (user.role === 'CLIENT') {
+        fetchRequests(user.id);
+      } else {
+        fetchRequests();
+      }
     }
   }, [user?.id]);
 

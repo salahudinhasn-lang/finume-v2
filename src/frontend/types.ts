@@ -42,6 +42,7 @@ export interface Expert extends User {
   role: 'EXPERT';
   specializations: string[];
   status: 'ACTIVE' | 'VETTING' | 'SUSPENDED';
+  kycStatus?: string;
   totalEarned: number;
   rating: number;
   totalReviews?: number;

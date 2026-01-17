@@ -42,7 +42,7 @@ const AdminDashboard = () => {
         : ((currentPeriodRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100;
 
     // --- 2. User Stats ---
-    const activeExperts = experts.filter(e => e.status === 'ACTIVE');
+    const activeExperts = experts.filter(e => e.status === 'ACTIVE' || e.kycStatus === 'APPROVED');
     const pendingExperts = experts.filter(e => e.status === 'VETTING');
     const totalClients = clients.length;
 
