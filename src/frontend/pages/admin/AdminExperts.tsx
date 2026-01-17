@@ -8,6 +8,7 @@ import { Expert } from '../../types';
 
 const AdminExperts = () => {
   const { experts, updateExpertStatus, updateExpert, settings, updateSettings } = useAppContext();
+  console.log('Experts in AdminExperts:', experts);
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'EXPERTS' | 'SKILLS'>('EXPERTS');
