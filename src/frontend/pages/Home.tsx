@@ -18,6 +18,10 @@ const HomePage = () => {
       setTimeout(() => {
         pricingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 500);
+    } else if (state?.scrollTo === 'calculator') {
+      setTimeout(() => {
+        document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 500);
     }
   }, [state]);
 
