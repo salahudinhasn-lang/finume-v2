@@ -185,9 +185,15 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
                                                         batches: []
                                                     };
 
-                                                    await addRequest(newReq);
+                                                    const createdRequest = await addRequest(newReq);
                                                     setSubmittingId(null);
-                                                    navigate(`/client/request-received/${newReq.id}`);
+
+                                                    if (createdRequest) {
+                                                        navigate(`/client/request-received/${createdRequest.id}`);
+                                                    } else {
+                                                        // Error handling is done in addRequest, but we shouldn't navigate
+                                                        console.error("Failed to create request, navigation aborted.");
+                                                    }
                                                 } else {
                                                     navigate(`/login?redirect=${encodeURIComponent('/pricing')}`);
                                                 }
