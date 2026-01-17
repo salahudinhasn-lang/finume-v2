@@ -7,7 +7,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Expert } from '../../types';
 
 const ExpertDashboard = () => {
-    const { user, requests, assignRequest, updateRequestStatus, t } = useAppContext();
+    const { user, requests, acceptRequest, updateRequestStatus, t } = useAppContext();
     const navigate = useNavigate();
     const [isOnline, setIsOnline] = useState(true);
 
@@ -38,14 +38,18 @@ const ExpertDashboard = () => {
         { name: 'In Progress', value: activeTasks.length, color: '#3b82f6' },
     ];
 
-    const handleAcceptJob = (requestId: string) => {
+    const handleAcceptJob = async (requestId: string) => {
         if (isVetting) {
             alert("Account Restricted: You must be approved by an Admin before accepting new requests.");
             return;
         }
         if (user) {
-            assignRequest(requestId, user.id);
-            alert("Job Accepted! Head to 'My Tasks' to start working.");
+            const success = await acceptRequest(requestId, user.id);
+            if (success) {
+                // alert("Job Accepted! Head to 'My Tasks' to start working."); // Optional: remove alert for smoother UX or use toast
+            } else {
+                alert("Failed to accept job. It might have been taken by another expert.");
+            }
         }
     };
 

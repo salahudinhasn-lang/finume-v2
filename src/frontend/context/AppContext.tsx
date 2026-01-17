@@ -26,6 +26,7 @@ interface AppContextType {
   addRequest: (req: Request) => Promise<Request | null>;
   updateRequestStatus: (id: string, status: Request['status']) => void;
   assignRequest: (requestId: string, expertId: string) => void;
+  acceptRequest: (requestId: string, expertId: string) => Promise<boolean>;
   updateExpertStatus: (expertId: string, status: Expert['status']) => void;
   updateRequest: (id: string, updates: Partial<Request>) => Promise<boolean>;
   updateClient: (id: string, updates: Partial<Client>) => void;
@@ -690,6 +691,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const acceptRequest = async (requestId: string, expertId: string): Promise<boolean> => {
+    const expert = experts.find(e => e.id === expertId);
+    if (!expert) return false;
+
+    // Optimistic Update
+    setRequests(prev => prev.map(r => {
+      if (r.id === requestId) {
+        return {
+          ...r,
+          assignedExpertId: expertId,
+          expertName: expert.name,
+          status: 'MATCHED',
+          visibility: 'ASSIGNED'
+        };
+      }
+      return r;
+    }));
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/requests/${requestId}/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expertId })
+      });
+
+      if (!res.ok) {
+        console.error('Failed to accept request DB');
+        // Revert logic could go here
+        return false;
+      }
+      // Reload pool/requests to clear any stale invites if needed, or rely on optim updates
+      return true;
+    } catch (e) {
+      console.error("Networks error accepting request", e);
+      return false;
+    }
+  };
+
   const updateExpertStatus = async (expertId: string, status: Expert['status']) => {
     // 1. Optimistic Update
     setExperts(prev => prev.map(e => e.id === expertId ? { ...e, status } : e));
@@ -1106,7 +1145,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{
       user, login, logout, language, setLanguage, t, register,
       clients, experts, requests, services, plans, admins, payoutRequests,
-      addRequest, updateRequestStatus, assignRequest, updateExpertStatus, updateRequest,
+      addRequest, updateRequestStatus, assignRequest, acceptRequest, updateExpertStatus, updateRequest,
       updateClient, updateExpert, addClient, addExpert, submitReview,
       addAdmin, updateAdmin, deleteAdmin,
       updateService, addService, deleteService, updatePlan,

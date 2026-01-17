@@ -147,6 +147,8 @@ export async function GET(req: Request) {
             where.clientId = clientId;
         }
 
+        // Placeholder to allow tool to run. I will not actually replace content here until I verify Schema strategy.
+        // I will actually just include `poolInvites` in GET for now as that IS in schema.
         const requests = await prisma.request.findMany({
             where,
             include: {
@@ -159,7 +161,8 @@ export async function GET(req: Request) {
                         user: true
                     }
                 },
-                assignedExpert: true
+                assignedExpert: true,
+                poolInvites: true // Include pool invites so frontend can see them
             },
             orderBy: { createdAt: 'desc' }
         });

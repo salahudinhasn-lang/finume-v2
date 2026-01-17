@@ -422,7 +422,7 @@ const AdminRequests = () => {
                                             onClick={() => {
                                                 handleChange('visibility', 'OPEN');
                                                 handleChange('assignedExpertId', null); // Clear assignment if opening
-                                                if (formData.status === 'NEW') handleChange('status', 'MATCHED');
+                                                // if (formData.status === 'NEW') handleChange('status', 'MATCHED'); // Removed: Status should remain NEW
                                             }}
                                             className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${formData.visibility === 'OPEN' ? 'bg-purple-100 text-purple-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                         >

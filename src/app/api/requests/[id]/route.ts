@@ -21,6 +21,51 @@ export async function PATCH(
         if (visibility !== undefined) dataToUpdate.visibility = visibility;
         if (requiredSkills !== undefined) dataToUpdate.requiredSkills = typeof requiredSkills === 'object' ? JSON.stringify(requiredSkills) : requiredSkills;
 
+        // --- Logic for "OPEN POOL" ---
+        if (visibility === 'OPEN') {
+            // 1. Ensure status allows opening (e.g. NEW)
+            // Note: Frontend might send status 'MATCHED' by mistake, ensure we control logic if needed. 
+            // The User requested: "Request status will remain the same as "New" until expert accept it"
+
+            // 2. Clear assigned expert if opening pool
+            dataToUpdate.assignedExpertId = null;
+
+            // 3. Find relevant experts (Active & Approved)
+            // For now, we invite ALL active experts. In future, filter by skills.
+            const activeExperts = await prisma.expert.findMany({
+                where: {
+                    status: 'ACTIVE',
+                    // kycStatus: 'APPROVED' // Uncomment if strict KYC needed
+                },
+                select: { id: true }
+            });
+
+            if (activeExperts.length > 0) {
+                // Upsert pool invites: Create if not exists
+                // We use a transaction or just loop for safety
+                for (const expert of activeExperts) {
+                    await prisma.providerPool.upsert({
+                        where: {
+                            requestId_expertId: {
+                                requestId: id,
+                                expertId: expert.id
+                            }
+                        },
+                        update: { status: 'INVITED' },
+                        create: {
+                            requestId: id,
+                            expertId: expert.id,
+                            status: 'INVITED'
+                        }
+                    });
+                }
+            }
+        }
+        else if (visibility === 'ASSIGNED' && assignedExpertId) {
+            // If switching back to assigned, we might want to clear pool invites or mark them invalid?
+            // For now, just setting assignedExpertId is enough, frontend logic handles the rest.
+        }
+
         const updatedRequest = await prisma.request.update({
             where: { id },
             data: dataToUpdate

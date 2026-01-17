@@ -238,6 +238,9 @@ model Request {
   batches          FileBatch[]
   amount           Decimal       @default(0)
   
+  visibility       String        @default("ADMIN") // ADMIN, ASSIGNED, OPEN
+  requiredSkills   String[]
+  
   messages         RequestMessage[]
   poolInvites      ProviderPool[]
   invoices         Invoice[]
