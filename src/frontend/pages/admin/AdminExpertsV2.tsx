@@ -113,7 +113,7 @@ export default function AdminExpertsV2() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${expert.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
-                                                expert.status === 'VETTING' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
+                                            expert.status === 'VETTING' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
                                             }`}>
                                             {expert.status || 'UNKNOWN'}
                                         </span>
@@ -137,6 +137,14 @@ export default function AdminExpertsV2() {
                     </table>
                 </div>
             </Card>
+
+            {/* DEBUG SECTION */}
+            <div className="mt-8 p-4 bg-gray-100 rounded-lg border border-gray-300">
+                <h3 className="text-sm font-bold text-gray-700 mb-2">Debug Data (Share if empty)</h3>
+                <pre className="text-xs text-slate-600 overflow-x-auto p-2 bg-slate-50 rounded">
+                    {JSON.stringify(experts, null, 2)}
+                </pre>
+            </div>
         </div>
     );
 }
