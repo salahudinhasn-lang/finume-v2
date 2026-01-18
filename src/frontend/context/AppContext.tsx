@@ -282,39 +282,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const res = await fetch(url, { cache: 'no-store' });
       if (res.ok) {
-        const data = await res.json();
+        const ct = res.headers.get('content-type');
+        if (ct && ct.includes('json')) {
+          const data = await res.json();
 
-        // Parse and map service names
-        const parsedData = data.map((d: any) => ({
-          ...d,
-          batches: d.batches?.map((b: any) => ({
-            ...b,
-            files: b.files || []
-          })) || [],
-          // Prioritize Pricing Plan Name if available, then Service Name
-          serviceName: d.pricingPlan ? d.pricingPlan.name : (d.service ? (language === 'en' ? d.service.nameEn : d.service.nameAr) : d.serviceName),
+          // Parse and map service names
+          const parsedData = data.map((d: any) => ({
+            ...d,
+            batches: d.batches?.map((b: any) => ({
+              ...b,
+              files: b.files || []
+            })) || [],
+            // Prioritize Pricing Plan Name if available, then Service Name
+            serviceName: d.pricingPlan ? d.pricingPlan.name : (d.service ? (language === 'en' ? d.service.nameEn : d.service.nameAr) : d.serviceName),
 
-          // Map Relations to flat fields used by UI
-          clientName: d.client ? (d.client.companyName || d.client.user?.name || d.client.name) : 'Unknown Client',
-          expertName: d.assignedExpert ? d.assignedExpert.name : (d.expertName || ''),
+            // Map Relations to flat fields used by UI
+            clientName: d.client ? (d.client.companyName || d.client.user?.name || d.client.name) : 'Unknown Client',
+            expertName: d.assignedExpert ? d.assignedExpert.name : (d.expertName || ''),
 
-          // Format Date (DB is ISO DateTime, UI expects YYYY-MM-DD or similar string)
-          dateCreated: d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-CA') : (d.dateCreated || new Date().toISOString().split('T')[0]),
+            // Format Date (DB is ISO DateTime, UI expects YYYY-MM-DD or similar string)
+            dateCreated: d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-CA') : (d.dateCreated || new Date().toISOString().split('T')[0]),
 
-          // Parse requiredSkills JSON string to array if needed
-          requiredSkills: typeof d.requiredSkills === 'string' ? JSON.parse(d.requiredSkills) : (d.requiredSkills || [])
-        }));
+            // Parse requiredSkills JSON string to array if needed
+            requiredSkills: typeof d.requiredSkills === 'string' ? JSON.parse(d.requiredSkills) : (d.requiredSkills || [])
+          }));
 
-        setRequests(prev => {
-          // Always MERGE with existing to avoid wiping optimistic updates
-          // But if this is a "Filtered" fetch, we might want to ensure we don't show irrelevant ones?
-          // Actually, keep safe merge logic.
-          const newIds = new Set(parsedData.map((d: any) => d.id));
-          const filteredPrev = prev.filter(p => !newIds.has(p.id) && (p.id.startsWith('SUB-') || p.id.startsWith('REQ-') || p.id.startsWith('NEW-')));
-          return [...parsedData, ...filteredPrev];
-        });
+          setRequests(prev => {
+            // Always MERGE with existing to avoid wiping optimistic updates
+            // But if this is a "Filtered" fetch, we might want to ensure we don't show irrelevant ones?
+            // Actually, keep safe merge logic.
+            const newIds = new Set(parsedData.map((d: any) => d.id));
+            const filteredPrev = prev.filter(p => !newIds.has(p.id) && (p.id.startsWith('SUB-') || p.id.startsWith('REQ-') || p.id.startsWith('NEW-')));
+            return [...parsedData, ...filteredPrev];
+          });
 
-        console.log('Fetched requests from DB:', parsedData.length);
+          console.log('Fetched requests from DB:', parsedData.length);
+        }
       }
     } catch (e) {
       console.error('Failed to fetch requests', e);
@@ -326,25 +329,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_BASE_URL}/api/pool`);
       if (res.ok) {
-        const data = await res.json();
-        // Parse and map service names (Same logic as fetchRequests - reusable?)
-        const parsedData = data.map((d: any) => ({
-          ...d,
-          batches: d.batches?.map((b: any) => ({ ...b, files: b.files || [] })) || [],
-          serviceName: d.pricingPlan ? d.pricingPlan.name : (d.service ? (language === 'en' ? d.service.nameEn : d.service.nameAr) : d.serviceName),
-          clientName: d.client ? d.client.name : 'Unknown Client',
-          expertName: d.assignedExpert ? d.assignedExpert.name : (d.expertName || ''),
-          dateCreated: d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-CA') : (d.dateCreated || new Date().toISOString().split('T')[0]),
-          requiredSkills: typeof d.requiredSkills === 'string' ? JSON.parse(d.requiredSkills) : (d.requiredSkills || [])
-        }));
+        const ct = res.headers.get('content-type');
+        if (ct && ct.includes('json')) {
+          const data = await res.json();
+          // Parse and map service names (Same logic as fetchRequests - reusable?)
+          const parsedData = data.map((d: any) => ({
+            ...d,
+            batches: d.batches?.map((b: any) => ({ ...b, files: b.files || [] })) || [],
+            serviceName: d.pricingPlan ? d.pricingPlan.name : (d.service ? (language === 'en' ? d.service.nameEn : d.service.nameAr) : d.serviceName),
+            clientName: d.client ? (d.client.companyName || d.client.user?.name || d.client.name) : 'Unknown Client',
+            expertName: d.assignedExpert ? d.assignedExpert.name : (d.expertName || ''),
+            dateCreated: d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-CA') : (d.dateCreated || new Date().toISOString().split('T')[0]),
+            requiredSkills: typeof d.requiredSkills === 'string' ? JSON.parse(d.requiredSkills) : (d.requiredSkills || [])
+          }));
 
-        setRequests(prev => {
-          // Merge pool into requests, avoiding duplicates
-          const newIds = new Set(parsedData.map((d: any) => d.id));
-          const filteredPrev = prev.filter(p => !newIds.has(p.id));
-          return [...filteredPrev, ...parsedData];
-        });
-        console.log('Fetched pool:', parsedData);
+          setRequests(prev => {
+            // Merge pool into requests, avoiding duplicates
+            const newIds = new Set(parsedData.map((d: any) => d.id));
+            const filteredPrev = prev.filter(p => !newIds.has(p.id));
+            return [...filteredPrev, ...parsedData];
+          });
+          console.log('Fetched pool:', parsedData);
+        }
       }
     } catch (e) {
       console.error('Failed to fetch pool', e);
@@ -357,7 +363,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Fetch Settings
       const settingsRes = await fetch(`${API_BASE_URL}/api/settings`);
       if (settingsRes.ok) {
-        setSettings(await settingsRes.json());
+        const ct = settingsRes.headers.get('content-type');
+        if (ct && ct.includes('json')) {
+          setSettings(await settingsRes.json());
+        }
       }
 
       // Fetch Users (including permissions) with Retry
@@ -453,8 +462,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Handle API Failure response (500)
         let errorMsg = 'Unknown API Error';
         try {
-          const errData = await usersRes?.json();
-          errorMsg = errData.error || errData.details || usersRes?.statusText || 'Unknown';
+          // Attempt to parse JSON error, fall back to text if HTML/Network error page
+          const ct = usersRes?.headers?.get('content-type');
+          if (ct && ct.includes('application/json')) {
+            const errData = await usersRes?.json();
+            errorMsg = errData.error || errData.details || usersRes?.statusText || 'Unknown';
+          } else {
+            const text = await usersRes?.text();
+            console.error("Critical: Received HTML/Text instead of JSON from API:", text?.substring(0, 500));
+            errorMsg = `Server Error (${usersRes?.status}): Received non-JSON response. Check console.`;
+          }
         } catch (e) {
           errorMsg = usersRes?.statusText || 'Unknown';
         }
@@ -484,20 +501,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Fetch Services
     try {
       const servicesRes = await fetch(`${API_BASE_URL}/api/services`);
-      if (servicesRes.ok) setServices(await servicesRes.json());
+      if (servicesRes.ok) {
+        const ct = servicesRes.headers.get('content-type');
+        if (ct && ct.includes('json')) {
+          setServices(await servicesRes.json());
+        }
+      }
     } catch (e) { }
 
     // Fetch Plans
     try {
       const plansRes = await fetch(`${API_BASE_URL}/api/plans`);
       if (plansRes.ok) {
-        const plansData = await plansRes.json();
-        const parsedPlans = plansData.map((p: any) => ({
-          ...p,
-          features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
-          attributes: typeof p.attributes === 'string' ? JSON.parse(p.attributes) : p.attributes
-        }));
-        setPlans(parsedPlans);
+        const ct = plansRes.headers.get('content-type');
+        if (ct && ct.includes('json')) {
+          const plansData = await plansRes.json();
+          const parsedPlans = plansData.map((p: any) => ({
+            ...p,
+            features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
+            attributes: typeof p.attributes === 'string' ? JSON.parse(p.attributes) : p.attributes
+          }));
+          setPlans(parsedPlans);
+        }
       }
     } catch (e) { }
 
