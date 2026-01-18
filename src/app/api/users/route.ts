@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 
+
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
     try {
         const users = await prisma.user.findMany({
@@ -24,7 +27,17 @@ export async function GET(request: Request) {
             } else if (user.role === 'EXPERT' && expertProfile) {
                 // Prioritize Expert.name if exists, else User.name
                 const mergedName = expertProfile.name || baseUser.name;
-                experts.push({ ...baseUser, ...expertProfile, name: mergedName, role: 'EXPERT' });
+
+                // Convert Decimals to Numbers/Strings for JSON safety
+                const safeExpert = {
+                    ...expertProfile,
+                    hourlyRate: expertProfile.hourlyRate ? Number(expertProfile.hourlyRate) : 0,
+                    rating: expertProfile.rating ? Number(expertProfile.rating) : 0,
+                    totalEarned: expertProfile.totalEarned ? Number(expertProfile.totalEarned) : 0,
+                    totalReviews: expertProfile.totalReviews || 0 // Int but safe
+                };
+
+                experts.push({ ...baseUser, ...safeExpert, name: mergedName, role: 'EXPERT' });
             } else if (user.role === 'ADMIN' && adminProfile) {
                 admins.push({ ...baseUser, ...adminProfile, role: 'ADMIN' });
             }
