@@ -167,16 +167,6 @@ export default function AdminExpertsV2() {
                 </div>
             </Card>
 
-            {/* DEBUG SECTION */}
-            <div className="mt-8 p-4 bg-gray-100 rounded-lg border border-gray-300">
-                <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-sm font-bold text-gray-700">Debug Data (Share if empty)</h3>
-                    <Button size="sm" onClick={() => window.location.reload()}>Force Refresh Page</Button>
-                </div>
-                <pre className="text-xs text-slate-600 overflow-x-auto p-2 bg-slate-50 rounded">
-                    {JSON.stringify(experts, null, 2)}
-                </pre>
-            </div>
         </div>
     );
 }
