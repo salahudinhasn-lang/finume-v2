@@ -6,7 +6,7 @@ import { Users, ShieldCheck, Briefcase, AlertCircle } from 'lucide-react';
 import { Expert } from '../../types';
 
 export default function AdminExpertsV2() {
-    const { experts, refreshData, updateExpertStatus, apiError } = useAppContext();
+    const { experts, refreshData, updateExpertStatus, apiError, isLoading } = useAppContext();
     const [filter, setFilter] = useState('ALL');
 
     // Stats
@@ -97,7 +97,17 @@ export default function AdminExpertsV2() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {filteredExperts.length === 0 && (
+                            {isLoading && (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
+                                        <div className="flex justify-center items-center py-8">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                                        </div>
+                                        <p>Loading experts...</p>
+                                    </td>
+                                </tr>
+                            )}
+                            {!isLoading && filteredExperts.length === 0 && (
                                 <tr>
                                     <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
                                         No experts found.

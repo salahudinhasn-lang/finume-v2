@@ -14,6 +14,7 @@ interface AppContextType {
   t: (key: string) => string;
   apiError: string | null;
   setApiError?: (error: string | null) => void;
+  isLoading: boolean;
 
 
   // Data Access
@@ -72,6 +73,23 @@ const API_BASE_URL = ''; // Unified App: Always use relative path
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, backoff = 500): Promise<Response> {
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok && retries > 0 && res.status >= 500) {
+      throw new Error(`Server Error ${res.status}`);
+    }
+    return res;
+  } catch (error) {
+    if (retries > 0) {
+      console.warn(`Fetch failed, retrying (${retries} left)...`, error);
+      await new Promise(r => setTimeout(r, backoff));
+      return fetchWithRetry(url, options, retries - 1, backoff * 2);
+    }
+    throw error;
+  }
+}
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isRestoringSession, setIsRestoringSession] = useState(true);
@@ -79,6 +97,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // "Database" in state
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [clients, setClients] = useState<Client[]>([]);
   const [experts, setExperts] = useState<Expert[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
@@ -121,106 +140,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     setIsRestoringSession(false);
 
-    const initBackend = async () => {
-      try {
-        // Fetch Settings
-        const settingsRes = await fetch(`${API_BASE_URL}/api/settings`);
-        if (settingsRes.ok) {
-          const settingsData = await settingsRes.json();
-          setSettings(settingsData);
-        }
-
-        // Fetch Users (including permissions)
-        const usersRes = await fetch(`${API_BASE_URL}/api/users`);
-        if (usersRes.ok) {
-          const usersData = await usersRes.json();
-
-          // Sanitize Experts
-          if (usersData.experts?.length > 0) {
-            const sanitizedExperts: Expert[] = usersData.experts.map((e: any) => ({
-              ...e,
-              // Ensure fields exist
-              specializations: Array.isArray(e.specializations) ? e.specializations : [],
-              rating: Number(e.rating) || 0,
-              totalReviews: Number(e.totalReviews) || 0,
-              role: 'EXPERT',
-              name: e.name || 'Unknown Expert',
-              avatarUrl: e.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.id}`
-            }));
-            setExperts(sanitizedExperts);
-          }
-
-          // Sanitize Clients
-          if (usersData.clients?.length > 0) {
-            const sanitizedClients: Client[] = usersData.clients.map((c: any) => ({
-              ...c,
-              role: 'CLIENT',
-              name: c.name || 'Unknown Client',
-              companyName: c.companyName || c.name || 'Unknown Company',
-              industry: c.industry || 'General',
-              avatarUrl: c.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${c.id}`
-            }));
-            setClients(sanitizedClients);
-          }
-
-          if (usersData.admins?.length > 0) setAdmins(usersData.admins);
-
-          // Hydrate client permissions map
-          const permsMap: Record<string, ClientFeaturePermissions> = {};
-          (usersData.clients as Client[] || []).forEach((c: any) => {
-            if (c.permissions) {
-              permsMap[c.id] = c.permissions;
-            }
-          });
-          setClientPermissions(permsMap);
-        }
-
-        // Fetch Requests
-        // Use the ID from local storage parsing if available
-        let currentUserId = user?.id;
-
-        if (user?.role === 'CLIENT' && !currentUserId && savedUser) {
-          try {
-            const p = JSON.parse(savedUser);
-            if (p.role === 'CLIENT') currentUserId = p.id;
-          } catch (e) { }
-        }
-
-        // Only filter by ID if the user is a CLIENT. Admins/Experts should see all (or their own specific view).
-        // Experts might need their own filter later (assignments), but for now fetch all and filter in UI or backend.
-        if (user?.role === 'CLIENT' || (savedUser && JSON.parse(savedUser).role === 'CLIENT')) {
-          await fetchRequests(currentUserId);
-        } else {
-          await fetchRequests(); // Fetch all for Admin/Expert
-        }
-
-        // Fetch Pool
-        await fetchPool();
-
-        // Fetch Services
-        const servicesRes = await fetch(`${API_BASE_URL}/api/services`);
-        if (servicesRes.ok) {
-          setServices(await servicesRes.json());
-        }
-
-        // Fetch Plans
-        const plansRes = await fetch(`${API_BASE_URL}/api/plans`);
-        if (plansRes.ok) {
-          const plansData = await plansRes.json();
-          // Parse features/attributes if they are strings (from DB)
-          const parsedPlans = plansData.map((p: any) => ({
-            ...p,
-            features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
-            attributes: typeof p.attributes === 'string' ? JSON.parse(p.attributes) : p.attributes
-          }));
-          setPlans(parsedPlans);
-        }
-      } catch (e) {
-        console.warn('Backend not available:', e);
-      }
-    };
-
-    initBackend(); // Call initBackend here
+    initBackend();
   }, []); // useEffect dependency array empty -> runs once
 
   // Reactive Data Fetching: Ensure we fetch user data when user state initializes/changes
@@ -238,78 +158,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [user?.id]);
 
   const refreshData = async () => {
-    // We need to access the logic inside initBackend. 
-    // The previous implementation failed because initBackend was scoped inside useEffect.
-    // The fixed implementation above simply defines it and calls it inside the effect... wait.
-    // ReplaceFileContent REPLACES lines. I need to make sure I am defining it outside.
-
-    // To truly fix this efficiently in one step:
-    // I need to define initBackend as a const function in the component body (before useEffect),
-    // and then call it inside useEffect.
-    // BUT "fetchRequests" and "fetchPool" are defined AFTER this block in the original file (lines 320+).
-    // So initBackend cannot be defined here if it uses fetchRequests.
-
-    // Solution: Move fetchRequests/fetchPool UP, or move initBackend DOWN or define initBackend relying on hoisted functions (which const aren't).
-
-    // Let's look at the file structure again.
-    // Lines 117-215 contained initBackend inside useEffect.
-    // Lines 320+ contain fetchRequests.
-
-    // Javascript/Typescript: "const fetchRequests =" is NOT hoisted. 
-    // If I move initBackend out, I must move it BELOW fetchRequests/fetchPool definitions.
-    // OR create a useEffect that calls a function defined later? No.
-
-    // Best Approach:
-    // 1. Rename the complex logic inside useEffect to a new standalone function `loadAllData`.
-    // 2. Move `loadAllData` to be defined AFTER `fetchRequests` and `fetchPool`.
-    // 3. Call `loadAllData` inside `useEffect`.
-    // 4. Call `loadAllData` inside `refreshData`.
-
-    // This tool call is replacing lines 117-216. I can replace it with just the useEffect calling a placeholder,
-    // and then insert the function definition later.
-    // OR, since I can't do multiple moves easily, I will inline the logic into `refreshData` as well? No, duplication.
-
-    // Actually, `fetchRequests` uses `setRequests` which is available.
-    // I will replace this block with just the useEffect call, and rely on `refreshData` (which I will rename to `initData` perhaps?)
-    // Wait, I can't effectively move the code block down with one replace.
-
-    // Alternative: Move `fetchRequests` and `fetchPool` UP to before this block.
-    // They are lines 320-389.
-
-    // Correct plan:
-    // 1. Delete the `useEffect` block here (lines 117-216). Replaced with `useEffect(() => { refreshData(); }, []);`
-    // 2. Define `refreshData` (which contains the logic) *after* `fetchPool` is defined (around line 390).
-    // 3. In step 2, I also need to make sure `refreshData` is exposed in context.
-
-    // Let's do step 1 (Update the useEffect to call refreshData, and remove the inline definition).
-    // Note: refreshData is defined below at 217. It needs to be updated to have the body.
-    // BUT `fetchRequests` is defined at 320. `refreshData` at 217 cannot call `fetchRequests` (const) unless `fetchRequests` is moved up or `refreshData` moved down.
-
-    // I will move `refreshData` definition to line ~400 (after fetchPool).
-    // And for lines 117-216, I will just call it? No, it's not defined yet.
-
-    // I will use `useCallback` or just define `fetchRequests` and `fetchPool` using `function` keyword (hoisted)? 
-    // They are `const = async ...` currently.
-
-    // Easiest fix for now: Copy the logic into `refreshData` (wait, duplicates).
-    // Better: Just make `fetchRequests` and `fetchPool` defined BEFORE `useEffect`.
-
-    // Let's try to verify if `fetchRequests` is hoisted. `const` is not.
-
-    // I will move the component body organization:
-    // 1. State definitions
-    // 2. Helper functions (fetchRequests, fetchPool)
-    // 3. `refreshData` / `initBackend` logic.
-    // 4. `useEffect` calling `initBackend`.
-
-    // This requires moving large chunks.
-
-    // A simpler way:
-    // Define `fetchRequests` and `fetchPool` using `function` keyword (so they are hoisted).
-    // Then `initBackend` can stay where it is (or move out) and call them.
-    // But they are inside a functional component, so function hoisting applies to the scope of the component.
-
-    // Let's try changing `const fetchRequests` to `async function fetchRequests`.
+    await initBackend();
   };
 
   const login = async (email: string, role?: string, newUser?: User, password?: string) => {
@@ -503,6 +352,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   async function initBackend() {
+    setIsLoading(true);
     try {
       // Fetch Settings
       const settingsRes = await fetch(`${API_BASE_URL}/api/settings`);
@@ -510,21 +360,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSettings(await settingsRes.json());
       }
 
-      // Fetch Users (including permissions)
-      const usersRes = await fetch(`${API_BASE_URL}/api/users?t=${Date.now()}`, { cache: 'no-store' });
+      // Fetch Users (including permissions) with Retry
+      // We use a timestamp to bust cache, and fetchWithRetry for robustness
+      let usersRes: Response | null = null;
+      try {
+        usersRes = await fetchWithRetry(`${API_BASE_URL}/api/users?t=${Date.now()}`, {
+          headers: { 'Cache-Control': 'no-store' }
+        });
+      } catch (err) {
+        console.error("Critical API Fetch Failed after retries:", err);
+        setApiError(err instanceof Error ? err.message : 'Connection Failed');
+        setIsLoading(false);
+        return; // Stop initialization if critical data fails
+      }
 
-      let usersData: any = { clients: [], experts: [], admins: [] }; // Default empty structure
-
-      if (usersRes.ok) {
-        usersData = await usersRes.json();
-        setApiError(null); // Clear previous errors
+      if (usersRes && usersRes.ok) {
+        const usersData = await usersRes.json();
+        setApiError(null);
 
         // Sanitize Experts
         const rawExperts = usersData.experts || [];
         const sanitizedExperts: Expert[] = rawExperts.map((e: any) => ({
           ...e,
           id: e.id || 'EXP-UNKNOWN',
-          // Ensure specializations is an array of strings
           specializations: Array.isArray(e.specializations)
             ? e.specializations.filter((s: any) => typeof s === 'string')
             : [],
@@ -562,53 +420,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         if (usersData.admins?.length > 0) setAdmins(usersData.admins);
 
+        // Hydrate client permissions map
+        const permsMap: Record<string, ClientFeaturePermissions> = {};
+        (usersData.clients as Client[] || []).forEach((c: any) => {
+          if (c.permissions) {
+            permsMap[c.id] = c.permissions;
+          }
+        });
+        setClientPermissions(permsMap);
+
+        // Sync User Session with fresh data
+        const storedUserJSON = localStorage.getItem('finume_user');
+        if (storedUserJSON) {
+          const storedUser = JSON.parse(storedUserJSON);
+          let freshUser: User | undefined;
+
+          if (storedUser.role === 'CLIENT') {
+            freshUser = (usersData.clients as Client[] || []).find((c: any) => c.id === storedUser.id);
+          } else if (storedUser.role === 'EXPERT') {
+            freshUser = (usersData.experts as Expert[] || []).find((e: any) => e.id === storedUser.id);
+          } else if (storedUser.role === 'ADMIN') {
+            freshUser = (usersData.admins as Admin[] || []).find((a: any) => a.id === storedUser.id);
+          }
+
+          if (freshUser) {
+            console.log("Refreshing session with fresh data:", freshUser);
+            setUser(freshUser);
+            localStorage.setItem('finume_user', JSON.stringify(freshUser));
+          }
+        }
       } else {
-        // Handle API Failure
+        // Handle API Failure response (500)
         let errorMsg = 'Unknown API Error';
         try {
-          const errData = await usersRes.json();
-          errorMsg = errData.error || errData.details || usersRes.statusText;
+          const errData = await usersRes?.json();
+          errorMsg = errData.error || errData.details || usersRes?.statusText || 'Unknown';
         } catch (e) {
-          errorMsg = usersRes.statusText;
+          errorMsg = usersRes?.statusText || 'Unknown';
         }
         console.error("API Error:", errorMsg);
-        setApiError(`API Error ${usersRes.status}: ${errorMsg}`);
+        setApiError(`API Error: ${errorMsg}`);
       }
-
-      // Hydrate client permissions map
-      const permsMap: Record<string, ClientFeaturePermissions> = {};
-      (usersData.clients as Client[] || []).forEach((c: any) => {
-        if (c.permissions) {
-          permsMap[c.id] = c.permissions;
-        }
-      });
-      setClientPermissions(permsMap);
-
-      // Sync User Session with fresh data
-      const storedUserJSON = localStorage.getItem('finume_user');
-      if (storedUserJSON) {
-        const storedUser = JSON.parse(storedUserJSON);
-        let freshUser: User | undefined;
-
-        if (storedUser.role === 'CLIENT') {
-          freshUser = (usersData.clients as Client[] || []).find((c: any) => c.id === storedUser.id);
-        } else if (storedUser.role === 'EXPERT') {
-          freshUser = (usersData.experts as Expert[] || []).find((e: any) => e.id === storedUser.id);
-        } else if (storedUser.role === 'ADMIN') {
-          freshUser = (usersData.admins as Admin[] || []).find((a: any) => a.id === storedUser.id);
-        }
-
-        if (freshUser) {
-          console.log("Refreshing session with fresh data:", freshUser);
-          setUser(freshUser);
-          localStorage.setItem('finume_user', JSON.stringify(freshUser));
-        }
-      }
-
     } catch (err: any) {
-      // Handle Network Errors (Fetch Threw)
-      console.error("Network Error in initBackend:", err);
-      setApiError(`Network Error: ${err.message}`);
+      // Catch other synchronous errors
+      console.error("InitBackend Error:", err);
+      setApiError(`App Error: ${err.message}`);
     }
 
     // Fetch Requests & Pool
@@ -626,25 +482,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await fetchPool();
 
     // Fetch Services
-    const servicesRes = await fetch(`${API_BASE_URL}/api/services`);
-    if (servicesRes.ok) {
-      setServices(await servicesRes.json());
-    }
+    try {
+      const servicesRes = await fetch(`${API_BASE_URL}/api/services`);
+      if (servicesRes.ok) setServices(await servicesRes.json());
+    } catch (e) { }
 
     // Fetch Plans
-    const plansRes = await fetch(`${API_BASE_URL}/api/plans`);
-    if (plansRes.ok) {
-      const plansData = await plansRes.json();
-      const parsedPlans = plansData.map((p: any) => ({
-        ...p,
-        features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
-        attributes: typeof p.attributes === 'string' ? JSON.parse(p.attributes) : p.attributes
-      }));
-      setPlans(parsedPlans);
-    }
+    try {
+      const plansRes = await fetch(`${API_BASE_URL}/api/plans`);
+      if (plansRes.ok) {
+        const plansData = await plansRes.json();
+        const parsedPlans = plansData.map((p: any) => ({
+          ...p,
+          features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
+          attributes: typeof p.attributes === 'string' ? JSON.parse(p.attributes) : p.attributes
+        }));
+        setPlans(parsedPlans);
+      }
+    } catch (e) { }
 
-
-
+    setIsLoading(false);
   }
 
   const addRequest = async (req: Request): Promise<Request | null> => {
@@ -1191,7 +1048,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       refreshData: initBackend,
       fetchRequests,
       apiError,
-      setApiError
+      setApiError,
+      isLoading,
     }}>
       {children}
     </AppContext.Provider>
