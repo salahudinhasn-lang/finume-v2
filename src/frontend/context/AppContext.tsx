@@ -507,7 +507,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       // Fetch Users (including permissions)
-      const usersRes = await fetch(`${API_BASE_URL}/api/users`, { cache: 'no-store' });
+      const usersRes = await fetch(`${API_BASE_URL}/api/users?t=${Date.now()}`, { cache: 'no-store' });
       if (usersRes.ok) {
         const usersData = await usersRes.json();
 

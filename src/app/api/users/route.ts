@@ -25,19 +25,35 @@ export async function GET(request: Request) {
             if (user.role === 'CLIENT' && clientProfile) {
                 clients.push({ ...baseUser, ...clientProfile, role: 'CLIENT' });
             } else if (user.role === 'EXPERT' && expertProfile) {
-                // Prioritize Expert.name if exists, else User.name
-                const mergedName = expertProfile.name || baseUser.name;
+                // Explicitly construct the Expert object to ensure no field shadowing or missing data
+                const flattenedExpert = {
+                    id: baseUser.id,
+                    email: baseUser.email,
+                    name: expertProfile.name || baseUser.name || 'Unknown',
+                    role: 'EXPERT',
+                    mobileNumber: baseUser.mobileNumber || '',
+                    avatarUrl: baseUser.avatarUrl,
 
-                // Convert Decimals to Numbers/Strings for JSON safety
-                const safeExpert = {
-                    ...expertProfile,
-                    hourlyRate: expertProfile.hourlyRate ? Number(expertProfile.hourlyRate) : 0,
-                    rating: expertProfile.rating ? Number(expertProfile.rating) : 0,
-                    totalEarned: expertProfile.totalEarned ? Number(expertProfile.totalEarned) : 0,
-                    totalReviews: expertProfile.totalReviews || 0 // Int but safe
+                    // Expert Specific Fields
+                    status: expertProfile.status || 'VETTING',
+                    specializations: expertProfile.specializations || [],
+                    bio: expertProfile.bio || '',
+                    yearsExperience: expertProfile.yearsExperience || 0,
+                    isPremium: !!expertProfile.isPremium,
+                    isFeatured: !!expertProfile.isFeatured,
+
+                    // Numeric Conversions
+                    hourlyRate: Number(expertProfile.hourlyRate || 0),
+                    rating: Number(expertProfile.rating || 0),
+                    totalEarned: Number(expertProfile.totalEarned || 0),
+                    totalReviews: Number(expertProfile.totalReviews || 0),
+
+                    // Include timestamps for debugging
+                    createdAt: baseUser.createdAt,
+                    updatedAt: baseUser.updatedAt
                 };
 
-                experts.push({ ...baseUser, ...safeExpert, name: mergedName, role: 'EXPERT' });
+                experts.push(flattenedExpert);
             } else if (user.role === 'ADMIN' && adminProfile) {
                 admins.push({ ...baseUser, ...adminProfile, role: 'ADMIN' });
             }
