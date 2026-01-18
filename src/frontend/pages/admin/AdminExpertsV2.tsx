@@ -14,14 +14,16 @@ export default function AdminExpertsV2() {
     const inVetting = experts ? experts.filter(e => (e.status || '').toUpperCase() === 'VETTING').length : 0;
     const activeExperts = experts ? experts.filter(e => (e.status || '').toUpperCase() === 'ACTIVE').length : 0;
 
-    // Filter
+    // Filter - Use Safe Getters
     const filteredExperts = (experts || []).filter(e => {
         if (filter === 'ALL') return true;
-        return (e.status || '').toUpperCase() === filter;
+        const status = getExpertField(e, 'status') || '';
+        return status.toUpperCase() === filter;
     });
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
+            {/* ... header ... */}
             <div className="flex justify-between items-end mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Expert Management</h1>
@@ -91,48 +93,54 @@ export default function AdminExpertsV2() {
                                     </td>
                                 </tr>
                             )}
-                            {filteredExperts.map((expert) => (
-                                <tr key={expert.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                                {expert.avatarUrl ? <img src={expert.avatarUrl} alt="" className="w-full h-full object-cover" /> : <Users size={18} className="text-gray-400" />}
+                            {filteredExperts.map((expert) => {
+                                const status = getExpertField(expert, 'status') || 'UNKNOWN';
+                                const specializations = getExpertField(expert, 'specializations') || [];
+                                const bio = getExpertField(expert, 'bio') || ''; // Example usage
+
+                                return (
+                                    <tr key={expert.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                                    {expert.avatarUrl ? <img src={expert.avatarUrl} alt="" className="w-full h-full object-cover" /> : <Users size={18} className="text-gray-400" />}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{expert.name || 'Unknown Expert'}</p>
+                                                    <p className="text-xs text-gray-500">{expert.email}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-gray-900">{expert.name || 'Unknown Expert'}</p>
-                                                <p className="text-xs text-gray-500">{expert.email}</p>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-wrap gap-1">
+                                                {Array.isArray(specializations) && specializations.map((s: any, i: number) => (
+                                                    <span key={i} className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-md border border-gray-200">{String(s)}</span>
+                                                ))}
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-wrap gap-1">
-                                            {Array.isArray(expert.specializations) && expert.specializations.map((s, i) => (
-                                                <span key={i} className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-md border border-gray-200">{String(s)}</span>
-                                            ))}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${expert.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
-                                            expert.status === 'VETTING' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
-                                            }`}>
-                                            {expert.status || 'UNKNOWN'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            {(expert.status || '').toUpperCase() === 'VETTING' && (
-                                                <>
-                                                    <Button size="sm" variant="outline" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-xs h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">Reject</Button>
-                                                    <Button size="sm" onClick={() => updateExpertStatus(expert.id, 'ACTIVE')} className="text-xs h-8 px-2 bg-green-600 hover:bg-green-700 shadow-sm">Approve</Button>
-                                                </>
-                                            )}
-                                            {(expert.status || '').toUpperCase() === 'ACTIVE' && (
-                                                <Button size="sm" variant="danger" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-xs h-8 px-2">Suspend</Button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
+                                                    status === 'VETTING' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                {status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                {(status || '').toUpperCase() === 'VETTING' && (
+                                                    <>
+                                                        <Button size="sm" variant="outline" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-xs h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">Reject</Button>
+                                                        <Button size="sm" onClick={() => updateExpertStatus(expert.id, 'ACTIVE')} className="text-xs h-8 px-2 bg-green-600 hover:bg-green-700 shadow-sm">Approve</Button>
+                                                    </>
+                                                )}
+                                                {(status || '').toUpperCase() === 'ACTIVE' && (
+                                                    <Button size="sm" variant="danger" onClick={() => updateExpertStatus(expert.id, 'SUSPENDED')} className="text-xs h-8 px-2">Suspend</Button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -140,11 +148,21 @@ export default function AdminExpertsV2() {
 
             {/* DEBUG SECTION */}
             <div className="mt-8 p-4 bg-gray-100 rounded-lg border border-gray-300">
-                <h3 className="text-sm font-bold text-gray-700 mb-2">Debug Data (Share if empty)</h3>
+                <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-sm font-bold text-gray-700">Debug Data (Share if empty)</h3>
+                    <Button size="sm" onClick={() => window.location.reload()}>Force Refresh Page</Button>
+                </div>
                 <pre className="text-xs text-slate-600 overflow-x-auto p-2 bg-slate-50 rounded">
                     {JSON.stringify(experts, null, 2)}
                 </pre>
             </div>
         </div>
     );
+}
+
+// Helper to safely extract data even if structure is nested (Legacy/Cached API support)
+function getExpertField(expert: any, field: string) {
+    if (expert[field]) return expert[field];
+    if (expert.expertProfile && expert.expertProfile[field]) return expert.expertProfile[field];
+    return null;
 }
