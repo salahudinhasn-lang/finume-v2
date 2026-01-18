@@ -143,14 +143,6 @@ const AdminExperts = () => {
                 color="blue"
               />
               <FunnelStep
-                label="Profile Ready"
-                count={profileCompleted}
-                icon={UserCheck}
-                isActive={false}
-                onClick={() => { }}
-                color="indigo"
-              />
-              <FunnelStep
                 label="In Vetting"
                 count={inVetting}
                 icon={ShieldCheck}

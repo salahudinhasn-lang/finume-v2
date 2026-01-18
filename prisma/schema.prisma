@@ -141,6 +141,7 @@ model Expert {
   iban            String?
   kycStatus       String   @default("PENDING")
   cvUrl           String?
+  name            String? // Added as per requirement to sync with User.name
   
   isPremium       Boolean  @default(false)
   isFeatured      Boolean  @default(false)
