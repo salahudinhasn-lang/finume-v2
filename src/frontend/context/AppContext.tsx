@@ -12,6 +12,9 @@ interface AppContextType {
   language: 'en' | 'ar';
   setLanguage: (lang: 'en' | 'ar') => void;
   t: (key: string) => string;
+  apiError: string | null;
+  setApiError?: (error: string | null) => void;
+
 
   // Data Access
   clients: Client[];
@@ -75,6 +78,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [language, setLanguage] = useState<'en' | 'ar'>('en');
 
   // "Database" in state
+  const [apiError, setApiError] = useState<string | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [experts, setExperts] = useState<Expert[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
@@ -508,14 +512,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // Fetch Users (including permissions)
       const usersRes = await fetch(`${API_BASE_URL}/api/users?t=${Date.now()}`, { cache: 'no-store' });
+
+      let usersData: any = { clients: [], experts: [], admins: [] }; // Default empty structure
+
       if (usersRes.ok) {
-        const usersData = await usersRes.json();
+        usersData = await usersRes.json();
+        setApiError(null); // Clear previous errors
 
         // Sanitize Experts
         const rawExperts = usersData.experts || [];
         const sanitizedExperts: Expert[] = rawExperts.map((e: any) => ({
           ...e,
           id: e.id || 'EXP-UNKNOWN',
+          // Ensure specializations is an array of strings
           specializations: Array.isArray(e.specializations)
             ? e.specializations.filter((s: any) => typeof s === 'string')
             : [],
@@ -534,7 +543,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           avatarUrl: e.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.id || Math.random()}`
         }));
         setExperts(sanitizedExperts);
-        console.log('Experts sanitized:', sanitizedExperts);
 
         // Sanitize Clients
         if (usersData.clients?.length > 0) {
@@ -554,73 +562,89 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         if (usersData.admins?.length > 0) setAdmins(usersData.admins);
 
-        // Hydrate client permissions map
-        const permsMap: Record<string, ClientFeaturePermissions> = {};
-        (usersData.clients as Client[] || []).forEach((c: any) => {
-          if (c.permissions) {
-            permsMap[c.id] = c.permissions;
-          }
-        });
-        setClientPermissions(permsMap);
+      } else {
+        // Handle API Failure
+        let errorMsg = 'Unknown API Error';
+        try {
+          const errData = await usersRes.json();
+          errorMsg = errData.error || errData.details || usersRes.statusText;
+        } catch (e) {
+          errorMsg = usersRes.statusText;
+        }
+        console.error("API Error:", errorMsg);
+        setApiError(`API Error ${usersRes.status}: ${errorMsg}`);
+      }
 
-        // Sync User Session with fresh data
-        const storedUserJSON = localStorage.getItem('finume_user');
-        if (storedUserJSON) {
-          const storedUser = JSON.parse(storedUserJSON);
-          let freshUser: User | undefined;
+      // Hydrate client permissions map
+      const permsMap: Record<string, ClientFeaturePermissions> = {};
+      (usersData.clients as Client[] || []).forEach((c: any) => {
+        if (c.permissions) {
+          permsMap[c.id] = c.permissions;
+        }
+      });
+      setClientPermissions(permsMap);
 
-          if (storedUser.role === 'CLIENT') {
-            freshUser = (usersData.clients as Client[]).find((c: any) => c.id === storedUser.id);
-          } else if (storedUser.role === 'EXPERT') {
-            freshUser = (usersData.experts as Expert[]).find((e: any) => e.id === storedUser.id);
-          } else if (storedUser.role === 'ADMIN') {
-            freshUser = (usersData.admins as Admin[]).find((a: any) => a.id === storedUser.id);
-          }
+      // Sync User Session with fresh data
+      const storedUserJSON = localStorage.getItem('finume_user');
+      if (storedUserJSON) {
+        const storedUser = JSON.parse(storedUserJSON);
+        let freshUser: User | undefined;
 
-          if (freshUser) {
-            console.log("Refreshing session with fresh data:", freshUser);
-            setUser(freshUser);
-            localStorage.setItem('finume_user', JSON.stringify(freshUser));
-          }
+        if (storedUser.role === 'CLIENT') {
+          freshUser = (usersData.clients as Client[] || []).find((c: any) => c.id === storedUser.id);
+        } else if (storedUser.role === 'EXPERT') {
+          freshUser = (usersData.experts as Expert[] || []).find((e: any) => e.id === storedUser.id);
+        } else if (storedUser.role === 'ADMIN') {
+          freshUser = (usersData.admins as Admin[] || []).find((a: any) => a.id === storedUser.id);
+        }
+
+        if (freshUser) {
+          console.log("Refreshing session with fresh data:", freshUser);
+          setUser(freshUser);
+          localStorage.setItem('finume_user', JSON.stringify(freshUser));
         }
       }
 
-      // Fetch Requests & Pool
-      let currentUserId = user?.id;
-      if (!currentUserId) {
-        const stored = localStorage.getItem('finume_user');
-        if (stored) {
-          try {
-            const p = JSON.parse(stored);
-            currentUserId = p.id;
-          } catch (e) { }
-        }
-      }
-      await fetchRequests(currentUserId);
-      await fetchPool();
-
-      // Fetch Services
-      const servicesRes = await fetch(`${API_BASE_URL}/api/services`);
-      if (servicesRes.ok) {
-        setServices(await servicesRes.json());
-      }
-
-      // Fetch Plans
-      const plansRes = await fetch(`${API_BASE_URL}/api/plans`);
-      if (plansRes.ok) {
-        const plansData = await plansRes.json();
-        const parsedPlans = plansData.map((p: any) => ({
-          ...p,
-          features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
-          attributes: typeof p.attributes === 'string' ? JSON.parse(p.attributes) : p.attributes
-        }));
-        setPlans(parsedPlans);
-      }
-
-
-    } catch (e) {
-      console.warn('Backend not available:', e);
+    } catch (err: any) {
+      // Handle Network Errors (Fetch Threw)
+      console.error("Network Error in initBackend:", err);
+      setApiError(`Network Error: ${err.message}`);
     }
+
+    // Fetch Requests & Pool
+    let currentUserId = user?.id;
+    if (!currentUserId) {
+      const stored = localStorage.getItem('finume_user');
+      if (stored) {
+        try {
+          const p = JSON.parse(stored);
+          currentUserId = p.id;
+        } catch (e) { }
+      }
+    }
+    await fetchRequests(currentUserId);
+    await fetchPool();
+
+    // Fetch Services
+    const servicesRes = await fetch(`${API_BASE_URL}/api/services`);
+    if (servicesRes.ok) {
+      setServices(await servicesRes.json());
+    }
+
+    // Fetch Plans
+    const plansRes = await fetch(`${API_BASE_URL}/api/plans`);
+    if (plansRes.ok) {
+      const plansData = await plansRes.json();
+      const parsedPlans = plansData.map((p: any) => ({
+        ...p,
+        features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
+        attributes: typeof p.attributes === 'string' ? JSON.parse(p.attributes) : p.attributes
+      }));
+      setPlans(parsedPlans);
+    }
+
+
+
   }
 
   const addRequest = async (req: Request): Promise<Request | null> => {
@@ -1155,13 +1179,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addAdmin, updateAdmin, deleteAdmin,
       updateService, addService, deleteService, updatePlan,
       requestPayout, processPayout, manualSettle, checkUsageLimit,
-      settings, updateSettings, clientPermissions, getPermissions, updatePermissions,
+      settings,
+      updateSettings,
+      clientPermissions,
+      getPermissions,
+      updatePermissions,
       updateSitePages: async (pages) => {
         await updateSettings({ sitePages: JSON.stringify(pages) });
       },
       isRestoringSession,
       refreshData: initBackend,
-      fetchRequests
+      fetchRequests,
+      apiError,
+      setApiError
     }}>
       {children}
     </AppContext.Provider>

@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { Card, Badge, Button } from '../../components/UI';
-import { Users, ShieldCheck, Briefcase } from 'lucide-react';
+import { Card, Button } from '../../components/UI';
+import { Users, ShieldCheck, Briefcase, AlertCircle } from 'lucide-react';
 import { Expert } from '../../types';
 
 export default function AdminExpertsV2() {
-    const { experts, updateExpertStatus } = useAppContext();
+    const { experts, refreshData, updateExpertStatus, apiError } = useAppContext();
     const [filter, setFilter] = useState('ALL');
 
     // Stats
@@ -23,6 +23,17 @@ export default function AdminExpertsV2() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Error Alert */}
+            {apiError && (
+                <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 flex justify-between items-center animate-in slide-in-from-top-2">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle size={20} />
+                        <span className="font-medium">{apiError}</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="text-red-700 hover:bg-red-100 h-8">Retry</Button>
+                </div>
+            )}
+
             {/* ... header ... */}
             <div className="flex justify-between items-end mb-6">
                 <div>
@@ -120,7 +131,7 @@ export default function AdminExpertsV2() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
-                                                    status === 'VETTING' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
+                                                status === 'VETTING' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
                                                 }`}>
                                                 {status}
                                             </span>
