@@ -59,11 +59,11 @@ const AdminExperts = () => {
   const filteredExperts = safeExperts.filter(e => {
     const status = (e.status || '').toUpperCase();
     if (filter !== 'ALL' && status !== filter) return false;
-    const s = search.toLowerCase();
+    const s = (search || '').toLowerCase();
     const matchesSearch =
       (e.name || '').toLowerCase().includes(s) ||
       (e.email || '').toLowerCase().includes(s) ||
-      (Array.isArray(e.specializations) && e.specializations.some(spec => typeof spec === 'string' && spec.toLowerCase().includes(s)));
+      (Array.isArray(e.specializations) && e.specializations.some((spec: any) => typeof spec === 'string' && spec.toLowerCase().includes(s)));
     return matchesSearch;
   });
 

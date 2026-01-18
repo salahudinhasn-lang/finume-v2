@@ -22,7 +22,9 @@ export async function GET(request: Request) {
             if (user.role === 'CLIENT' && clientProfile) {
                 clients.push({ ...baseUser, ...clientProfile, role: 'CLIENT' });
             } else if (user.role === 'EXPERT' && expertProfile) {
-                experts.push({ ...baseUser, ...expertProfile, role: 'EXPERT' });
+                // Prioritize Expert.name if exists, else User.name
+                const mergedName = expertProfile.name || baseUser.name;
+                experts.push({ ...baseUser, ...expertProfile, name: mergedName, role: 'EXPERT' });
             } else if (user.role === 'ADMIN' && adminProfile) {
                 admins.push({ ...baseUser, ...adminProfile, role: 'ADMIN' });
             }

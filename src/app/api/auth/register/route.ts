@@ -128,7 +128,8 @@ export async function POST(request: Request) {
                             yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
                             hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
                             specializations: specializations ? specializations : [], // Assumes schema handles string[] or Json
-                            kycStatus: 'PENDING'
+                            kycStatus: 'PENDING',
+                            name: name // Persist name in Expert table as well
                         }
                     }
                 },
