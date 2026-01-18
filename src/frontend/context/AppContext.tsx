@@ -90,10 +90,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     // Initialize Mock Data (Empty now as we cleaned it)
-    setClients(MOCK_CLIENTS);
-    setExperts(MOCK_EXPERTS);
-    setRequests(MOCK_REQUESTS);
-    setAdmins(MOCK_ADMINS);
+    // Initialize Mock Data (Empty now as we cleaned it)
+    // Removed to rely fully on DB
+    // setClients(MOCK_CLIENTS);
+    // setExperts(MOCK_EXPERTS);
+    // setRequests(MOCK_REQUESTS);
+    // setAdmins(MOCK_ADMINS);
     setServices(SERVICES);
     setPlans(MOCK_PLANS);
 

@@ -203,22 +203,22 @@ const AdminExperts = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4 cursor-pointer" onClick={() => handleEdit(expert)}>
                           <div className="relative">
-                            <img src={expert.avatarUrl} alt="" className="w-10 h-10 rounded-full bg-gray-200 object-cover ring-2 ring-white shadow-sm" />
+                            <img src={expert.avatarUrl || ''} alt="" className="w-10 h-10 rounded-full bg-gray-200 object-cover ring-2 ring-white shadow-sm" />
                             <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${expert.status === 'ACTIVE' ? 'bg-green-500' : expert.status === 'VETTING' ? 'bg-orange-500' : 'bg-red-500'}`}></span>
                           </div>
                           <div>
-                            <p className="font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{expert.name}</p>
-                            <p className="text-xs text-gray-500">{expert.email}</p>
+                            <p className="font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{expert.name || 'Unknown Helper'}</p>
+                            <p className="text-xs text-gray-500">{expert.email || 'No Email'}</p>
                             {expert.mobileNumber && <p className="text-xs text-gray-400 mt-0.5">{expert.mobileNumber}</p>}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">
-                          {expert.specializations.slice(0, 2).map((s, i) => (
-                            <span key={i} className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-md border border-gray-200">{s}</span>
+                          {(Array.isArray(expert.specializations) ? expert.specializations.slice(0, 2) : []).map((s, i) => (
+                            <span key={i} className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-md border border-gray-200">{String(s)}</span>
                           ))}
-                          {expert.specializations.length > 2 && <span className="text-xs text-gray-400 px-1">+{expert.specializations.length - 2}</span>}
+                          {Array.isArray(expert.specializations) && expert.specializations.length > 2 && <span className="text-xs text-gray-400 px-1">+{expert.specializations.length - 2}</span>}
                         </div>
                       </td>
                       <td className="px-6 py-4"><Badge status={expert.status} /></td>
