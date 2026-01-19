@@ -190,6 +190,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.warn("API Login failed, falling back to mock logic for demo");
         // ... existing mock logic ...
         // For brevity, I will just alert error if API fails, as user requested "Professional".
+        // const err = await res.json();
+        // alert(err.error || 'Login failed');
+        // return null;
         const err = await res.json();
         alert(err.error || 'Login failed');
         return null;
