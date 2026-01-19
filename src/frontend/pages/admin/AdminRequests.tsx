@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/UI';
 import { Search, LayoutGrid, List, MoreHorizontal, ArrowRight, FolderCog, AlertCircle, Check, Clock, Eye, Sliders, X, FileText, UserPlus, Edit, CheckCircle, Filter, Briefcase, DollarSign, Ban, Save } from 'lucide-react';
+import { Request, FileBatch, Review } from '../../types';
+import { FileBatchManager } from '../../components/FileBatchManager';
+import Timer from '../../components/Timer';
 
 // --- Duration Helper ---
 const calculateDuration = (start?: string, end?: string) => {
@@ -116,7 +119,7 @@ const AdminRequests = () => {
 
     // Modal State
     const [editingRequest, setEditingRequest] = useState<Request | null>(null);
-    const [formData, setFormData] = Partial < Request >> ({});
+    const [formData, setFormData] = useState<Partial<Request>>({});
     const [selectedRequestForReview, setSelectedRequestForReview] = useState<Request | null>(null);
 
 
