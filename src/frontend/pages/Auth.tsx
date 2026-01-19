@@ -75,8 +75,8 @@ const LoginPage = () => {
       if (res.ok) {
         localStorage.setItem('finume_user', JSON.stringify(data.user));
         localStorage.setItem('finume_token', data.token);
-        const targetPath = data.user.role === 'ADMIN' ? '/admin' : data.user.role === 'EXPERT' ? '/expert' : '/client';
-        navigate(targetPath);
+        // Force reload to hydrate AppContext
+        window.location.href = data.user.role === 'ADMIN' ? '/#/admin' : data.user.role === 'EXPERT' ? '/#/expert' : '/#/client';
       } else {
         alert(t(data.error || 'Login failed'));
       }
@@ -108,8 +108,8 @@ const LoginPage = () => {
       if (res.ok) {
         localStorage.setItem('finume_user', JSON.stringify(data.user));
         localStorage.setItem('finume_token', data.token);
-        const targetPath = data.user.role === 'ADMIN' ? '/admin' : data.user.role === 'EXPERT' ? '/expert' : '/client';
-        navigate(targetPath);
+        // Force reload to hydrate AppContext
+        window.location.href = data.user.role === 'ADMIN' ? '/#/admin' : data.user.role === 'EXPERT' ? '/#/expert' : '/#/client';
       } else {
         alert(data.error || 'LinkedIn Login Failed');
       }
@@ -124,6 +124,9 @@ const LoginPage = () => {
   const triggerGoogle = () => {
     if ((window as any).google) {
       (window as any).google.accounts.id.prompt();
+    } else {
+      console.error("Google script not loaded");
+      alert("Google Sign-In is not ready yet. Please check your internet connection or ad-blockers.");
     }
   };
 
