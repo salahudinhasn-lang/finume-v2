@@ -16,11 +16,120 @@ const LoginPage = () => {
   const [password, setPassword] = useState('password');
   const [isLoading, setIsLoading] = useState(false);
 
+
+  const [googleLoaded, setGoogleLoaded] = useState(false);
+
   useEffect(() => {
-    if (role === 'CLIENT') setEmail('client1@example.com');
-    else if (role === 'EXPERT') setEmail('expert1@example.com');
-    else setEmail('admin@finume.com');
-  }, [role]);
+    // Load Google Script
+    const script = document.createElement('script');
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.onload = () => setGoogleLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (googleLoaded && (window as any).google) {
+      (window as any).google.accounts.id.initialize({
+        client_id: "640269627410-dur5hrb3s95v4v7frnmvapc4fkgaronq.apps.googleusercontent.com",
+        callback: handleGoogleResponse
+      });
+      // We can render a button or just use the JS API to prompt
+      // (window as any).google.accounts.id.renderButton(
+      //     document.getElementById("google-btn"),
+      //     { theme: "outline", size: "large" }
+      // );
+    }
+  }, [googleLoaded]);
+
+  // Handle LinkedIn Callback
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+
+    if (code && state === 'linkedin_auth') {
+      handleLinkedinCallback(code);
+    }
+  }, [location.search]);
+
+  const handleGoogleResponse = async (response: any) => {
+    console.log("Google Response", response);
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: response.credential })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        // We need a way to "login" via context manually or just reload/redirect
+        // Ideally modify `login` in context to accept a full user object, or just set storage and reload
+        localStorage.setItem('finume_user', JSON.stringify(data.user));
+        localStorage.setItem('finume_token', data.token);
+        // Force reload to pick up session or navigate
+        window.location.href = data.user.role === 'ADMIN' ? '/#/admin' : data.user.role === 'EXPERT' ? '/#/expert' : '/#/client';
+      } else {
+        alert(t(data.error || 'Login failed'));
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Google Login Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLinkedinCallback = async (code: string) => {
+    setIsLoading(true);
+    try {
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      const res = await fetch('/api/auth/linkedin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          redirectUri: window.location.origin + '/login'
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('finume_user', JSON.stringify(data.user));
+        localStorage.setItem('finume_token', data.token);
+        window.location.href = data.user.role === 'ADMIN' ? '/#/admin' : data.user.role === 'EXPERT' ? '/#/expert' : '/#/client';
+      } else {
+        alert(data.error || 'LinkedIn Login Failed');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('LinkedIn Login Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const triggerGoogle = () => {
+    if ((window as any).google) {
+      (window as any).google.accounts.id.prompt();
+    }
+  };
+
+  const triggerLinkedin = () => {
+    const clientId = '77nmudsqcg5t0i';
+    const redirectUri = encodeURIComponent(window.location.origin + '/login');
+    const scope = encodeURIComponent('openid profile email');
+    const state = 'linkedin_auth';
+    window.location.href = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}`;
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -231,7 +340,10 @@ const LoginPage = () => {
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <button className="w-full inline-flex justify-center py-2.5 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all">
+              <button
+                onClick={triggerGoogle}
+                className="w-full inline-flex justify-center py-2.5 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+              >
                 <span className="sr-only">{t('auth.google')}</span>
                 <svg className="h-5 w-5 mr-2" aria-hidden="true" viewBox="0 0 24 24">
                   <path
@@ -241,7 +353,10 @@ const LoginPage = () => {
                 </svg>
                 Google
               </button>
-              <button className="w-full inline-flex justify-center py-2.5 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all">
+              <button
+                onClick={triggerLinkedin}
+                className="w-full inline-flex justify-center py-2.5 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+              >
                 <span className="sr-only">{t('auth.linkedin')}</span>
                 <Linkedin size={20} className="mr-2 text-[#0077b5]" />
                 LinkedIn

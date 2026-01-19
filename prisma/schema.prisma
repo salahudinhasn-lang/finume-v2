@@ -75,6 +75,8 @@ enum PayoutStatus {
 model User {
   id            String    @id
   email         String    @unique
+  googleId      String?   @unique
+  linkedinId    String?   @unique
   passwordHash  String
   name          String
   role          Role
