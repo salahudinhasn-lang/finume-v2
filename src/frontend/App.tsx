@@ -16,6 +16,7 @@ import ClientSettings from './pages/client/ClientSettings';
 import ClientServices from './pages/client/ClientServices';
 import BrowseExperts from './pages/client/BrowseExperts';
 import ExpertPortal from './pages/expert/ExpertDashboard';
+import ExpertOnboarding from './pages/expert/ExpertOnboarding';
 import ExpertTasks from './pages/expert/ExpertTasks';
 import ExpertEarnings from './pages/expert/ExpertEarnings';
 import ExpertProfile from './pages/expert/ExpertProfile';
@@ -57,6 +58,14 @@ const ProtectedRoute = ({ children, allowedRoles }: { children?: React.ReactNode
     if (user.role === 'EXPERT') return <Navigate to="/expert" replace />;
     if (user.role === 'ADMIN') return <Navigate to="/admin" replace />;
     return <Navigate to="/login" replace />;
+  }
+
+  // Force Expert Onboarding
+  if (user.role === 'EXPERT' && !allowedRoles.includes('ONBOARDING_ONLY')) {
+    const isProfileComplete = user.mobileNumber && user.specializations && user.specializations.length > 0 && user.hourlyRate > 0;
+    if (!isProfileComplete) {
+      return <Navigate to="/expert/onboarding" replace />;
+    }
   }
 
   return <>{children}</>;
@@ -230,6 +239,11 @@ const AppContent = () => {
             <Layout title="Profile">
               <ExpertProfile />
             </Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/expert/onboarding" element={
+          <ProtectedRoute allowedRoles={['EXPERT', 'ONBOARDING_ONLY']}>
+            <ExpertOnboarding />
           </ProtectedRoute>
         } />
 
