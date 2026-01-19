@@ -5,6 +5,7 @@ import { Card, Badge, Button } from '../../components/UI';
 import { Search, Edit, X, UserPlus, Save, Filter, Briefcase, DollarSign, Ban, LayoutGrid, List, MoreHorizontal, ArrowRight, FolderCog, Check, Clock, AlertCircle } from 'lucide-react';
 import { Request, FileBatch } from '../../types';
 import { FileBatchManager } from '../../components/FileBatchManager';
+import Timer from '../../components/Timer';
 
 const AdminRequests = () => {
     const { requests, experts, updateRequest, settings } = useAppContext();
@@ -212,6 +213,12 @@ const AdminRequests = () => {
                                                                 className={`h-full rounded-full transition-all duration-500 ${req.status === 'COMPLETED' ? 'bg-green-500' : 'bg-primary-500'}`}
                                                                 style={{ width: `${progress}%` }}
                                                             />
+                                                        </div>
+                                                    )}
+                                                    {req.status === 'IN_PROGRESS' && req.workStartedAt && (
+                                                        <div className="flex items-center gap-1 text-xs font-mono text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-md w-fit">
+                                                            <Clock size={12} className="animate-pulse" />
+                                                            <Timer startDate={req.workStartedAt} />
                                                         </div>
                                                     )}
                                                 </div>

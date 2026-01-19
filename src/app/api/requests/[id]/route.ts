@@ -22,6 +22,14 @@ export async function PATCH(
         if (visibility !== undefined) dataToUpdate.visibility = visibility;
         if (requiredSkills !== undefined) dataToUpdate.requiredSkills = requiredSkills;
 
+        // Auto-update timestamps based on status change
+        if (status === 'IN_PROGRESS') {
+            dataToUpdate.workStartedAt = new Date();
+        }
+        if (status === 'REVIEW_CLIENT' || status === 'REVIEW_ADMIN') {
+            dataToUpdate.completedAt = new Date();
+        }
+
         // --- Logic for "OPEN POOL" ---
         if (visibility === 'OPEN') {
             // 1. Ensure status allows opening (e.g. NEW)

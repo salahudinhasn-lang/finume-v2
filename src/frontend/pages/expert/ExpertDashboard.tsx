@@ -5,6 +5,7 @@ import { Briefcase, DollarSign, Star, Globe, ArrowRight, CheckCircle, Clock, Sen
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Expert } from '../../types';
+import Timer from '../../components/Timer';
 
 const ExpertDashboard = () => {
     const { user, requests, acceptRequest, updateRequestStatus, t } = useAppContext();
@@ -224,9 +225,15 @@ const ExpertDashboard = () => {
                                                     </Button>
                                                 )}
                                                 {task.status === 'IN_PROGRESS' && (
-                                                    <Button onClick={() => updateRequestStatus(task.id, 'REVIEW_CLIENT')} className="bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-200 w-full md:w-auto rounded-xl">
-                                                        {t('expert.submitForReview')} <CheckCircle size={18} className="ml-2" />
-                                                    </Button>
+                                                    <div className="flex flex-col gap-2 w-full md:w-auto">
+                                                        <div className="flex items-center justify-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-mono font-bold text-lg border border-blue-100">
+                                                            <Clock size={16} className="animate-pulse" />
+                                                            {task.workStartedAt && <Timer startDate={task.workStartedAt} />}
+                                                        </div>
+                                                        <Button onClick={() => updateRequestStatus(task.id, 'REVIEW_CLIENT')} className="bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-200 w-full md:w-auto rounded-xl">
+                                                            {t('expert.submitForReview')} <CheckCircle size={18} className="ml-2" />
+                                                        </Button>
+                                                    </div>
                                                 )}
                                                 {['REVIEW_CLIENT', 'REVIEW_ADMIN'].includes(task.status) && (
                                                     <div className="text-center">
