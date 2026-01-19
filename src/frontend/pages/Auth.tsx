@@ -78,9 +78,9 @@ const LoginPage = () => {
       } else {
         alert(t(data.error || 'Login failed'));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Google Login Error');
+      alert('Google Login Error: ' + (error.message || JSON.stringify(error)));
     } finally {
       setIsLoading(false);
     }
@@ -110,9 +110,9 @@ const LoginPage = () => {
       } else {
         alert(data.error || 'LinkedIn Login Failed');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('LinkedIn Login Error');
+      alert('LinkedIn Login Error: ' + (error.message || JSON.stringify(error)));
     } finally {
       setIsLoading(false);
     }

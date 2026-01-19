@@ -104,6 +104,20 @@ const VisibilityGuard = ({ children, pageKey, type = 'public' }: { children: Rea
 };
 
 const AppContent = () => {
+  // Handle LinkedIn Callback Redirect (Browser URL -> Hash URL)
+  React.useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+
+    if (code && state?.startsWith('linkedin_auth')) {
+      // Redirect to Hash URL so HashRouter can handle it
+      // Construct: /#/login?code=...&state=...
+      const newUrl = `${window.location.origin}/#/login${window.location.search}`;
+      window.location.replace(newUrl);
+    }
+  }, []);
+
   return (
     <>
       <Routes>
