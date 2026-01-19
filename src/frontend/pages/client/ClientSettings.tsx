@@ -9,6 +9,15 @@ const ClientSettings = () => {
     const { user, updateClient, t } = useAppContext();
     const [activeTab, setActiveTab] = useState<'PROFILE' | 'KYC' | 'TEAM' | 'SECURITY' | 'NOTIFICATIONS'>('PROFILE');
 
+    // Tab Configuration
+    const tabs: { id: typeof activeTab; label: string; icon: React.ElementType }[] = [
+        { id: 'PROFILE', label: 'Company Profile', icon: Building },
+        { id: 'KYC', label: 'Legal & KYC', icon: FileText },
+        { id: 'TEAM', label: 'Team Members', icon: Users },
+        { id: 'SECURITY', label: 'Security', icon: Lock },
+        { id: 'NOTIFICATIONS', label: 'Notifications', icon: Bell },
+    ];
+
     // Real data from user context only
     const [formData, setFormData] = useState({
         // Basic Profile
@@ -110,25 +119,22 @@ const ClientSettings = () => {
             </div>
 
             <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-1">
-                {[
-                    { id: 'PROFILE', label: 'Company Profile', icon: Building },
-                    { id: 'KYC', label: 'Legal & KYC', icon: FileText },
-                    { id: 'TEAM', label: 'Team Members', icon: Users },
-                    { id: 'SECURITY', label: 'Security', icon: Lock },
-                    { id: 'NOTIFICATIONS', label: 'Notifications', icon: Bell },
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        className={`px-4 py-3 text-sm font-medium rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === tab.id
-                            ? 'bg-white text-primary-600 border-b-2 border-primary-600'
-                            : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
-                            }`}
-                    >
-                        <tab.icon size={16} />
-                        {tab.label}
-                    </button>
-                ))}
+                {tabs.map(tab => {
+                    const Icon = tab.icon;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`px-4 py-3 text-sm font-medium rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === tab.id
+                                ? 'bg-white text-primary-600 border-b-2 border-primary-600'
+                                : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                                }`}
+                        >
+                            <Icon size={16} />
+                            {tab.label}
+                        </button>
+                    );
+                })}
             </div>
 
             <form onSubmit={handleSubmit}>
