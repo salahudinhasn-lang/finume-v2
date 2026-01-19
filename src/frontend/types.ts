@@ -51,6 +51,8 @@ export interface Expert extends User {
   hourlyRate: number;
   isPremium?: boolean;
   isFeatured?: boolean;
+  linkedinUrl?: string;
+  cvUrl?: string;
 }
 
 export type AdminRole = 'SUPER_ADMIN' | 'ADMIN' | 'FINANCE' | 'SUPPORT' | 'EXPERT_RELATIONS' | 'SALES';
