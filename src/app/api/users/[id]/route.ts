@@ -66,7 +66,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
         }
 
         // Determine Profile update based on ID prefix
-        if (id.startsWith('cus-')) {
+        const lowerId = id.toLowerCase();
+        if (lowerId.startsWith('cus-')) {
             // Client Update
             userUpdateData.clientProfile = {
                 update: {
@@ -74,7 +75,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     permissions: profileData.permissions ? { update: profileData.permissions } : undefined
                 }
             };
-        } else if (id.startsWith('exp-')) {
+        } else if (lowerId.startsWith('exp-')) {
             // Expert Update
             // Handle specializations JSON if needed
             // Handle specializations JSON if needed
@@ -94,7 +95,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     specializations: specializations
                 }
             };
-        } else if (id.startsWith('adm-')) {
+        } else if (lowerId.startsWith('adm-')) {
             userUpdateData.adminProfile = {
                 update: profileData
             };
