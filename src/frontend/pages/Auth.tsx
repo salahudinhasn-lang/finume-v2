@@ -100,7 +100,6 @@ const LoginPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code,
-          code,
           redirectUri: "https://finume-v2.vercel.app/login", // Must match the one sent in auth request
           role: roleParam || 'CLIENT'
         })
