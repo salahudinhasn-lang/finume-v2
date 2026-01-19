@@ -1129,6 +1129,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       apiError,
       setApiError,
       isLoading,
+      setSession,
     }}>
       {children}
     </AppContext.Provider>
