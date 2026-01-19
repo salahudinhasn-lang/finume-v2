@@ -205,7 +205,7 @@ const ExpertDashboard = () => {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-3">
                                                     <Badge status={task.status} />
-                                                    <span className="text-xs font-bold text-gray-400 tracking-wider">#{task.id}</span>
+                                                    <span className="text-xs font-bold text-gray-400 tracking-wider">{task.displayId || task.id}</span>
                                                     <span className="text-xs font-medium text-gray-500 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md">
                                                         <Clock size={12} /> Due in 2 days
                                                     </span>
