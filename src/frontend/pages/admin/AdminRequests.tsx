@@ -1,11 +1,116 @@
-
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/UI';
-import { Search, Edit, X, UserPlus, Save, Filter, Briefcase, DollarSign, Ban, LayoutGrid, List, MoreHorizontal, ArrowRight, FolderCog, Check, Clock, AlertCircle } from 'lucide-react';
-import { Request, FileBatch } from '../../types';
+import { Search, LayoutGrid, List, MoreHorizontal, ArrowRight, FolderCog, AlertCircle } from 'lucide-react';
+import { Request, FileBatch, Review } from '../../types';
 import { FileBatchManager } from '../../components/FileBatchManager';
 import Timer from '../../components/Timer';
+import { Check, Clock, Eye, Sliders, X, FileText, UserPlus, Edit, CheckCircle } from 'react-feather';
+
+// --- Duration Helper ---
+const calculateDuration = (start?: string, end?: string) => {
+    if (!start || !end) return 'N/A';
+    const startTime = new Date(start).getTime();
+    const endTime = new Date(end).getTime();
+    if (isNaN(startTime) || isNaN(endTime)) return 'N/A';
+
+    const diff = endTime - startTime;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+};
+
+// --- Review Modal Component ---
+const ReviewDetailsModal = ({ request, isOpen, onClose }: { request: Request | null, isOpen: boolean, onClose: () => void }) => {
+    const { updateRequestStatus } = useAppContext();
+
+    if (!isOpen || !request) return null;
+
+    const handleComplete = () => {
+        if (confirm('Are you sure you want to mark this request as COMPLETE?')) {
+            updateRequestStatus(request.id, 'COMPLETED');
+            onClose();
+        }
+    };
+
+    const review = request.review;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div>
+                        <h3 className="text-xl font-bold text-gray-900">Review & Complete</h3>
+                        <p className="text-sm text-gray-500 mt-1">{request.serviceName} • {request.displayId || request.id}</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                    {/* Key Stats */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Time Spent</span>
+                            <div className="text-2xl font-black text-gray-900 mt-1">
+                                {calculateDuration(request.workStartedAt, request.completedAt)}
+                            </div>
+                        </div>
+                        <div className="bg-green-50 p-4 rounded-xl border border-green-100">
+                            <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Expert Status</span>
+                            <div className="text-lg font-bold text-gray-900 mt-1 flex items-center gap-2">
+                                <CheckCircle size={18} className="text-green-600" /> Submitted
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Review Details */}
+                    {review ? (
+                        <div className="space-y-4">
+                            <h4 className="font-bold text-gray-800 flex items-center gap-2">
+                                <FileText size={18} className="text-gray-400" /> Client Feedback
+                            </h4>
+                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
+                                <div>
+                                    <div className="flex justify-between text-sm mb-1">
+                                        <span className="text-gray-600">Expert Rating</span>
+                                        <span className="font-bold text-yellow-500">{'★'.repeat(review.expertRating)} <span className="text-gray-400">({review.expertRating}/5)</span></span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">Platform Rating</span>
+                                        <span className="font-bold text-blue-500">{review.adminNps ? review.adminNps + '/10' : 'N/A'}</span>
+                                    </div>
+                                </div>
+                                {review.comment && (
+                                    <div className="pt-3 border-t border-gray-200 mt-3">
+                                        <p className="text-sm text-gray-600 italic">"{review.comment}"</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                            <p className="text-gray-500 text-sm">No review submitted by client yet.</p>
+                        </div>
+                    )}
+                </div>
+
+                <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+                    <button onClick={onClose} className="px-5 py-2.5 rounded-lg text-gray-600 font-medium hover:bg-gray-200 transition-colors">
+                        Close
+                    </button>
+                    <button
+                        onClick={handleComplete}
+                        className="px-5 py-2.5 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
+                    >
+                        <CheckCircle size={18} /> Complete Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const AdminRequests = () => {
     const { requests, experts, updateRequest, settings } = useAppContext();
@@ -15,7 +120,9 @@ const AdminRequests = () => {
 
     // Modal State
     const [editingRequest, setEditingRequest] = useState<Request | null>(null);
-    const [formData, setFormData] = useState<Partial<Request>>({});
+    const [formData, setFormData] = Partial < Request >> ({});
+    const [selectedRequestForReview, setSelectedRequestForReview] = useState<Request | null>(null);
+
 
     const filteredRequests = requests.filter(r => {
         const matchesSearch =
@@ -42,6 +149,10 @@ const AdminRequests = () => {
     const handleEdit = (req: Request) => {
         setEditingRequest(req);
         setFormData({ ...req });
+    };
+
+    const handleReviewOpen = (req: Request) => {
+        setSelectedRequestForReview(req);
     };
 
     const handleClose = () => {
@@ -234,13 +345,25 @@ const AdminRequests = () => {
                                                             <UserPlus size={14} /> Assign
                                                         </Button>
                                                     ) : (
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => { e.stopPropagation(); handleEdit(req); }}
-                                                            className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
-                                                        >
-                                                            <Edit size={16} />
-                                                        </button>
+                                                        <div className="flex gap-2">
+                                                            {req.status === 'REVIEW_ADMIN' && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => { e.stopPropagation(); handleReviewOpen(req); }}
+                                                                    className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+                                                                    title="Review & Complete"
+                                                                >
+                                                                    <FileText size={16} />
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => { e.stopPropagation(); handleEdit(req); }}
+                                                                className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+                                                            >
+                                                                <Edit size={16} />
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </td>
@@ -547,6 +670,13 @@ const AdminRequests = () => {
                     </div>
                 </div>
             )}
+            {/* Review Modal */}
+            <ReviewDetailsModal
+                isOpen={!!selectedRequestForReview}
+                request={selectedRequestForReview}
+                onClose={() => setSelectedRequestForReview(null)}
+            />
+
         </div>
     );
 };

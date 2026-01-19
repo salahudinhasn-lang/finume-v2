@@ -162,7 +162,8 @@ export async function GET(req: Request) {
                     }
                 },
                 assignedExpert: true,
-                poolInvites: true // Include pool invites so frontend can see them
+                poolInvites: true, // Include pool invites so frontend can see them
+                review: true // Include review data for Admin & Expert visibility
             },
             orderBy: { createdAt: 'desc' }
         });
