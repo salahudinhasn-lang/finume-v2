@@ -992,7 +992,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const dummyPayout: PayoutRequest = {
       id: payoutId,
       expertId: 'VARIOUS', // Or specific if we filtered
-      expertName: translations[language === 'en' ? 'en' : 'ar'].financials.manualSettlement,
+      expertName: t('financials.manualSettlement'),
       amount: totalAmount,
       requestDate: new Date().toISOString().split('T')[0],
       processedDate: new Date().toISOString().split('T')[0],
