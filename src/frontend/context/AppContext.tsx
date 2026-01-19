@@ -590,7 +590,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateRequestStatus = (id: string, status: Request['status']) => {
-    setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+    // We reuse the persist logic
+    updateRequest(id, { status });
   };
 
   const assignRequest = (requestId: string, expertId: string) => {
