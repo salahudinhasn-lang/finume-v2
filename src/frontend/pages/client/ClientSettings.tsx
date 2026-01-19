@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Client } from '../../types';
 import { Card, Button } from '../../components/UI';
-import { User, Building, Mail, Save, FileText, MapPin, Phone, Hash, Upload, CheckCircle, Users, Bell, ToggleLeft, Trash2, Plus } from 'lucide-react';
+import { User, Building, Mail, Save, FileText, MapPin, Phone, Hash, Upload, CheckCircle, Users, Bell, ToggleLeft, Trash2, Plus, Lock } from 'lucide-react';
 
 const ClientSettings = () => {
     const { user, updateClient, t } = useAppContext();
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'KYC' | 'TEAM' | 'NOTIFICATIONS'>('PROFILE');
+    const [activeTab, setActiveTab] = useState<'PROFILE' | 'KYC' | 'TEAM' | 'SECURITY' | 'NOTIFICATIONS'>('PROFILE');
 
     // Real data from user context only
     const [formData, setFormData] = useState({
@@ -28,6 +28,10 @@ const ClientSettings = () => {
         vatNumber: (user as Client).vatNumber || '',
         nationalAddress: (user as Client).nationalAddress || '',
         legalStructure: (user as Client).legalStructure || 'LLC',
+
+        // Security
+        password: '',
+        confirmPassword: ''
     });
 
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
@@ -59,17 +63,23 @@ const ClientSettings = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // In a real app, we would upload files to storage here
-        // and update the user profile with URLs.
-        // For now, we simulate success and update text fields.
-        console.log('Submitting Client Settings Form...');
 
+        if (formData.password && formData.password !== formData.confirmPassword) {
+            alert('Passwords do not match!');
+            return;
+        }
+
+        console.log('Submitting Client Settings Form...');
 
         let updates: any = {
             name: formData.name,
             mobileNumber: formData.phone,
             // email: formData.email, // Immutable
         };
+
+        if (formData.password) {
+            updates.password = formData.password;
+        }
 
         if (user && user.role === 'CLIENT') {
             updates.companyName = formData.company;
@@ -86,6 +96,9 @@ const ClientSettings = () => {
         }
 
         updateClient(user!.id, updates);
+        if (formData.password) {
+            setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
+        }
         alert('Settings updated successfully.');
     };
 
@@ -101,6 +114,7 @@ const ClientSettings = () => {
                     { id: 'PROFILE', label: 'Company Profile', icon: Building },
                     { id: 'KYC', label: 'Legal & KYC', icon: FileText },
                     { id: 'TEAM', label: 'Team Members', icon: Users },
+                    { id: 'SECURITY', label: 'Security', icon: Lock },
                     { id: 'NOTIFICATIONS', label: 'Notifications', icon: Bell },
                 ].map(tab => (
                     <button
@@ -280,6 +294,39 @@ const ClientSettings = () => {
                                     </div>
                                 ))
                             )}
+                        </div>
+                    </Card>
+                )}
+
+                {activeTab === 'SECURITY' && (
+                    <Card>
+                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <Lock className="text-primary-600" size={20} /> Password & Security
+                        </h3>
+                        <div className="max-w-md space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
+                                    placeholder="Enter new password"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                                <input
+                                    type="password"
+                                    name="confirmPassword"
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
+                                    placeholder="Confirm new password"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500">
+                                Make sure your password is at least 6 characters long.
+                            </p>
                         </div>
                     </Card>
                 )}

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Button } from '../../components/UI';
-import { User, Mail, DollarSign, Briefcase, Save, Eye, CheckCircle, Shield, FileText, Upload } from 'lucide-react';
+import { User, Mail, DollarSign, Briefcase, Save, Eye, CheckCircle, Shield, FileText, Upload, Lock, Phone, Linkedin } from 'lucide-react';
 
 const ExpertProfile = () => {
     const { user, updateExpert } = useAppContext();
@@ -16,16 +16,19 @@ const ExpertProfile = () => {
             name: user?.name || '',
             email: user?.email || '',
             bio: (user as any)?.bio || '',
+            mobileNumber: (user as any)?.mobileNumber || '',
+            linkedinUrl: (user as any)?.linkedinUrl || '',
             hourlyRate: (user as any)?.hourlyRate || 0,
             specializations: safeSpecs,
+            password: '',
+            confirmPassword: ''
         };
     });
 
-    // Update form data if user context changes (e.g. initial load from null/storage)
+    // Update form data if user context changes
     React.useEffect(() => {
         if (user) {
             setFormData(prev => {
-                // Only update if email changed to avoid wiping user edits
                 if (prev.email !== user.email) {
                     const specs = (user as any)?.specializations;
                     const safeSpecs = Array.isArray(specs) ? specs.join(', ') : (typeof specs === 'string' ? specs : '');
@@ -33,8 +36,12 @@ const ExpertProfile = () => {
                         name: user.name || '',
                         email: user.email || '',
                         bio: (user as any).bio || '',
+                        mobileNumber: (user as any).mobileNumber || '',
+                        linkedinUrl: (user as any).linkedinUrl || '',
                         hourlyRate: (user as any).hourlyRate || 0,
                         specializations: safeSpecs,
+                        password: '',
+                        confirmPassword: ''
                     };
                 }
                 return prev;
@@ -42,6 +49,7 @@ const ExpertProfile = () => {
             setAvatarPreview(user.avatarUrl);
         }
     }, [user]);
+
     const [avatarPreview, setAvatarPreview] = useState(user?.avatarUrl);
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,15 +71,31 @@ const ExpertProfile = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (user) {
-            updateExpert(user.id, {
+            if (formData.password && formData.password !== formData.confirmPassword) {
+                alert("Passwords do not match!");
+                return;
+            }
+
+            const payload: any = {
                 name: formData.name,
                 // @ts-ignore
                 bio: formData.bio,
                 // @ts-ignore
+                mobileNumber: formData.mobileNumber,
+                // @ts-ignore
+                linkedinUrl: formData.linkedinUrl,
+                // @ts-ignore
                 hourlyRate: parseFloat(formData.hourlyRate as any),
                 specializations: formData.specializations.split(',').map((s: string) => s.trim()).filter(Boolean)
-            });
+            };
+
+            if (formData.password) {
+                payload.password = formData.password;
+            }
+
+            updateExpert(user.id, payload);
             alert('Profile updated successfully.');
+            setFormData(prev => ({ ...prev, password: '', confirmPassword: '' })); // Clear password fields
         }
     };
 
@@ -114,7 +138,7 @@ const ExpertProfile = () => {
                                             <Shield size={10} /> Verified Expert
                                         </span>
                                         <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
-                                            {((user as any).rating || 0).toFixed(1)} ★
+                                            {((user as any)?.rating || 0).toFixed(1)} ★
                                         </span>
                                     </div>
                                 </div>
@@ -151,6 +175,21 @@ const ExpertProfile = () => {
                                 </div>
 
                                 <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                        <input
+                                            type="text"
+                                            name="mobileNumber"
+                                            value={formData.mobileNumber}
+                                            onChange={handleChange}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            placeholder="+966..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-1">Hourly Rate (SAR)</label>
                                     <div className="relative">
                                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -160,6 +199,21 @@ const ExpertProfile = () => {
                                             value={formData.hourlyRate}
                                             onChange={handleChange}
                                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">LinkedIn URL</label>
+                                    <div className="relative">
+                                        <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                        <input
+                                            type="text"
+                                            name="linkedinUrl"
+                                            value={formData.linkedinUrl}
+                                            onChange={handleChange}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            placeholder="https://linkedin.com/in/..."
                                         />
                                     </div>
                                 </div>
@@ -191,6 +245,37 @@ const ExpertProfile = () => {
                                         placeholder="Describe your professional background..."
                                     />
                                 </div>
+
+                                {/* Password Management */}
+                                <div className="md:col-span-2 pt-4 border-t border-gray-100">
+                                    <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                        <Lock size={18} className="text-gray-500" /> Change Password
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                                            <input
+                                                type="password"
+                                                name="password"
+                                                value={formData.password}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
+                                                placeholder="Leave blank to keep current"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                                            <input
+                                                type="password"
+                                                name="confirmPassword"
+                                                value={formData.confirmPassword}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
+                                                placeholder="Confirm new password"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="pt-4 border-t border-gray-100 flex justify-end">
@@ -208,7 +293,7 @@ const ExpertProfile = () => {
                         <h3 className="font-bold text-gray-800 mb-4">Verification Status</h3>
                         <div className="space-y-4">
                             {/* Only show if actually approved/verified */}
-                            {user?.status === 'APPROVED' ? (
+                            {user?.status === 'APPROVED' || (user as any)?.status === 'ACTIVE' ? (
                                 <>
                                     <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
                                         <div className="flex items-center gap-3">
@@ -251,7 +336,7 @@ const ExpertProfile = () => {
                         <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-4 text-white text-center">
                             <img src={avatarPreview || user?.avatarUrl} className="w-16 h-16 rounded-full mx-auto border-2 border-white mb-2 object-cover" />
                             <p className="font-bold">{formData.name}</p>
-                            <p className="text-xs text-gray-400 mb-3 line-clamp-1">{formData.bio}</p>
+                            <p className="text-xs text-gray-400 mb-3 line-clamp-1">{formData.bio || "No bio set"}</p>
                             <Button size="sm" variant="secondary" className="w-full text-xs h-8">
                                 <Eye size={14} /> View Public Profile
                             </Button>
