@@ -5,8 +5,10 @@ import { Card, Button } from '../../components/UI';
 import { User, Mail, DollarSign, Briefcase, Save, Eye, CheckCircle, Shield, FileText, Upload, Lock, Phone, Linkedin } from 'lucide-react';
 
 const ExpertProfile = () => {
-    const { user, updateExpert } = useAppContext();
+    const { user, updateExpert, isLoading, isRestoringSession } = useAppContext();
     const [isPublic, setIsPublic] = useState(true);
+
+    const [avatarPreview, setAvatarPreview] = useState(user?.avatarUrl);
 
     const [formData, setFormData] = React.useState(() => {
         const specs = (user as any)?.specializations;
@@ -50,7 +52,18 @@ const ExpertProfile = () => {
         }
     }, [user]);
 
-    const [avatarPreview, setAvatarPreview] = useState(user?.avatarUrl);
+    if (isLoading || isRestoringSession) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return <div className="p-8 text-center text-gray-500">User profile not found. Please log in again.</div>;
+    }
+
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
