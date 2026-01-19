@@ -1,8 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { User, Client, Expert, Admin, Request, Service, Review, PricingPlan, PayoutRequest, PlatformSettings, ClientFeaturePermissions, SitePage } from '../types';
 import { MOCK_CLIENTS, MOCK_EXPERTS, MOCK_REQUESTS, SERVICES, MOCK_ADMINS, MOCK_PLANS } from '../mockData';
-import { translations } from '../utils/translations';
 
 interface AppContextType {
   user: User | null;
@@ -11,7 +11,7 @@ interface AppContextType {
   logout: () => void;
   language: 'en' | 'ar';
   setLanguage: (lang: 'en' | 'ar') => void;
-  t: (key: string) => string;
+  t: (key: string, options?: any) => string;
   apiError: string | null;
   setApiError?: (error: string | null) => void;
   isLoading: boolean;
@@ -91,9 +91,24 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
 }
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t: i18nT, i18n } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [isRestoringSession, setIsRestoringSession] = useState(true);
-  const [language, setLanguage] = useState<'en' | 'ar'>('en');
+
+  // Initialize language from i18n or localStorage (i18n detector handles this mostly, but we sync state)
+  const [language, setInternalLanguage] = useState<'en' | 'ar'>((i18n.language as 'en' | 'ar') || 'en');
+
+  // Sync state when i18n language changes
+  useEffect(() => {
+    if (i18n.language) {
+      setInternalLanguage(i18n.language as 'en' | 'ar');
+    }
+  }, [i18n.language]);
+
+  const setLanguage = (lang: 'en' | 'ar') => {
+    i18n.changeLanguage(lang);
+    setInternalLanguage(lang);
+  };
 
   // "Database" in state
   const [apiError, setApiError] = useState<string | null>(null);
@@ -106,10 +121,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
 
-  useEffect(() => {
-    document.documentElement.lang = language;
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-  }, [language]);
+  // useEffect(() => {
+  //   document.documentElement.lang = language;
+  //   document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+  // }, [language]); // Managed by i18n.on('languageChanged') now in i18n.ts
 
   useEffect(() => {
     // Initialize Mock Data (Empty now as we cleaned it)
@@ -258,13 +273,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.removeItem('finume_user');
   };
 
-  const t = (key: string): string => {
-    const keys = key.split('.');
-    let value: any = translations[language];
-    for (const k of keys) {
-      value = value?.[k];
-    }
-    return value || key;
+  const t = (key: string, options?: any): string => {
+    return i18nT(key, options) as string;
   };
 
   // Fetch Requests from Backend

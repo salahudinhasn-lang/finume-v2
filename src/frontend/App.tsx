@@ -1,5 +1,6 @@
 
 import React from 'react';
+import './i18n';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
 import LoginPage from './pages/Auth';
