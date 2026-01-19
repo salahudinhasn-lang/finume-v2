@@ -75,7 +75,8 @@ const LoginPage = () => {
       if (res.ok) {
         localStorage.setItem('finume_user', JSON.stringify(data.user));
         localStorage.setItem('finume_token', data.token);
-        window.location.href = data.user.role === 'ADMIN' ? '/#/admin' : data.user.role === 'EXPERT' ? '/#/expert' : '/#/client';
+        const targetPath = data.user.role === 'ADMIN' ? '/admin' : data.user.role === 'EXPERT' ? '/expert' : '/client';
+        navigate(targetPath);
       } else {
         alert(t(data.error || 'Login failed'));
       }
@@ -107,7 +108,8 @@ const LoginPage = () => {
       if (res.ok) {
         localStorage.setItem('finume_user', JSON.stringify(data.user));
         localStorage.setItem('finume_token', data.token);
-        window.location.href = data.user.role === 'ADMIN' ? '/#/admin' : data.user.role === 'EXPERT' ? '/#/expert' : '/#/client';
+        const targetPath = data.user.role === 'ADMIN' ? '/admin' : data.user.role === 'EXPERT' ? '/expert' : '/client';
+        navigate(targetPath);
       } else {
         alert(data.error || 'LinkedIn Login Failed');
       }

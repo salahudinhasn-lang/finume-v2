@@ -83,7 +83,7 @@ export async function POST(request: Request) {
                 userData.expertProfile = {
                     create: {
                         bio: 'New Expert via Google',
-                        specialization: 'General',
+                        specializations: ['General'],
                         status: 'VETTING'
                     }
                 };

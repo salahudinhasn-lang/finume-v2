@@ -116,7 +116,7 @@ export async function POST(request: Request) {
                 userData.expertProfile = {
                     create: {
                         bio: 'New Expert via LinkedIn',
-                        specialization: 'General',
+                        specializations: ['General'],
                         status: 'VETTING'
                     }
                 };
