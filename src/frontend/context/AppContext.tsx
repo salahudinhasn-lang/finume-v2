@@ -686,14 +686,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 2. Persist
     try {
-      // Map frontend fields (like objects) to what API expects if needed, 
-      // but our API route handles JSON.stringify for requiredSkills if passed as object.
       const res = await fetch(`${API_BASE_URL}/api/requests/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
-      return res.ok;
+
+      if (res.ok) {
+        const updatedRequest = await res.json();
+        // Update state with actual server data (includes generated timestamps)
+        setRequests(prev => prev.map(r => r.id === id ? updatedRequest : r));
+        return true;
+      } else {
+        console.error('Failed to update request DB', await res.text());
+        // Revert optimistic update?
+        // For now, simpler to just alert or reload. 
+        // Ideally we fetchRequests() to reset state.
+        return false;
+      }
     } catch (e) {
       console.error('Failed to update request DB', e);
       alert('Failed to save changes to the server. Please check your connection.');

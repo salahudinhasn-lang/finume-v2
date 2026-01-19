@@ -8,6 +8,11 @@ const Timer = ({ startDate }: { startDate: string | Date }) => {
 
         const start = new Date(startDate).getTime();
 
+        if (isNaN(start)) {
+            setElapsed('00:00:00');
+            return;
+        }
+
         const interval = setInterval(() => {
             const now = new Date().getTime();
             const diff = now - start;
@@ -30,7 +35,7 @@ const Timer = ({ startDate }: { startDate: string | Date }) => {
     }, [startDate]);
 
     return (
-        <span className="font-mono tabular-nums tracking-widest text-lg font-bold">
+        <span className="font-mono tabular-nums tracking-widest text-xl font-black text-blue-800 drop-shadow-sm min-w-[100px] text-center inline-block">
             {elapsed}
         </span>
     );
