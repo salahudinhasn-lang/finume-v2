@@ -696,6 +696,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return res.ok;
     } catch (e) {
       console.error('Failed to update request DB', e);
+      alert('Failed to save changes to the server. Please check your connection.');
       return false;
     }
   };

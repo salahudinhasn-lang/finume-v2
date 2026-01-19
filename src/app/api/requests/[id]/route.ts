@@ -11,6 +11,7 @@ export async function PATCH(
     try {
         const { id } = await params;
         const body = await request.json();
+        console.log(`[PATCH Request] ID: ${id}`, body);
 
         // Extract allowed fields to update
         const { assignedExpertId, status, visibility, requiredSkills } = body;
@@ -19,7 +20,7 @@ export async function PATCH(
         if (assignedExpertId !== undefined) dataToUpdate.assignedExpertId = assignedExpertId;
         if (status !== undefined) dataToUpdate.status = status;
         if (visibility !== undefined) dataToUpdate.visibility = visibility;
-        if (requiredSkills !== undefined) dataToUpdate.requiredSkills = typeof requiredSkills === 'object' ? JSON.stringify(requiredSkills) : requiredSkills;
+        if (requiredSkills !== undefined) dataToUpdate.requiredSkills = requiredSkills;
 
         // --- Logic for "OPEN POOL" ---
         if (visibility === 'OPEN') {
