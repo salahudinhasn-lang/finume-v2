@@ -339,27 +339,25 @@ const LoginPage = () => {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="mt-6 flex justify-center gap-4">
               <button
                 onClick={triggerGoogle}
-                className="w-full inline-flex justify-center py-2.5 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+                className="flex items-center justify-center w-24 h-16 border border-gray-200 rounded-xl shadow-sm bg-white hover:bg-gray-50 hover:border-gray-300 transition-all"
+                title={t('auth.google')}
               >
-                <span className="sr-only">{t('auth.google')}</span>
-                <svg className="h-5 w-5 mr-2" aria-hidden="true" viewBox="0 0 24 24">
+                <svg className="h-7 w-7" aria-hidden="true" viewBox="0 0 24 24">
                   <path
                     d="M12.0003 20.45c4.6667 0 8.5833-3.2083 9.9583-7.5833H12.0003v-4.125h12.5c.1667 1.2917.25 2.6667.25 4.125 0 6.9167-4.8333 11.8333-11.75 11.8333-6.4583 0-11.7083-5.25-11.7083-11.7083S6.542 1.2917 12.0003 1.2917c3.1667 0 5.875 1.1667 7.9583 3.125l-3 3c-1.25-1.2083-2.9166-1.9167-4.9583-1.9167-4.125 0-7.5833 3.3333-7.5833 7.5s3.4583 7.5 7.5833 7.5z"
                     fill="currentColor"
                   />
                 </svg>
-                Google
               </button>
               <button
                 onClick={triggerLinkedin}
-                className="w-full inline-flex justify-center py-2.5 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+                className="flex items-center justify-center w-24 h-16 border border-gray-200 rounded-xl shadow-sm bg-white hover:bg-gray-50 hover:border-gray-300 transition-all"
+                title={t('auth.linkedin')}
               >
-                <span className="sr-only">{t('auth.linkedin')}</span>
-                <Linkedin size={20} className="mr-2 text-[#0077b5]" />
-                LinkedIn
+                <Linkedin size={28} className="text-[#0077b5]" />
               </button>
             </div>
           </div>
