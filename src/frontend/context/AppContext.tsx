@@ -769,23 +769,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateExpert = async (id: string, updates: Partial<Expert>) => {
     // 1. Optimistic Update
     setExperts(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
-    if (user && user.id === id) {
-      const updatedUser = user ? { ...user, ...updates } as User : null;
-      setUser(updatedUser);
-      if (updatedUser) {
-        localStorage.setItem('finume_user', JSON.stringify(updatedUser));
-      }
-    }
 
     // 2. Persist
     try {
-      await fetch(`${API_BASE_URL}/api/users/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        // Ensure we don't send derived fields if they aren't in DB Schema effectively (though Prisma ignores unknown if configured, better to be safe)
-        // For now, passing updates directly.
         body: JSON.stringify(updates)
       });
+
+      if (res.ok) {
+        const updatedExpert = await res.json();
+        // Update local state if this is the logged-in user
+        if (user && user.id === id) {
+          console.log("Updating local session with fresh expert data", updatedExpert);
+          // Ensure we preserve the token (it's not changed)
+          const token = localStorage.getItem('finume_token') || '';
+          setSession(updatedExpert, token);
+        }
+      } else {
+        console.error('Failed to update expert DB');
+      }
     } catch (e) {
       console.error('Failed to update expert DB', e);
     }
