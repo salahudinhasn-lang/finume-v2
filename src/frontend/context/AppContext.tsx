@@ -684,30 +684,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateRequest = async (id: string, updates: Partial<Request>): Promise<boolean> => {
     // 1. Optimistic Update
     setRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+    console.log(`[AppContext] Updating request ${id}`, updates);
 
     // 2. Persist
     try {
-      const res = await fetch(`${API_BASE_URL}/api/requests/${id}`, {
+      const url = `${API_BASE_URL}/api/requests/${id}`;
+      console.log(`[AppContext] sending PATCH to ${url}`);
+      const res = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
 
+      console.log(`[AppContext] Response status: ${res.status}`);
+
       if (res.ok) {
         const updatedRequest = await res.json();
+        console.log('[AppContext] Server returned updated request:', updatedRequest);
         // Update state with actual server data (includes generated timestamps)
         setRequests(prev => prev.map(r => r.id === id ? updatedRequest : r));
         return true;
       } else {
-        console.error('Failed to update request DB', await res.text());
-        // Revert optimistic update?
-        // For now, simpler to just alert or reload. 
-        // Ideally we fetchRequests() to reset state.
+        const errText = await res.text();
+        console.error('Failed to update request DB', errText);
+        alert(`Server Error: Failed to save status. \n${errText}`);
         return false;
       }
     } catch (e) {
       console.error('Failed to update request DB', e);
-      alert('Failed to save changes to the server. Please check your connection.');
+      alert('Network Error: Failed to save changes. Check console for details.');
       return false;
     }
   };
