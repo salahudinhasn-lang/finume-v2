@@ -100,7 +100,8 @@ const LoginPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code,
-          redirectUri: window.location.origin + '/login',
+          code,
+          redirectUri: "https://finume-v2.vercel.app/login", // Must match the one sent in auth request
           role: roleParam || 'CLIENT'
         })
       });
@@ -134,7 +135,9 @@ const LoginPage = () => {
 
   const triggerLinkedin = () => {
     const clientId = '77nmudsqcg5t0i';
-    const redirectUri = encodeURIComponent(window.location.origin + '/login');
+    // Use stable production URL to match LinkedIn Whitelist
+    const stableOrigin = "https://finume-v2.vercel.app";
+    const redirectUri = encodeURIComponent(stableOrigin + '/login');
     const scope = encodeURIComponent('openid profile email');
     // Encode role in state
     const state = `linkedin_auth:${role}`;
