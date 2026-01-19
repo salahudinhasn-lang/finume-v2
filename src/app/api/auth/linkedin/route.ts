@@ -15,6 +15,10 @@ export async function POST(request: Request) {
     try {
         const { code, redirectUri } = await request.json();
 
+        if (!LINKEDIN_CLIENT_SECRET) {
+            throw new Error('LINKEDIN_CLIENT_SECRET is not defined');
+        }
+
         // 1. Exchange Code for Token
         const tokenRes = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
             method: 'POST',
