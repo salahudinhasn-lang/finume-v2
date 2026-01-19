@@ -151,7 +151,7 @@ const ExpertProfile = () => {
                                             <Shield size={10} /> Verified Expert
                                         </span>
                                         <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
-                                            {((user as any)?.rating || 0).toFixed(1)} ★
+                                            {Number((user as any)?.rating || 0).toFixed(1)} ★
                                         </span>
                                     </div>
                                 </div>
