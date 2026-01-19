@@ -139,6 +139,7 @@ model Expert {
   rating          Decimal  @default(0)
   totalReviews    Int      @default(0)
   totalEarned     Decimal  @default(0)
+  linkedinUrl     String?
   
   iban            String?
   kycStatus       String   @default("PENDING")
