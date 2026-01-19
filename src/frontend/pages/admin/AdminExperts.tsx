@@ -8,6 +8,7 @@ import { Expert } from '../../types';
 
 const AdminExperts = () => {
   const { experts, updateExpertStatus, updateExpert, settings, updateSettings } = useAppContext();
+  // Force redeploy detection
   // console.log('Experts in AdminExperts:', experts); // Removed debug log
   const [filter, setFilter] = useState('VETTING'); // Default to VETTING view
   const [search, setSearch] = useState('');
