@@ -108,7 +108,8 @@ async function main() {
   // Hash for "12121212"
   const passwordHash = await require('bcryptjs').hash("12121212", 10);
 
-  // 1. CLEAN UP
+  // 1. CLEAN UP - DISABLED TO PREVENT WIPING PROD DATA
+  /*
   try {
     console.log('Cleaning up database...');
     await prisma.transaction.deleteMany({});
@@ -135,6 +136,7 @@ async function main() {
   } catch (e) {
     console.warn('Cleanup warning:', e);
   }
+  */
 
   // 2. SERVICES
   for (const s of SERVICES) {
