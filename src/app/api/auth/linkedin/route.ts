@@ -13,7 +13,7 @@ const REDIRECT_URI = typeof window !== 'undefined'
 
 export async function POST(request: Request) {
     try {
-        const { code, redirectUri } = await request.json();
+        const { code, redirectUri, role: requestedRole } = await request.json();
 
         if (!LINKEDIN_CLIENT_SECRET) {
             throw new Error('LINKEDIN_CLIENT_SECRET is not defined');
@@ -87,7 +87,11 @@ export async function POST(request: Request) {
             }
         } else {
             // Create New User
-            const randomId = `CUS-${Math.floor(100000 + Math.random() * 900000)}`;
+            const randomId = requestedRole === 'EXPERT'
+                ? `EXP-${Math.floor(100000 + Math.random() * 900000)}`
+                : `CUS-${Math.floor(100000 + Math.random() * 900000)}`;
+
+            const newRole = requestedRole === 'EXPERT' ? 'EXPERT' : 'CLIENT';
 
             user = await prisma.user.create({
                 data: {
@@ -96,16 +100,27 @@ export async function POST(request: Request) {
                     name,
                     linkedinId,
                     avatarUrl: picture,
-                    role: 'CLIENT',
+                    role: newRole,
                     passwordHash: 'LINKEDIN_AUTH_NO_PASS',
                     isActive: true,
                     isVerified: true,
-                    clientProfile: {
-                        create: {
-                            companyName: 'New Company',
-                            industry: 'General'
+                    ...(newRole === 'CLIENT' && {
+                        clientProfile: {
+                            create: {
+                                companyName: 'New Company',
+                                industry: 'General'
+                            }
                         }
-                    }
+                    }),
+                    ...(newRole === 'EXPERT' && {
+                        expertProfile: {
+                            create: {
+                                bio: 'New Expert via LinkedIn',
+                                specialization: 'General',
+                                status: 'VETTING'
+                            }
+                        }
+                    })
                 },
                 include: {
                     clientProfile: { include: { permissions: true } },

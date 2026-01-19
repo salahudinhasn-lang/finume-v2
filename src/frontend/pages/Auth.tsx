@@ -16,8 +16,11 @@ const LoginPage = () => {
   const [password, setPassword] = useState('password');
   const [isLoading, setIsLoading] = useState(false);
 
+  const roleRef = React.useRef(role);
 
-  const [googleLoaded, setGoogleLoaded] = useState(false);
+  useEffect(() => {
+    roleRef.current = role;
+  }, [role]);
 
   useEffect(() => {
     // Load Google Script
@@ -38,11 +41,6 @@ const LoginPage = () => {
         client_id: "640269627410-dur5hrb3s95v4v7frnmvapc4fkgaronq.apps.googleusercontent.com",
         callback: handleGoogleResponse
       });
-      // We can render a button or just use the JS API to prompt
-      // (window as any).google.accounts.id.renderButton(
-      //     document.getElementById("google-btn"),
-      //     { theme: "outline", size: "large" }
-      // );
     }
   }, [googleLoaded]);
 
@@ -50,30 +48,32 @@ const LoginPage = () => {
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const code = searchParams.get('code');
-    const state = searchParams.get('state');
+    const state = searchParams.get('state'); // now like 'linkedin_auth:CLIENT'
 
-    if (code && state === 'linkedin_auth') {
-      handleLinkedinCallback(code);
+    if (code && state?.startsWith('linkedin_auth')) {
+      const [, roleParam] = state.split(':');
+      handleLinkedinCallback(code, roleParam);
     }
   }, [location.search]);
 
   const handleGoogleResponse = async (response: any) => {
     console.log("Google Response", response);
+    const currentRole = roleRef.current;
     setIsLoading(true);
     try {
       const res = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: response.credential })
+        body: JSON.stringify({
+          token: response.credential,
+          role: currentRole
+        })
       });
 
       const data = await res.json();
       if (res.ok) {
-        // We need a way to "login" via context manually or just reload/redirect
-        // Ideally modify `login` in context to accept a full user object, or just set storage and reload
         localStorage.setItem('finume_user', JSON.stringify(data.user));
         localStorage.setItem('finume_token', data.token);
-        // Force reload to pick up session or navigate
         window.location.href = data.user.role === 'ADMIN' ? '/#/admin' : data.user.role === 'EXPERT' ? '/#/expert' : '/#/client';
       } else {
         alert(t(data.error || 'Login failed'));
@@ -86,7 +86,7 @@ const LoginPage = () => {
     }
   };
 
-  const handleLinkedinCallback = async (code: string) => {
+  const handleLinkedinCallback = async (code: string, roleParam?: string) => {
     setIsLoading(true);
     try {
       // Clean URL
@@ -97,7 +97,8 @@ const LoginPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code,
-          redirectUri: window.location.origin + '/login'
+          redirectUri: window.location.origin + '/login',
+          role: roleParam || 'CLIENT'
         })
       });
 
@@ -127,7 +128,8 @@ const LoginPage = () => {
     const clientId = '77nmudsqcg5t0i';
     const redirectUri = encodeURIComponent(window.location.origin + '/login');
     const scope = encodeURIComponent('openid profile email');
-    const state = 'linkedin_auth';
+    // Encode role in state
+    const state = `linkedin_auth:${role}`;
     window.location.href = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}`;
   };
 
