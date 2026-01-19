@@ -48,6 +48,9 @@ const AdminExperts = () => {
   const [editingExpert, setEditingExpert] = useState<Expert | null>(null);
   const [expertFormData, setExpertFormData] = useState<Partial<Expert>>({});
 
+  // Viewing State
+  const [viewingExpert, setViewingExpert] = useState<Expert | null>(null);
+
   // Logic for the Funnel
   const safeExperts = experts || [];
   const totalRegistered = safeExperts.length;
@@ -201,7 +204,7 @@ const AdminExperts = () => {
                   {filteredExperts.map(expert => (
                     <tr key={expert.id} className="hover:bg-blue-50/50 transition-colors group">
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => handleEdit(expert)}>
+                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => setViewingExpert(expert)}>
                           <div className="relative">
                             <img src={expert.avatarUrl || ''} alt="" className="w-10 h-10 rounded-full bg-gray-200 object-cover ring-2 ring-white shadow-sm" />
                             <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${expert.status === 'ACTIVE' ? 'bg-green-500' : expert.status === 'VETTING' ? 'bg-orange-500' : 'bg-red-500'}`}></span>
@@ -224,6 +227,17 @@ const AdminExperts = () => {
                       <td className="px-6 py-4"><Badge status={expert.status} /></td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+
+                          {/* Preview Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setViewingExpert(expert); }}
+                            className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="View Profile"
+                          >
+                            <Search size={18} />
+                          </button>
+
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleEdit(expert); }}
@@ -232,14 +246,7 @@ const AdminExperts = () => {
                           >
                             <Edit size={18} />
                           </button>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleSupport(expert); }}
-                            className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Contact Support"
-                          >
-                            <LifeBuoy size={18} />
-                          </button>
+
                           {(expert.status || '').toUpperCase() === 'VETTING' && (
                             <div className="flex gap-1 ml-2">
                               <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'SUSPENDED'); }} className="text-xs h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">Reject</Button>
@@ -250,7 +257,7 @@ const AdminExperts = () => {
                             <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'SUSPENDED'); }} className="text-xs h-8 px-2">Suspend</Button>
                           )}
                           {(expert.status || '').toUpperCase() === 'SUSPENDED' && (
-                            <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'ACTIVE'); }} className="text-xs h-8 px-2">Reactivate</Button>
+                            <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); updateExpertStatus(expert.id, 'ACTIVE'); }} className="text-xs h-8 px-2 bg-green-100 text-green-700 hover:bg-green-200 border-green-200">Reactivate</Button>
                           )}
                         </div>
                       </td>
@@ -295,6 +302,108 @@ const AdminExperts = () => {
               </div>
             </div>
           </Card>
+        </div>
+      )}
+
+      {/* View Expert Details Modal */}
+      {viewingExpert && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="bg-gray-900 p-6 text-white flex justify-between items-center shrink-0">
+              <div>
+                <h3 className="font-bold text-xl">Expert Profile</h3>
+                <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">{viewingExpert.id}</p>
+              </div>
+              <button onClick={() => setViewingExpert(null)} className="hover:bg-white/20 p-2 rounded-full transition-colors"><X size={24} /></button>
+            </div>
+
+            <div className="p-8 overflow-y-auto">
+              <div className="flex flex-col md:flex-row gap-8">
+                {/* Left Column: Avatar & Quick Info */}
+                <div className="flex flex-col items-center gap-4 md:w-1/3 border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-6 shrink-0">
+                  <img src={viewingExpert.avatarUrl || ''} className="w-32 h-32 rounded-full object-cover border-4 border-gray-50 shadow-lg" />
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-gray-900">{viewingExpert.name}</h2>
+                    <Badge status={viewingExpert.status} className="mt-2" />
+                  </div>
+
+                  <div className="w-full space-y-3 mt-4">
+                    <div className="p-3 bg-gray-50 rounded-lg text-center">
+                      <p className="text-xs text-gray-500 uppercase font-bold">Hourly Rate</p>
+                      <p className="text-lg font-bold text-gray-900">{viewingExpert.hourlyRate} SAR</p>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg text-center">
+                      <p className="text-xs text-gray-500 uppercase font-bold">Experience</p>
+                      <p className="text-lg font-bold text-gray-900">{viewingExpert.yearsExperience} Years</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Detailed Info */}
+                <div className="flex-1 space-y-6">
+                  <div>
+                    <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Contact Information</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 text-gray-700">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><span className="text-xs">@</span></div>
+                        <span className="font-medium">{viewingExpert.email}</span>
+                      </div>
+                      {viewingExpert.mobileNumber && (
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">PH</div>
+                          <span className="font-medium">{viewingExpert.mobileNumber}</span>
+                        </div>
+                      )}
+                      {viewingExpert.linkedinUrl && (
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-700">IN</div>
+                          <a href={viewingExpert.linkedinUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline break-all">
+                            LinkedIn Profile
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Professional Bio</h4>
+                    <p className="text-gray-600 leading-relaxed text-sm bg-gray-50 p-4 rounded-xl border border-gray-100">
+                      {viewingExpert.bio || 'No bio provided.'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Specializations</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {(viewingExpert.specializations || []).map((s, i) => (
+                        <span key={i} className="bg-gray-100 px-3 py-1 rounded-full text-xs font-bold text-gray-700 border border-gray-200">
+                          {String(s)}
+                        </span>
+                      ))}
+                      {(!viewingExpert.specializations || viewingExpert.specializations.length === 0) && <span className="text-sm text-gray-400 italic">None listed</span>}
+                    </div>
+                  </div>
+
+                  {viewingExpert.cvUrl && (
+                    <div className="pt-4 border-t border-gray-100">
+                      <a href={viewingExpert.cvUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 font-bold hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50 transition-all">
+                        View Attached CV / Resume
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 shrink-0">
+              <Button variant="secondary" onClick={() => setViewingExpert(null)}>Close</Button>
+              {viewingExpert.status === 'SUSPENDED' && (
+                <Button onClick={() => { updateExpertStatus(viewingExpert.id, 'ACTIVE'); setViewingExpert(null); }} className="bg-green-600 hover:bg-green-700">
+                  Re-Activate Expert
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
