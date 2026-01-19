@@ -62,7 +62,7 @@ const ProtectedRoute = ({ children, allowedRoles }: { children?: React.ReactNode
 
   // Force Expert Onboarding
   if (user.role === 'EXPERT' && !allowedRoles.includes('ONBOARDING_ONLY')) {
-    const isProfileComplete = user.mobileNumber && user.specializations && user.specializations.length > 0 && user.hourlyRate > 0;
+    const isProfileComplete = user.mobileNumber && user.specializations && user.specializations.length > 0 && (user as any).hourlyRate > 0;
     if (!isProfileComplete) {
       return <Navigate to="/expert/onboarding" replace />;
     }
