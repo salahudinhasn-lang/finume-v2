@@ -10,9 +10,20 @@ const ExpertProfile = () => {
 
     const [avatarPreview, setAvatarPreview] = useState(user?.avatarUrl);
 
-    const [formData, setFormData] = React.useState(() => {
+    const [formData, setFormData] = React.useState<{
+        name: string;
+        email: string;
+        bio: string;
+        mobileNumber: string;
+        linkedinUrl: string;
+        hourlyRate: number;
+        specializations: string[];
+        password: '';
+        confirmPassword: '';
+    }>(() => {
         const specs = (user as any)?.specializations;
-        const safeSpecs = Array.isArray(specs) ? specs.join(', ') : (typeof specs === 'string' ? specs : '');
+        // Ensure we always start with an array
+        const safeSpecs = Array.isArray(specs) ? specs : (typeof specs === 'string' ? specs.split(',').map((s: string) => s.trim()).filter(Boolean) : []);
 
         return {
             name: user?.name || '',
@@ -27,13 +38,59 @@ const ExpertProfile = () => {
         };
     });
 
+    const [specializationInput, setSpecializationInput] = useState('');
+    const [selectedServiceKey, setSelectedServiceKey] = useState('');
+    const [isOtherSelected, setIsOtherSelected] = useState(false);
+
+    const specificServices = [
+        'bookkeeping',
+        'vatFilling',
+        'financialAudit',
+        'zakatAdvisory',
+        'cfoAdvisory'
+    ];
+
+    const handleServiceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        if (value === 'other') {
+            setIsOtherSelected(true);
+            setSelectedServiceKey('other');
+        } else {
+            setIsOtherSelected(false);
+            setSelectedServiceKey(value);
+
+            if (value) {
+                // Format camelCase to readable title case for display/storage
+                // e.g. "vatFilling" -> "Vat Filling"
+                const displayValue = value.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+
+                if (!formData.specializations.includes(displayValue)) {
+                    setFormData((prev: any) => ({
+                        ...prev,
+                        specializations: [...prev.specializations, displayValue]
+                    }));
+                }
+            }
+        }
+    };
+
+    const handleAddSpecialization = () => {
+        if (specializationInput.trim()) {
+            setFormData((prev: any) => ({
+                ...prev,
+                specializations: [...prev.specializations, specializationInput.trim()]
+            }));
+            setSpecializationInput('');
+        }
+    };
+
     // Update form data if user context changes
     React.useEffect(() => {
         if (user) {
             setFormData(prev => {
                 if (prev.email !== user.email) {
                     const specs = (user as any)?.specializations;
-                    const safeSpecs = Array.isArray(specs) ? specs.join(', ') : (typeof specs === 'string' ? specs : '');
+                    const safeSpecs = Array.isArray(specs) ? specs : (typeof specs === 'string' ? specs.split(',').map((s: string) => s.trim()).filter(Boolean) : []);
                     return {
                         name: user.name || '',
                         email: user.email || '',
@@ -51,6 +108,7 @@ const ExpertProfile = () => {
             setAvatarPreview(user.avatarUrl);
         }
     }, [user]);
+
 
     if (isLoading || isRestoringSession) {
         return (
@@ -99,7 +157,7 @@ const ExpertProfile = () => {
                 linkedinUrl: formData.linkedinUrl,
                 // @ts-ignore
                 hourlyRate: parseFloat(formData.hourlyRate as any),
-                specializations: formData.specializations.split(',').map((s: string) => s.trim()).filter(Boolean)
+                specializations: formData.specializations
             };
 
             if (formData.password) {
@@ -231,20 +289,49 @@ const ExpertProfile = () => {
                                     </div>
                                 </div>
 
-                                <div className="md:col-span-2">
+                                <div className="md:col-span-2 space-y-1">
                                     <label className="block text-sm font-bold text-gray-700 mb-1">Specializations (Skills)</label>
-                                    <div className="relative">
-                                        <Briefcase className="absolute left-3 top-3 text-gray-400" size={18} />
-                                        <input
-                                            type="text"
-                                            name="specializations"
-                                            value={formData.specializations}
-                                            onChange={handleChange}
-                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                            placeholder="e.g. VAT Filing, Zakat, Audit"
-                                        />
+                                    <div className="flex flex-col gap-3 mb-2">
+                                        <div className="relative">
+                                            <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                            <select
+                                                value={selectedServiceKey}
+                                                onChange={handleServiceSelect}
+                                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 outline-none transition-all appearance-none cursor-pointer bg-white"
+                                            >
+                                                <option value="">Select Specialization</option>
+                                                {specificServices.map(key => (
+                                                    <option key={key} value={key}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}</option>
+                                                ))}
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+
+                                        {isOtherSelected && (
+                                            <div className="flex gap-2 animate-in fade-in slide-in-from-top-1">
+                                                <input
+                                                    type="text"
+                                                    value={specializationInput}
+                                                    onChange={(e) => setSpecializationInput(e.target.value)}
+                                                    className="flex-1 px-4 py-2 border border-primary-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none shadow-sm"
+                                                    placeholder="Type custom skill..."
+                                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSpecialization())}
+                                                    autoFocus
+                                                />
+                                                <Button type="button" onClick={handleAddSpecialization} variant="secondary" size="sm" className="px-4 font-bold">Add</Button>
+                                            </div>
+                                        )}
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-1">Separate skills with commas.</p>
+                                    <div className="flex flex-wrap gap-2 min-h-[32px]">
+                                        {formData.specializations.map((spec: string, idx: number) => (
+                                            <span key={idx} className="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm animate-in zoom-in-50 duration-200">
+                                                {spec}
+                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, specializations: prev.specializations.filter((_: string, i: number) => i !== idx) }))} className="hover:text-red-300 transition-colors">
+                                                    &times;
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <div className="md:col-span-2">
