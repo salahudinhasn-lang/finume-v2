@@ -109,7 +109,7 @@ export const ServicesPage = () => {
                                 <div className="pt-6 border-t border-slate-50 flex items-center justify-between mt-auto">
                                     <div>
                                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t('public.startingFrom')}</p>
-                                        <p className="text-2xl font-black text-slate-900">{service.price.toLocaleString()} <span className="text-sm text-slate-400 font-medium">{t('common.sar')}</span></p>
+                                        <p className="text-2xl font-black text-slate-900">{service.price?.toLocaleString() || '0'} <span className="text-sm text-slate-400 font-medium">{t('common.sar')}</span></p>
                                     </div>
                                     <Button onClick={() => handleBookService(service.id)} className="bg-slate-900 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-bold transition-colors shadow-lg shadow-slate-200">
                                         {t('public.bookNow')}

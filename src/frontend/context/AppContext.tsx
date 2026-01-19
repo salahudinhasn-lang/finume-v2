@@ -504,7 +504,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (servicesRes.ok) {
         const ct = servicesRes.headers.get('content-type');
         if (ct && ct.includes('json')) {
-          setServices(await servicesRes.json());
+          const rawServices = await servicesRes.json();
+          const mappedServices = rawServices.map((s: any) => ({
+            ...s,
+            price: s.price !== undefined ? s.price : (s.basePrice !== undefined ? Number(s.basePrice) : 0),
+            description: s.description || '',
+            nameEn: s.nameEn || 'Unknown Service'
+          }));
+          setServices(mappedServices);
         }
       }
     } catch (e) { }
