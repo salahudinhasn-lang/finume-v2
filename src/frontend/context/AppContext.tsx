@@ -488,17 +488,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     // Fetch Requests & Pool
+    // Fetch Requests & Pool
     let currentUserId = user?.id;
+    let currentUserRole = user?.role;
+
     if (!currentUserId) {
       const stored = localStorage.getItem('finume_user');
       if (stored) {
         try {
           const p = JSON.parse(stored);
           currentUserId = p.id;
+          currentUserRole = p.role;
         } catch (e) { }
       }
     }
-    await fetchRequests(currentUserId);
+
+    // Only filter by ID if it's a CLIENT. Admins/Experts see all (or their specific view logic handles it)
+    if (currentUserRole === 'CLIENT' && currentUserId) {
+      await fetchRequests(currentUserId);
+    } else {
+      await fetchRequests();
+    }
     await fetchPool();
 
     // Fetch Services
