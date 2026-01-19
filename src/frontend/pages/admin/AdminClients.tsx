@@ -115,7 +115,7 @@ const AdminClients = () => {
                                                 {client.name.charAt(0)}
                                             </div>
                                             <div>
-                                                <p className="font-bold text-gray-900">{client.name}</p>
+                                                <p className="font-bold text-gray-900">{client.companyName}</p>
                                                 <p className="text-xs text-gray-500">{client.industry}</p>
                                             </div>
                                         </div>
