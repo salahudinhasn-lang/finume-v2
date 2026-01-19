@@ -15,6 +15,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState('client1@example.com');
   const [password, setPassword] = useState('password');
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoaded, setGoogleLoaded] = useState(false);
 
   const roleRef = React.useRef(role);
 
