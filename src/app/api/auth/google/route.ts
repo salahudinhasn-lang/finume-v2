@@ -123,8 +123,11 @@ export async function POST(request: Request) {
             token: jwtToken
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Google Auth Error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({
+            error: error.message || 'Internal Server Error',
+            details: error.toString()
+        }, { status: 500 });
     }
 }
