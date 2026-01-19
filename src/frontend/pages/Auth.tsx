@@ -7,7 +7,7 @@ import { Logo } from '../components/Logo';
 import { Mail, Lock, ArrowRight, Github, Linkedin, CheckCircle, ShieldCheck } from 'lucide-react';
 
 const LoginPage = () => {
-  const { login, t, language } = useAppContext();
+  const { login, t, language, setSession } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
   const [role, setRole] = useState('CLIENT');
@@ -75,8 +75,9 @@ const LoginPage = () => {
       if (res.ok) {
         localStorage.setItem('finume_user', JSON.stringify(data.user));
         localStorage.setItem('finume_token', data.token);
-        // Force reload to hydrate AppContext
-        window.location.href = data.user.role === 'ADMIN' ? '/#/admin' : data.user.role === 'EXPERT' ? '/#/expert' : '/#/client';
+        setSession(data.user, data.token);
+        const targetPath = data.user.role === 'ADMIN' ? '/admin' : data.user.role === 'EXPERT' ? '/expert' : '/client';
+        navigate(targetPath);
       } else {
         alert(t(data.error || 'Login failed'));
       }
@@ -108,8 +109,9 @@ const LoginPage = () => {
       if (res.ok) {
         localStorage.setItem('finume_user', JSON.stringify(data.user));
         localStorage.setItem('finume_token', data.token);
-        // Force reload to hydrate AppContext
-        window.location.href = data.user.role === 'ADMIN' ? '/#/admin' : data.user.role === 'EXPERT' ? '/#/expert' : '/#/client';
+        setSession(data.user, data.token);
+        const targetPath = data.user.role === 'ADMIN' ? '/admin' : data.user.role === 'EXPERT' ? '/expert' : '/client';
+        navigate(targetPath);
       } else {
         alert(data.error || 'LinkedIn Login Failed');
       }
@@ -126,7 +128,7 @@ const LoginPage = () => {
       (window as any).google.accounts.id.prompt();
     } else {
       console.error("Google script not loaded");
-      alert("Google Sign-In is not ready yet. Please check your internet connection or ad-blockers.");
+      alert("Google Sign-In is not ready yet. Please check your internet connection or ad-blockers on this device.");
     }
   };
 

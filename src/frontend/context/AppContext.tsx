@@ -66,6 +66,7 @@ interface AppContextType {
   isRestoringSession: boolean;
   refreshData: () => Promise<void>;
   fetchRequests: (clientIdFiltered?: string) => Promise<void>;
+  setSession: (user: User, token: string) => void;
 }
 
 // Define API Base URL
@@ -266,6 +267,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       alert("Network error during registration");
       return null;
     }
+  };
+
+  const setSession = (user: User, token: string) => {
+    setUser(user);
+    localStorage.setItem('finume_user', JSON.stringify(user));
+    localStorage.setItem('finume_token', token);
   };
 
   const logout = () => {
