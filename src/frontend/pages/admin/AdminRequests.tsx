@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/UI';
-import { Search, LayoutGrid, List, MoreHorizontal, ArrowRight, FolderCog, AlertCircle } from 'lucide-react';
-import { Request, FileBatch, Review } from '../../types';
-import { FileBatchManager } from '../../components/FileBatchManager';
-import Timer from '../../components/Timer';
-import { Check, Clock, Eye, Sliders, X, FileText, UserPlus, Edit, CheckCircle } from 'react-feather';
+import { Search, LayoutGrid, List, MoreHorizontal, ArrowRight, FolderCog, AlertCircle, Check, Clock, Eye, Sliders, X, FileText, UserPlus, Edit, CheckCircle } from 'lucide-react';
 
 // --- Duration Helper ---
 const calculateDuration = (start?: string, end?: string) => {
