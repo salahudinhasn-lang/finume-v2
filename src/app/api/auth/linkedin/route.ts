@@ -93,35 +93,37 @@ export async function POST(request: Request) {
 
             const newRole = requestedRole === 'EXPERT' ? 'EXPERT' : 'CLIENT';
 
+            const userData: any = {
+                id: randomId,
+                email,
+                name,
+                linkedinId,
+                avatarUrl: picture,
+                role: newRole,
+                passwordHash: 'LINKEDIN_AUTH_NO_PASS',
+                isActive: true,
+                isVerified: true
+            };
+
+            if (newRole === 'CLIENT') {
+                userData.clientProfile = {
+                    create: {
+                        companyName: 'New Company',
+                        industry: 'General'
+                    }
+                };
+            } else if (newRole === 'EXPERT') {
+                userData.expertProfile = {
+                    create: {
+                        bio: 'New Expert via LinkedIn',
+                        specialization: 'General',
+                        status: 'VETTING'
+                    }
+                };
+            }
+
             user = await prisma.user.create({
-                data: {
-                    id: randomId,
-                    email,
-                    name,
-                    linkedinId,
-                    avatarUrl: picture,
-                    role: newRole,
-                    passwordHash: 'LINKEDIN_AUTH_NO_PASS',
-                    isActive: true,
-                    isVerified: true,
-                    ...(newRole === 'CLIENT' && {
-                        clientProfile: {
-                            create: {
-                                companyName: 'New Company',
-                                industry: 'General'
-                            }
-                        }
-                    }),
-                    ...(newRole === 'EXPERT' && {
-                        expertProfile: {
-                            create: {
-                                bio: 'New Expert via LinkedIn',
-                                specialization: 'General',
-                                status: 'VETTING'
-                            }
-                        }
-                    })
-                },
+                data: userData,
                 include: {
                     clientProfile: { include: { permissions: true } },
                     expertProfile: true,

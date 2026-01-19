@@ -54,26 +54,43 @@ export async function POST(request: Request) {
         } else {
             // Create New User (Default to Client)
             // Generate a random password hash since they use Google
-            const randomId = `CUS-${Math.floor(100000 + Math.random() * 900000)}`;
+            const randomId = requestedRole === 'EXPERT'
+                ? `EXP-${Math.floor(100000 + Math.random() * 900000)}`
+                : `CUS-${Math.floor(100000 + Math.random() * 900000)}`;
+
+            const newRole = requestedRole === 'EXPERT' ? 'EXPERT' : 'CLIENT';
+
+            const userData: any = {
+                id: randomId,
+                email,
+                name,
+                googleId,
+                avatarUrl: picture,
+                role: newRole,
+                passwordHash: 'GOOGLE_AUTH_NO_PASS',
+                isActive: true,
+                isVerified: true
+            };
+
+            if (newRole === 'CLIENT') {
+                userData.clientProfile = {
+                    create: {
+                        companyName: 'New Company',
+                        industry: 'General',
+                    }
+                };
+            } else if (newRole === 'EXPERT') {
+                userData.expertProfile = {
+                    create: {
+                        bio: 'New Expert via Google',
+                        specialization: 'General',
+                        status: 'VETTING'
+                    }
+                };
+            }
 
             user = await prisma.user.create({
-                data: {
-                    id: randomId,
-                    email,
-                    name,
-                    googleId,
-                    avatarUrl: picture,
-                    role: 'CLIENT',
-                    passwordHash: 'GOOGLE_AUTH_NO_PASS',
-                    isActive: true,
-                    isVerified: true,
-                    clientProfile: {
-                        create: {
-                            companyName: 'New Company', // Placeholder
-                            industry: 'General',
-                        }
-                    }
-                },
+                data: userData,
                 include: {
                     clientProfile: { include: { permissions: true } },
                     expertProfile: true,
