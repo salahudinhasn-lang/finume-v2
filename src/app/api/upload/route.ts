@@ -8,8 +8,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-prod';
 export async function POST(req: NextRequest) {
     try {
         // Authenticate User
+        console.log("Upload API: Received request");
         const authHeader = req.headers.get('Authorization');
+        console.log("Upload API: Auth Header:", authHeader ? "Present" : "Missing");
+
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            console.error("Upload API: Unauthorized - missing header");
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
         const token = authHeader.split(' ')[1];

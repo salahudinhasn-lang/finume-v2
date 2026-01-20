@@ -58,7 +58,9 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
         // setProgress({ current: 0, total: files.length, stage: 'Starting Upload...' });
 
         const uploadedFiles: any[] = [];
-        const token = localStorage.getItem('token'); // Assuming token is stored here
+        const token = localStorage.getItem('finume_token'); // Corrected key from 'token' to 'finume_token'
+
+        console.log("Starting upload with token:", token ? "Present" : "Missing");
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
@@ -91,8 +93,9 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                         // driveId: data.driveId
                     });
                 }
-            } catch (error) {
-                console.error("Upload error:", error);
+            } catch (error: any) {
+                console.error(`Upload error for file ${file.name}:`, error);
+                alert(`Error uploading ${file.name}: ${error.message || 'Unknown error'}`);
                 // Optionally handle error (continue or stop)
             }
         }
