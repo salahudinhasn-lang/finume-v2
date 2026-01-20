@@ -44,9 +44,17 @@ export async function POST(req: NextRequest) {
         let driveFileId: string | undefined;
 
         // --- Google Drive Logic ---
-        // --- Google Drive Logic ---
-        let userDriveFolderId = user?.googleDriveFolderId;
         const masterFolderId = process.env.GOOGLE_DRIVE_MASTER_FOLDER_ID;
+        const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+        const privateKey = process.env.GOOGLE_PRIVATE_KEY;
+
+        if (!masterFolderId || !clientEmail || !privateKey) {
+            console.error("Google Drive Env Vars missing");
+            // Fail if Drive is required. Since we removed reliable local fallback for Prod, we should return error.
+            return NextResponse.json({ error: 'Server Configuration Error: Google Drive credentials missing' }, { status: 503 });
+        }
+
+        let userDriveFolderId = user?.googleDriveFolderId;
 
         // 1. Auto-Create User Folder if missing
         if (!userDriveFolderId && masterFolderId) {
