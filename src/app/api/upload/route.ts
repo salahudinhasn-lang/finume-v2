@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
 
                 const uploadedDriveFile = await uploadFileToDrive(buffer, filename, targetFolderId, file.type);
                 if (uploadedDriveFile) {
-                    driveFileUrl = uploadedDriveFile.webViewLink; // Link to view in Drive
+                    driveFileUrl = uploadedDriveFile.webViewLink || null; // Link to view in Drive
                     driveFileId = uploadedDriveFile.id;
                     console.log(`Uploaded to Drive: ${driveFileUrl}`);
                 }
