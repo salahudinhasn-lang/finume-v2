@@ -715,17 +715,15 @@ const AdminRequests = () => {
                                 </div>
                             )}
 
-                        </div>
-
-                        <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0">
-                            <Button variant="secondary" onClick={handleClose}>Close</Button>
-                            <Button onClick={handleSave} className="bg-primary-600 hover:bg-primary-700 px-6 shadow-lg">
-                                <Save size={18} /> Save Changes
-                            </Button>
+                            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0">
+                                <Button variant="secondary" onClick={handleClose}>Close</Button>
+                                <Button onClick={handleSave} className="bg-primary-600 hover:bg-primary-700 px-6 shadow-lg">
+                                    <Save size={18} /> Save Changes
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
             {/* Review Modal */}
             <ReviewDetailsModal
