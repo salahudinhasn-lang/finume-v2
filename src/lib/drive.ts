@@ -38,9 +38,20 @@ export async function getDriveService() {
     }
 }
 
+// Simple in-memory cache to handle Drive API eventual consistency
+// Key: `${parentFolderId}__${subfolderName}` -> Value: folderId
+const folderCache = new Map<string, string>();
+
 export async function createFolder(folderName: string, parentId?: string) {
     const drive = await getDriveService();
     if (!drive) return null;
+
+    // Check cache first (optimistic)
+    const effectiveParentId = parentId || process.env.GOOGLE_DRIVE_MASTER_FOLDER_ID;
+    const cacheKey = `${effectiveParentId}__${folderName}`;
+
+    // Note: We don't return from cache on create, we want to create if logic asked. 
+    // But actually, createFolder is usually called after findSubfolder failed.
 
     try {
         const fileMetadata: any = {
@@ -51,7 +62,6 @@ export async function createFolder(folderName: string, parentId?: string) {
         if (parentId) {
             fileMetadata.parents = [parentId];
         } else if (process.env.GOOGLE_DRIVE_MASTER_FOLDER_ID) {
-            // Default to Master Folder if no parent specified
             fileMetadata.parents = [process.env.GOOGLE_DRIVE_MASTER_FOLDER_ID];
         }
 
@@ -60,6 +70,12 @@ export async function createFolder(folderName: string, parentId?: string) {
             fields: 'id, name, webViewLink',
             supportsAllDrives: true,
         });
+
+        if (file.data.id) {
+            // Cache the new folder
+            folderCache.set(cacheKey, file.data.id);
+            console.log(`[Drive] Created and Cached folder: ${folderName} (${file.data.id})`);
+        }
 
         return file.data;
     } catch (err) {
@@ -96,10 +112,18 @@ export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, fo
 }
 
 export async function findSubfolder(parentFolderId: string, subfolderName: string) {
+    // Check Cache
+    const cacheKey = `${parentFolderId}__${subfolderName}`;
+    if (folderCache.has(cacheKey)) {
+        console.log(`[Drive] Cache Hit for folder: ${subfolderName}`);
+        return { id: folderCache.get(cacheKey), name: subfolderName };
+    }
+
     const drive = await getDriveService();
     if (!drive) return null;
 
     try {
+        console.log(`[Drive] Querying for folder: '${subfolderName}' in '${parentFolderId}'`);
         const query = `'${parentFolderId}' in parents and name = '${subfolderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
         const res = await drive.files.list({
             q: query,
@@ -110,8 +134,14 @@ export async function findSubfolder(parentFolderId: string, subfolderName: strin
         });
 
         if (res.data.files && res.data.files.length > 0) {
-            return res.data.files[0];
+            const folder = res.data.files[0];
+            if (folder.id) {
+                folderCache.set(cacheKey, folder.id);
+                console.log(`[Drive] Found and Cached folder: ${subfolderName} (${folder.id})`);
+            }
+            return folder;
         }
+        console.log(`[Drive] Folder not found: ${subfolderName}`);
         return null;
     } catch (err) {
         console.error("Error finding subfolder", err);
