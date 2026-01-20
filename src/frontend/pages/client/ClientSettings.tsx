@@ -46,13 +46,8 @@ const ClientSettings = () => {
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
 
     // File Upload State
-    const [uploads, setUploads] = useState<{
-        cr?: File,
-        vat?: File,
-        formation?: File,
-        nationalAddressDoc?: File,
-        other?: File
-    }>({});
+    // File Upload State
+    const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
 
     const [notifications, setNotifications] = useState({
         emailOrders: true,
@@ -62,18 +57,6 @@ const ClientSettings = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: keyof typeof uploads) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            // 5MB Validation
-            if (file.size > 5 * 1024 * 1024) {
-                alert('File size exceeds 5MB limit.');
-                return;
-            }
-            setUploads(prev => ({ ...prev, [type]: file }));
-        }
     };
 
     const uploadDocument = async (file: File) => {
@@ -94,7 +77,43 @@ const ClientSettings = () => {
         return null;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, stateField: string, dbField: string) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            // 5MB Validation
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size exceeds 5MB limit.');
+                return;
+            }
+
+            setUploadingDoc(stateField);
+
+            try {
+                const url = await uploadDocument(file);
+                if (url) {
+                    // Immediate Update to DB
+                    let updatePayload: any = {};
+                    if (stateField === 'other') {
+                        updatePayload[dbField] = { url, name: file.name, date: new Date().toISOString() };
+                    } else {
+                        updatePayload[dbField] = url;
+                    }
+
+                    await updateClient(user!.id, updatePayload);
+                    alert('Document uploaded successfully!');
+                } else {
+                    alert('Upload failed. Please try again.');
+                }
+            } catch (error) {
+                console.error("Upload error", error);
+                alert("An error occurred during upload.");
+            } finally {
+                setUploadingDoc(null);
+            }
+        }
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         if (formData.password && formData.password !== formData.confirmPassword) {
@@ -104,36 +123,9 @@ const ClientSettings = () => {
 
         console.log('Submitting Client Settings Form...');
 
-        // 1. Upload any new files first
-        let newUrls: any = {};
-        try {
-            if (uploads.cr) newUrls.crDocumentUrl = await uploadDocument(uploads.cr);
-            if (uploads.vat) newUrls.vatDocumentUrl = await uploadDocument(uploads.vat);
-            if (uploads.formation) newUrls.formationContractUrl = await uploadDocument(uploads.formation);
-            if (uploads.nationalAddressDoc) newUrls.nationalAddressDocumentUrl = await uploadDocument(uploads.nationalAddressDoc);
-            // "Other" is tricky if it's an array, but for now let's assume single file or just push to existing? 
-            // The prompt said "other where he can upload MORE legal documents". 
-            // For MVP, treating 'other' as a single "Other Documents" slot or just appending to list?
-            // Schema has `otherDocuments: Json`. Let's just store the URL in a simple object for now or array.
-            if (uploads.other) {
-                const otherUrl = await uploadDocument(uploads.other);
-                if (otherUrl) {
-                    // Logic to append would be complex without knowing current state. 
-                    // Let's just save it. Ideally we fetch existing, parse, append.
-                    // For now, simpler: Just save as single object { url: ..., date: ... } or replace.
-                    newUrls.otherDocuments = { url: otherUrl, name: uploads.other.name, date: new Date().toISOString() };
-                }
-            }
-        } catch (err) {
-            console.error("Upload failed", err);
-            alert("Failed to upload documents. Please try again.");
-            return;
-        }
-
         let updates: any = {
             name: formData.name,
             mobileNumber: formData.phone,
-            ...newUrls // Add new URLs
             // email: formData.email, // Immutable
         };
 
@@ -159,8 +151,7 @@ const ClientSettings = () => {
         if (formData.password) {
             setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
         }
-        setUploads({}); // Clear uploads on success
-        alert('Settings updated successfully.');
+        alert('Profile details updated successfully.');
     };
 
     return (
@@ -316,26 +307,29 @@ const ClientSettings = () => {
                                     }
 
                                     const currentUrl = (user as Client)?.[dbField as keyof Client];
-                                    const isUploading = uploads[stateField as keyof typeof uploads];
+                                    // Handle "Other" which might be an object
+                                    const displayUrl = stateField === 'other' && currentUrl && typeof currentUrl === 'object' ? (currentUrl as any).url : currentUrl as string;
+
+                                    const isUploading = uploadingDoc === stateField;
 
                                     return (
                                         <div key={docType} className="flex items-center justify-between p-4 border border-gray-100 rounded-xl bg-gray-50">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${currentUrl ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'}`}>
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${displayUrl ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'}`}>
                                                     <FileText size={20} />
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-gray-800">{label}</p>
                                                     <p className="text-xs text-gray-500">
-                                                        {currentUrl ? 'Document on file' : 'No document uploaded'}
-                                                        {isUploading && <span className="text-blue-600 ml-2 font-medium">(New file selected)</span>}
+                                                        {displayUrl ? 'Document on file' : 'No document uploaded'}
+                                                        {isUploading && <span className="text-blue-600 ml-2 font-medium animate-pulse">... Uploading ...</span>}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 {/* View Button */}
-                                                {currentUrl && typeof currentUrl === 'string' && (
-                                                    <a href={currentUrl} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                                {displayUrl && (
+                                                    <a href={displayUrl} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                                                         View
                                                     </a>
                                                 )}
@@ -344,12 +338,13 @@ const ClientSettings = () => {
                                                 <div className="relative">
                                                     <input
                                                         type="file"
-                                                        onChange={(e) => handleFileChange(e, stateField as any)}
-                                                        className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                                                        onChange={(e) => handleFileUpload(e, stateField, dbField)}
+                                                        className="absolute inset-0 opacity-0 cursor-pointer w-full disabled:cursor-not-allowed"
                                                         accept=".pdf,.jpg,.jpeg,.png"
+                                                        disabled={isUploading}
                                                     />
-                                                    <button type="button" className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-colors ${currentUrl ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-primary-600 text-white hover:bg-primary-700'}`}>
-                                                        {currentUrl ? 'Update' : 'Upload'}
+                                                    <button type="button" disabled={isUploading} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-colors ${displayUrl ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-primary-600 text-white hover:bg-primary-700'} ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                        {isUploading ? 'Uploading...' : (displayUrl ? 'Update' : 'Upload')}
                                                     </button>
                                                 </div>
                                             </div>
