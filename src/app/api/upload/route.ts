@@ -67,23 +67,53 @@ export async function POST(req: NextRequest) {
         let currentFolderId = masterFolderId;
 
         // Level 1: Company Folder
-        // Use Company Name if Client, else User Name, else "Unknown_Client"
         let companyFolderName = "Unknown_Client";
-        if (request.client && request.client.companyName) {
-            companyFolderName = request.client.companyName;
-        } else if (request.client && request.client.user?.name) { // accessible if we included user, but client object usually has companyName
-            // If client.companyName is missing, we might need to fetch user, but let's assume valid client
-            companyFolderName = `Client_${request.clientId}`;
-        }
-        companyFolderName = companyFolderName.replace(/[\/\\]/g, '-'); // Sanitize
+        let userToUpdate = null;
 
-        const companyFolder = await findSubfolder(currentFolderId, companyFolderName);
-        if (companyFolder && companyFolder.id) {
-            currentFolderId = companyFolder.id;
-        } else {
-            const newFolder = await createFolder(companyFolderName, currentFolderId);
-            if (!newFolder || !newFolder.id) throw new Error("Failed to create Company folder");
-            currentFolderId = newFolder.id;
+        // Try getting name and user ID for persistence
+        if (request.client) {
+            if (request.client.companyName) companyFolderName = request.client.companyName;
+
+            // We want to access the user record to check/save folder ID
+            if (request.client.user) {
+                userToUpdate = request.client.user;
+                if (userToUpdate.googleDriveFolderId) {
+                    currentFolderId = userToUpdate.googleDriveFolderId;
+                    console.log(`[Drive] Using stored Company Folder ID: ${currentFolderId}`);
+                }
+            }
+        }
+
+        // Only search/create if we didn't find a stored ID
+        if (currentFolderId === masterFolderId) {
+            companyFolderName = companyFolderName.replace(/[\/\\]/g, '-'); // Sanitize
+
+            const companyFolder = await findSubfolder(currentFolderId, companyFolderName);
+            if (companyFolder && companyFolder.id) {
+                currentFolderId = companyFolder.id;
+                // Found it, let's persist it for next time!
+                if (userToUpdate) {
+                    await prisma.user.update({
+                        where: { id: userToUpdate.id },
+                        data: { googleDriveFolderId: currentFolderId }
+                    });
+                    console.log(`[Drive] Linked existing folder to User: ${currentFolderId}`);
+                }
+
+            } else {
+                const newFolder = await createFolder(companyFolderName, currentFolderId);
+                if (!newFolder || !newFolder.id) throw new Error("Failed to create Company folder");
+                currentFolderId = newFolder.id;
+
+                // Created it, persist it!
+                if (userToUpdate) {
+                    await prisma.user.update({
+                        where: { id: userToUpdate.id },
+                        data: { googleDriveFolderId: currentFolderId }
+                    });
+                    console.log(`[Drive] Linked NEW folder to User: ${currentFolderId}`);
+                }
+            }
         }
 
         // Level 2: Request Folder (Display ID)
