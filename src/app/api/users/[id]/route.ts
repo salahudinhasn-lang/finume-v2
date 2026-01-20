@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { createFolder, renameFileOrFolder } from '@/lib/drive';
 
 // GET /api/users/[id]
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
@@ -101,6 +102,12 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
             };
         }
 
+
+
+        // ... existing imports ...
+
+        // ... inside PATCH ...
+
         const updatedUser = await prisma.user.update({
             where: { id },
             data: userUpdateData,
@@ -111,8 +118,22 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
             }
         });
 
+        // --- Post-Update Actions ---
+        // 1. Rename Drive Folder if Company Name Changed
+        if (updatedUser.role === 'CLIENT' && updatedUser.clientProfile?.companyName && updatedUser.googleDriveFolderId) {
+            const newName = updatedUser.clientProfile.companyName.replace(/[\/\\\\]/g, '-');
+            // We don't strictly know if it *changed* without comparing to old, but renaming to the same name is harmless and safer than an extra DB read.
+            // Or we could check if profileData.companyName was present in the request.
+            if (profileData.companyName) {
+                console.log(`Renaming Drive folder ${updatedUser.googleDriveFolderId} to ${newName}`);
+                await renameFileOrFolder(updatedUser.googleDriveFolderId, newName);
+            }
+        }
+        // ---------------------------
+
         // Flatten response
         const { passwordHash, clientProfile, expertProfile, adminProfile, ...baseUser } = updatedUser;
+        // ... rest of response logic ...
         let finalUser: any = { ...baseUser };
 
         if (updatedUser.role === 'CLIENT' && clientProfile) {

@@ -118,3 +118,23 @@ export async function findSubfolder(parentFolderId: string, subfolderName: strin
         return null;
     }
 }
+
+export async function renameFileOrFolder(fileId: string, newName: string) {
+    const drive = await getDriveService();
+    if (!drive) return null;
+
+    try {
+        const file = await drive.files.update({
+            fileId: fileId,
+            requestBody: {
+                name: newName
+            },
+            fields: 'id, name',
+            supportsAllDrives: true,
+        });
+        return file.data;
+    } catch (err) {
+        console.error("Error renaming file/folder", err);
+        return null;
+    }
+}
