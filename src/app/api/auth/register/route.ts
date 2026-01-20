@@ -176,7 +176,13 @@ export async function POST(request: Request) {
 
         // --- Google Drive Integration ---
         try {
-            const folderName = newUser.name;
+            let folderName = newUser.name;
+            if (role === 'CLIENT' && companyName) {
+                folderName = companyName;
+            }
+            // Sanitize folder name
+            folderName = folderName.replace(/[\/\\\\]/g, '-');
+
             // createFolder will use the Master Folder ID from env as parent by default
             const driveFolder = await createFolder(folderName);
 
@@ -201,11 +207,22 @@ export async function POST(request: Request) {
             { expiresIn: '7d' }
         );
 
-        // 5. Return
-        const { passwordHash: _, ...userWithoutPassword } = newUser;
+        // 5. Construct Response (Flatten for Frontend compatibility)
+        // Extract profiles and base user data
+        const { passwordHash: _ph, clientProfile, expertProfile, adminProfile, ...baseUser } = newUser as any;
+
+        let finalUser: any = { ...baseUser };
+
+        if (newUser.role === 'CLIENT' && clientProfile) {
+            finalUser = { ...finalUser, ...clientProfile, role: 'CLIENT' };
+        } else if (newUser.role === 'EXPERT' && expertProfile) {
+            finalUser = { ...finalUser, ...expertProfile, role: 'EXPERT' };
+        } else if (newUser.role === 'ADMIN' && adminProfile) {
+            finalUser = { ...finalUser, ...adminProfile, role: 'ADMIN' };
+        }
 
         return NextResponse.json({
-            user: userWithoutPassword,
+            user: finalUser,
             token
         }, { status: 201 });
 
