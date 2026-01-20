@@ -152,6 +152,7 @@ export async function GET(req: Request) {
         const requests = await prisma.request.findMany({
             where,
             include: {
+                files: { orderBy: { createdAt: 'desc' } }, // Directly attached files
                 batches: { include: { files: true } },
                 transactions: true,
                 service: true,

@@ -247,6 +247,7 @@ model Request {
   payout           PayoutRequest? @relation(fields: [payoutId], references: [id])
 
   batches          FileBatch[]
+  files            UploadedFile[]
   amount           Decimal       @default(0)
   
   visibility       String        @default("ADMIN") // ADMIN, ASSIGNED, OPEN
@@ -299,9 +300,9 @@ model UploadedFile {
   fileBatchId  String?
   fileBatch    FileBatch? @relation(fields: [fileBatchId], references: [id])
   
-  // Optional direct link to Request if needed, but App seems to use Batches
+  // Optional direct link to Request if needed
   requestId    String?
-  // request      Request? @relation(fields: [requestId], references: [id]) // Commented out to avoid confusion unless needed
+  request      Request? @relation(fields: [requestId], references: [id])
 
   createdAt    DateTime @default(now())
 }

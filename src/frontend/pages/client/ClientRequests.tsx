@@ -293,6 +293,46 @@ const ClientRequests = () => {
                                     className='border-dashed border-2 shadow-sm'
                                 />
 
+                                {selectedRequest.files && selectedRequest.files.length > 0 && (
+                                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                                            <h4 className="font-bold text-gray-800 flex items-center gap-2">
+                                                <FileText size={18} className="text-blue-500" /> Attached Documents
+                                            </h4>
+                                            <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{selectedRequest.files.length} files</span>
+                                        </div>
+                                        <div className="divide-y divide-gray-100">
+                                            {selectedRequest.files.map((file) => (
+                                                <div key={file.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                                            <FileText size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-gray-700 text-sm truncate max-w-[200px] sm:max-w-md" title={file.name}>{file.name}</p>
+                                                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-2">
+                                                                <Clock size={10} />
+                                                                {new Date(file.createdAt || file.uploadedAt).toLocaleString()}
+                                                                <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                                                <span>{file.size ? (parseInt(file.size) / 1024).toFixed(0) + ' KB' : 'Unknown Size'}</span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <a
+                                                        href={file.url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                        title="Download/View"
+                                                    >
+                                                        <Download size={18} />
+                                                    </a>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <DocumentBatchList
                                     batches={selectedRequest.batches || []}
                                     onUpdateBatches={handleUpdateBatches}

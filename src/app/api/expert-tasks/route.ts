@@ -32,7 +32,10 @@ export async function GET(req: NextRequest) {
             where: { expertId: userId },
             include: {
                 request: {
-                    include: { client: true }
+                    include: {
+                        client: { include: { user: true } },
+                        files: true // Include attached files
+                    }
                 }
             },
             orderBy: { createdAt: 'desc' }

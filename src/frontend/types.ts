@@ -185,6 +185,7 @@ export interface UploadedFile {
   url: string;
   uploadedBy: 'CLIENT' | 'EXPERT' | 'ADMIN';
   uploadedAt: string; // ISO string including time
+  createdAt?: string; // DB field backup
   source?: 'WHATSAPP' | 'DESKTOP' | 'MOBILE_WEB' | 'APP';
   category?: DocumentCategory;
   originalCategory?: DocumentCategory; // AI Detected category
@@ -234,6 +235,7 @@ export interface Request {
   description: string;
   review?: Review;
   batches?: FileBatch[];
+  files?: UploadedFile[]; // New: Direct files
   payoutId?: string; // Link to a PayoutRequest. If undefined, it is "Unsettled".
   workStartedAt?: string; // ISO String
   completedAt?: string; // ISO String
