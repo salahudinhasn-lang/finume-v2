@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/UI';
-import { Briefcase, DollarSign, Star, Globe, ArrowRight, CheckCircle, Clock, Send, Zap, TrendingUp, Filter, Search, MoreHorizontal, MessageSquare, AlertTriangle, ShieldCheck, Activity } from 'lucide-react';
+import { Briefcase, DollarSign, Star, Globe, ArrowRight, CheckCircle, Clock, Send, Zap, TrendingUp, Filter, Search, MoreHorizontal, MessageSquare, AlertTriangle, ShieldCheck, Activity, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Expert } from '../../types';
@@ -38,6 +38,45 @@ const ExpertDashboard = () => {
         { name: 'Completed', value: completedTasks.length, color: '#10b981' },
         { name: 'In Progress', value: activeTasks.length, color: '#3b82f6' },
     ];
+
+    // EXPERT TASKS LOGIC
+    const [expertTasks, setExpertTasks] = useState<any[]>([]); // Use appropriate type if imported
+
+    React.useEffect(() => {
+        if (user?.id) {
+            fetch('/api/expert-tasks', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('finume_token')}` }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        setExpertTasks(data.filter(t => t.status === 'PENDING'));
+                    }
+                })
+                .catch(err => console.error("Failed to fetch expert tasks", err));
+        }
+    }, [user?.id]);
+
+    const handleCompleteTask = async (taskId: string) => {
+        try {
+            const res = await fetch('/api/expert-tasks', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('finume_token')}`
+                },
+                body: JSON.stringify({ taskId, status: 'COMPLETED' })
+            });
+            if (res.ok) {
+                // Remove from list
+                setExpertTasks(prev => prev.filter(t => t.id !== taskId));
+                // Optionally refresh main data if needed
+                // refreshData(); 
+            }
+        } catch (e) {
+            console.error("Error completing task", e);
+        }
+    };
 
     const handleAcceptJob = async (requestId: string) => {
         if (isVetting) {
@@ -261,6 +300,42 @@ const ExpertDashboard = () => {
                             )}
                         </div>
                     </section>
+
+                    {/* Pending Tasks Section */}
+                    {expertTasks.length > 0 && (
+                        <section>
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                    <div className="p-2 bg-red-100 text-red-600 rounded-lg"><CheckCircle size={20} /></div>
+                                    Pending Reviews
+                                </h2>
+                            </div>
+
+                            <div className="space-y-4">
+                                {expertTasks.map(task => (
+                                    <div key={task.id} className="bg-white p-5 rounded-2xl border border-red-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-3 bg-red-50 text-red-500 rounded-xl">
+                                                <FileText size={24} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-gray-900">{task.description}</h4>
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    Request: <span className="font-mono font-medium text-gray-700">{task.request?.displayId || 'REQ-???'}</span> • {new Date(task.createdAt).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            onClick={() => handleCompleteTask(task.id)}
+                                            className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200"
+                                        >
+                                            Mark as Completed
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
                     {/* Marketplace Feed */}
                     <section>

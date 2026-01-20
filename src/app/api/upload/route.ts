@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import { uploadFileToDrive, createFolder, findSubfolder } from '@/lib/drive';
@@ -26,151 +24,160 @@ export async function POST(req: NextRequest) {
 
         const formData = await req.formData();
         const file = formData.get('file') as File | null;
+        const requestId = formData.get('requestId') as string | null;
 
         if (!file) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
+        if (!requestId) {
+            return NextResponse.json({ error: 'Request ID is required for this upload' }, { status: 400 });
+        }
 
         const buffer = Buffer.from(await file.arrayBuffer());
-        const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
+        // Clean filename: remove special chars, keep extension
+        const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const filename = `${Date.now()}-${cleanName}`;
 
-        // Fetch User to get Drive Folder ID
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { googleDriveFolderId: true, role: true }
+        // Fetch Request & Client details
+        const request = await prisma.request.findUnique({
+            where: { id: requestId },
+            include: {
+                client: {
+                    include: { user: true }
+                },
+                assignedExpert: true
+            }
         });
 
-        let driveFileUrl: string | null = null;
-        let driveFileId: string | undefined;
+        if (!request) {
+            return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+        }
 
         // --- Google Drive Logic ---
         const masterFolderId = process.env.GOOGLE_DRIVE_MASTER_FOLDER_ID;
-        const clientId = process.env.GOOGLE_CLIENT_ID;
-        const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-        const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
-        if (!masterFolderId || !clientId || !clientSecret || !refreshToken) {
-            console.error("Google Drive Env Vars missing");
-            // Fail if Drive is required. Since we removed reliable local fallback for Prod, we should return error.
-            return NextResponse.json({ error: 'Server Configuration Error: Google Drive OAuth credentials missing' }, { status: 503 });
+        if (!masterFolderId) {
+            return NextResponse.json({ error: 'Server Config Error: Drive Master Folder ID missing' }, { status: 503 });
         }
 
-        let userDriveFolderId = user?.googleDriveFolderId;
+        let currentFolderId = masterFolderId;
 
-        // 1. Auto-Create User Folder if missing
-        if (!userDriveFolderId && masterFolderId) {
-            try {
-                // Fetch full profile to get Company Name if possible
-                const userFull = await prisma.user.findUnique({
-                    where: { id: userId },
-                    include: { clientProfile: true }
+        // Level 1: Company Folder
+        // Use Company Name if Client, else User Name, else "Unknown_Client"
+        let companyFolderName = "Unknown_Client";
+        if (request.client && request.client.companyName) {
+            companyFolderName = request.client.companyName;
+        } else if (request.client && request.client.user?.name) { // accessible if we included user, but client object usually has companyName
+            // If client.companyName is missing, we might need to fetch user, but let's assume valid client
+            companyFolderName = `Client_${request.clientId}`;
+        }
+        companyFolderName = companyFolderName.replace(/[\/\\]/g, '-'); // Sanitize
+
+        const companyFolder = await findSubfolder(currentFolderId, companyFolderName);
+        if (companyFolder && companyFolder.id) {
+            currentFolderId = companyFolder.id;
+        } else {
+            const newFolder = await createFolder(companyFolderName, currentFolderId);
+            if (!newFolder || !newFolder.id) throw new Error("Failed to create Company folder");
+            currentFolderId = newFolder.id;
+        }
+
+        // Level 2: Request Folder (Display ID)
+        const requestFolderName = request.displayId || `REQ-${request.id.slice(0, 8)}`;
+        const requestFolder = await findSubfolder(currentFolderId, requestFolderName);
+        if (requestFolder && requestFolder.id) {
+            currentFolderId = requestFolder.id;
+        } else {
+            const newFolder = await createFolder(requestFolderName, currentFolderId);
+            if (!newFolder || !newFolder.id) throw new Error("Failed to create Request folder");
+            currentFolderId = newFolder.id;
+        }
+
+        // Level 3: Date Folder (YYYY-MM-DD)
+        const today = new Date().toISOString().split('T')[0];
+        const dateFolder = await findSubfolder(currentFolderId, today);
+        if (dateFolder && dateFolder.id) {
+            currentFolderId = dateFolder.id;
+        } else {
+            const newFolder = await createFolder(today, currentFolderId);
+            if (!newFolder || !newFolder.id) throw new Error("Failed to create Date folder");
+            currentFolderId = newFolder.id;
+        }
+
+        // Upload File
+        const uploadedDriveFile = await uploadFileToDrive(buffer, filename, currentFolderId, file.type);
+        if (!uploadedDriveFile || !uploadedDriveFile.webViewLink) {
+            throw new Error("Drive upload failed");
+        }
+
+        // --- Database Logic ---
+
+        // 1. Find or Create FileBatch for this Request + Date? 
+        // Logic says "create task for expert". Maybe one task per batch?
+        // Let's create a NEW batch for this upload session if one doesn't exist for today, or just append.
+        // Simplest: Create a FileBatch for this upload (or group uploads if sequential, but here we process one by one).
+        // To avoid spamming tasks, we can check if there is already a PENDING task for this request created TODAY.
+
+        let relatedBatchId = null;
+
+        // Create UploadedFile record
+        // We need a batch. Let's find recent batch or create one.
+        // For simplicity, let's create a new Batch for "Daily Uploads - [Date]"
+
+        const batchName = `Uploads ${today}`;
+        // Try to find existing batch for this request & date? 
+        // For now, simple approach: Create Batch if not exists, else append.
+        // Prisma doesn't strictly require Batch for UploadedFile (it's optional in schema? Check schema).
+        // Schema: `fileBatch FileBatch?` -> Yes optional.
+
+        const newFile = await prisma.uploadedFile.create({
+            data: {
+                name: file.name,
+                size: file.size.toString(),
+                type: file.type,
+                url: uploadedDriveFile.webViewLink,
+                uploadedById: userId,
+                requestId: request.id
+            }
+        });
+
+        // 2. Expert Task Logic
+        // "I want to enevolp every upload the client make as a task for the expert"
+        if (request.assignedExpertId) {
+            // Check if there is already an open task for "Review files from [Today]"
+            const taskTile = `Review files uploaded by client on ${today}`;
+
+            const existingTask = await prisma.expertTask.findFirst({
+                where: {
+                    requestId: request.id,
+                    expertId: request.assignedExpertId,
+                    description: taskTile,
+                    status: 'PENDING'
+                }
+            });
+
+            if (!existingTask) {
+                await prisma.expertTask.create({
+                    data: {
+                        description: taskTile,
+                        status: 'PENDING',
+                        requestId: request.id,
+                        expertId: request.assignedExpertId,
+                        // relatedBatchId: ... (link if we had batch)
+                    }
                 });
-
-                let folderName = `User_${userId}`;
-                if (userFull) {
-                    if (userFull.role === 'CLIENT' && userFull.clientProfile?.companyName) {
-                        folderName = userFull.clientProfile.companyName;
-                    } else if (userFull.name) {
-                        folderName = userFull.name;
-                    }
-                }
-
-                // Sanitize folder name (remove slashes just in case)
-                folderName = folderName.replace(/[\/\\]/g, '-');
-
-                const newFolder = await createFolder(folderName, masterFolderId);
-                if (newFolder && newFolder.id) {
-                    userDriveFolderId = newFolder.id;
-                    // Update DB
-                    await prisma.user.update({
-                        where: { id: userId },
-                        data: { googleDriveFolderId: userDriveFolderId }
-                    });
-                    console.log(`Auto-created Drive folder for user ${userId}: ${userDriveFolderId} (${folderName})`);
-                }
-            } catch (err) {
-                console.error("Failed to auto-create missing Drive folder:", err);
             }
-        }
-
-        if (userDriveFolderId) {
-            try {
-                let targetFolderId = userDriveFolderId;
-
-                // Client Logic: Subfolder by Date or Category
-                if (user?.role === 'CLIENT') {
-                    const category = formData.get('category') as string | null;
-
-                    if (category === 'legal') {
-                        // Legal Documents -> "Legal Entity Documents" folder
-                        const legalFolderName = "Legal Entity Documents";
-                        const legalFolder = await findSubfolder(userDriveFolderId, legalFolderName);
-
-                        if (legalFolder && legalFolder.id) {
-                            targetFolderId = legalFolder.id;
-                        } else {
-                            const newLegalFolder = await createFolder(legalFolderName, userDriveFolderId);
-                            if (newLegalFolder && newLegalFolder.id) {
-                                targetFolderId = newLegalFolder.id;
-                            }
-                        }
-                    } else {
-                        // Default / Daily Uploads
-                        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-                        const dateFolder = await findSubfolder(userDriveFolderId, today);
-
-                        if (dateFolder && dateFolder.id) {
-                            targetFolderId = dateFolder.id;
-                        } else {
-                            // Create it
-                            const newDateFolder = await createFolder(today, userDriveFolderId);
-                            if (newDateFolder && newDateFolder.id) {
-                                targetFolderId = newDateFolder.id;
-                            }
-                        }
-                    }
-                } else if (user?.role === 'EXPERT') {
-                    // Expert Logic: "Documents" folder
-                    const docFolderName = "Documents";
-                    const docFolder = await findSubfolder(userDriveFolderId, docFolderName);
-
-                    if (docFolder && docFolder.id) {
-                        targetFolderId = docFolder.id;
-                    } else {
-                        const newDocFolder = await createFolder(docFolderName, userDriveFolderId);
-                        if (newDocFolder && newDocFolder.id) {
-                            targetFolderId = newDocFolder.id;
-                        }
-                    }
-                }
-
-                const uploadedDriveFile = await uploadFileToDrive(buffer, filename, targetFolderId, file.type);
-                if (uploadedDriveFile) {
-                    driveFileUrl = uploadedDriveFile.webViewLink || null; // Link to view in Drive
-                    driveFileId = uploadedDriveFile.id || undefined;
-                    console.log(`Uploaded to Drive: ${driveFileUrl}`);
-                }
-
-            } catch (driveErr: any) {
-                console.error("Google Drive Upload Failed:", driveErr);
-                return NextResponse.json({ error: `Google Drive Upload Failed: ${driveErr.message}` }, { status: 500 });
-            }
-        }
-
-        if (!driveFileUrl) {
-            return NextResponse.json({ error: 'Upload failed: No URL returned from Drive' }, { status: 500 });
         }
 
         return NextResponse.json({
-            url: driveFileUrl,
+            success: true,
+            url: uploadedDriveFile.webViewLink,
             name: file.name,
-            size: file.size,
-            type: file.type,
-            driveId: driveFileId // Optional extra info
+            driveId: uploadedDriveFile.id
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Upload Error', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }

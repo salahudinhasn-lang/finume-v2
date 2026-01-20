@@ -266,3 +266,15 @@ export interface ChatMessage {
   text: string;
   timestamp: number;
 }
+
+export interface ExpertTask {
+  id: string;
+  description: string;
+  status: 'PENDING' | 'COMPLETED' | 'IGNORED';
+  requestId: string;
+  expertId: string;
+  relatedBatchId?: string;
+  createdAt: string;
+  completedAt?: string;
+  request?: Request; // Included relations
+}

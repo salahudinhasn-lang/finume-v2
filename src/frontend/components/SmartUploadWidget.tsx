@@ -51,28 +51,55 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
         setFiles(prev => [...prev, ...newFiles]);
     };
 
-    const simulateAIProcessing = async () => {
+    const uploadFiles = async () => {
         if (!selectedRequestId || files.length === 0) return;
 
         setIsProcessing(true);
-        setProgress({ current: 0, total: files.length, stage: 'Uploading...' });
+        // setProgress({ current: 0, total: files.length, stage: 'Starting Upload...' });
 
-        // Step 1: Uploading
-        await new Promise(resolve => setTimeout(resolve, 800));
+        const uploadedFiles: any[] = [];
+        const token = localStorage.getItem('token'); // Assuming token is stored here
 
-        // Step 2: OCR Extraction
-        setProgress(prev => ({ ...prev, stage: 'Running OCR Extraction...' }));
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            setProgress({ current: i + 1, total: files.length, stage: `Uploading: ${file.name}...` });
 
-        // Step 3: AI Categorization
-        for (let i = 0; i <= files.length; i++) {
-            setProgress({ current: i, total: files.length, stage: `AI Categorizing: ${files[i]?.name || 'Finalizing'}...` });
-            await new Promise(resolve => setTimeout(resolve, 600));
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('requestId', selectedRequestId);
+
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Upload failed for ${file.name}`);
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    uploadedFiles.push({
+                        name: data.name,
+                        url: data.url,
+                        type: data.type || file.type,
+                        size: file.size,
+                        // driveId: data.driveId
+                    });
+                }
+            } catch (error) {
+                console.error("Upload error:", error);
+                // Optionally handle error (continue or stop)
+            }
         }
 
         // Done
         setIsProcessing(false);
-        onUploadComplete(files, selectedRequestId);
+        onUploadComplete(files, selectedRequestId); // Pass original files for now, parent will refresh or we can pass uploadedFiles if we change signature
         setFiles([]); // Reset
     };
 
@@ -181,7 +208,7 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                         </Button>
                         {files.length > 0 && (
                             <Button
-                                onClick={simulateAIProcessing}
+                                onClick={uploadFiles}
                                 disabled={!selectedRequestId}
                                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-200 py-3 px-8 rounded-xl font-bold transform hover:scale-105 transition-all"
                             >

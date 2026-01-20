@@ -106,52 +106,16 @@ const ClientRequests = () => {
         }
     };
 
-    const handleSmartUpload = (files: File[], requestId: string) => {
-        // Find existing request or use selectedRequest if matches
-        const req = requests.find(r => r.id === requestId);
-        if (!req) return;
+    const handleSmartUpload = async (files: File[], requestId: string) => {
+        // The widget now handles the actual upload. We just need to refresh the data to show the new files.
+        // Gamification Update (Local Optimistic or wait for refresh?) 
+        // Let's do optimistic gamification update but rely on refresh for files.
 
-        const categories: DocumentCategory[] = ['Sales Invoice', 'Purchase Invoice', 'Contract', 'Expense', 'Petty Cash', 'Bank Statement', 'VAT Return', 'Other'];
-
-        const newFiles: UploadedFile[] = files.map((f, idx) => ({
-            id: `f-${Date.now()}-${idx}`,
-            name: f.name,
-            size: (f.size / 1024 / 1024).toFixed(2) + ' MB',
-            type: f.type,
-            url: '#',
-            uploadedBy: 'CLIENT',
-            uploadedAt: new Date().toISOString(),
-            source: 'DESKTOP',
-            category: categories[Math.floor(Math.random() * categories.length)], // Simulating AI
-            status: 'PENDING'
-        }));
-
-        const today = new Date().toISOString().split('T')[0];
-        let currentBatches = req.batches || [];
-        const existingBatchIndex = currentBatches.findIndex(b => b.id === today);
-
-        if (existingBatchIndex >= 0) {
-            currentBatches[existingBatchIndex] = {
-                ...currentBatches[existingBatchIndex],
-                files: [...currentBatches[existingBatchIndex].files, ...newFiles]
-            };
-        } else {
-            currentBatches = [{
-                id: today,
-                date: today,
-                files: newFiles,
-                status: 'PENDING'
-            }, ...currentBatches];
-        }
-
-        updateRequest(req.id, { batches: currentBatches });
-
-        // Gamification Update
         if (currentClient && clientGamification) {
             const pointsEarned = 10 + (files.length > 10 ? 5 : 0);
             const newPoints = clientGamification.totalPoints + pointsEarned;
-            const newStars = clientGamification.totalStars + 1; // +1 star per upload batch for demo
-            const newStreak = clientGamification.currentStreak + 1; // Simplification
+            const newStars = clientGamification.totalStars + 1;
+            const newStreak = clientGamification.currentStreak + 1;
 
             updateClient(currentClient.id, {
                 gamification: {
@@ -159,17 +123,13 @@ const ClientRequests = () => {
                     totalPoints: newPoints,
                     totalStars: newStars,
                     currentStreak: newStreak,
-                    // Simple Level Logic
                     level: newPoints > 1500 ? 'Platinum' : newPoints > 700 ? 'Gold' : newPoints > 300 ? 'Silver' : 'Bronze'
                 }
             });
-            // alert(`Uploaded! +${pointsEarned} Points. +1 Star!`);
         }
 
-        // Update local state if currently viewing this request
-        if (selectedRequest && selectedRequest.id === req.id) {
-            setSelectedRequest(prev => prev ? { ...prev, batches: currentBatches } : null);
-        }
+        // Refresh data to get new files from DB
+        await refreshData();
     };
 
     return (
