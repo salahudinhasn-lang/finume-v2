@@ -161,6 +161,7 @@ model Expert {
   reviews         Review[]
   poolInvites     ProviderPool[]
   payouts         PayoutRequest[]
+  documents       Json?
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

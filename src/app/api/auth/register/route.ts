@@ -193,6 +193,12 @@ export async function POST(request: Request) {
                     data: { googleDriveFolderId: driveFolder.id }
                 });
                 console.log(`Created Google Drive folder for ${newUser.email}: ${driveFolder.id}`);
+
+                // If Expert, create "Documents" subfolder
+                if (role === 'EXPERT') {
+                    await createFolder('Documents', driveFolder.id);
+                    console.log(`Created 'Documents' subfolder for Expert ${newUser.email}`);
+                }
             }
         } catch (driveError) {
             // Non-blocking error: don't fail registration if Drive fails

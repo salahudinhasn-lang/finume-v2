@@ -129,6 +129,19 @@ export async function POST(req: NextRequest) {
                             }
                         }
                     }
+                } else if (user?.role === 'EXPERT') {
+                    // Expert Logic: "Documents" folder
+                    const docFolderName = "Documents";
+                    const docFolder = await findSubfolder(userDriveFolderId, docFolderName);
+
+                    if (docFolder && docFolder.id) {
+                        targetFolderId = docFolder.id;
+                    } else {
+                        const newDocFolder = await createFolder(docFolderName, userDriveFolderId);
+                        if (newDocFolder && newDocFolder.id) {
+                            targetFolderId = newDocFolder.id;
+                        }
+                    }
                 }
 
                 const uploadedDriveFile = await uploadFileToDrive(buffer, filename, targetFolderId, file.type);

@@ -81,27 +81,75 @@ const ExpertOnboarding = () => {
         }
     };
 
+    const [uploading, setUploading] = useState(false);
+
+    const uploadDocument = async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        // category not needed for expert, defaults to Documents folder via API logic
+
+        const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('finume_token')}` },
+            body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Upload failed');
+        return data.url;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
+        setUploading(true);
 
-        // Map form data to API payload schema
-        const updates: Partial<Expert> = {
-            mobileNumber: `${(formData as any).countryCode || '+966'}${formData.phone}`,
-            bio: formData.bio,
-            yearsExperience: Number(formData.yearsExperience),
-            hourlyRate: Number(formData.hourlyRate),
-            specializations: formData.specializations,
-            linkedinUrl: formData.linkedin,
-            // Assuming status might need to be set to VETTING if it was NEW
-            status: 'VETTING'
-        };
+        try {
+            let cvUrl = '';
+            // Upload CV if selected
+            if (formData.cvFile) {
+                try {
+                    cvUrl = await uploadDocument(formData.cvFile);
+                } catch (err) {
+                    console.error("CV Upload Failed", err);
+                    alert("Failed to upload CV. Please try again.");
+                    setUploading(false);
+                    return;
+                }
+            }
 
-        // TODO: Handle CV File Upload separately or via updateExpert if it supports FormData
-        // For now, we update the profile data.
+            // Map form data to API payload schema
+            const updates: Partial<Expert> & { documents?: any } = {
+                mobileNumber: `${(formData as any).countryCode || '+966'}${formData.phone}`,
+                bio: formData.bio,
+                yearsExperience: Number(formData.yearsExperience),
+                hourlyRate: Number(formData.hourlyRate),
+                specializations: formData.specializations,
+                linkedinUrl: formData.linkedin,
+                status: 'VETTING',
+                cvUrl: cvUrl || undefined,
+            };
 
-        await updateExpert(user.id, updates);
-        navigate('/expert');
+            // Initialize documents array with the CV if uploaded
+            if (cvUrl) {
+                updates.documents = [
+                    {
+                        id: Date.now().toString(),
+                        label: 'CV / Resume',
+                        url: cvUrl,
+                        uploadedAt: new Date().toISOString()
+                    }
+                ];
+            }
+
+            await updateExpert(user.id, updates);
+            navigate('/expert');
+        } catch (error) {
+            console.error("Onboarding Error", error);
+            alert("An error occurred. Please try again.");
+        } finally {
+            setUploading(false);
+        }
     };
 
     return (
@@ -327,8 +375,10 @@ const ExpertOnboarding = () => {
 
                         <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-6">
                             <p className="text-xs text-slate-400 max-w-xs leading-relaxed text-center sm:text-start">By clicking submit, you confirm that the information provided is accurate and agree to our terms.</p>
-                            <Button type="submit" size="lg" className="bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-900/10 px-10 py-4 rounded-xl text-base w-full sm:w-auto h-auto transition-all hover:-translate-y-1">
-                                Complete Profile <ArrowRight size={20} className="ml-2 rtl:mr-2 rtl:ml-0 rtl:rotate-180" />
+                            <Button type="submit" size="lg" disabled={uploading} className="bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-900/10 px-10 py-4 rounded-xl text-base w-full sm:w-auto h-auto transition-all hover:-translate-y-1">
+                                {uploading ? 'Processing...' : (
+                                    <>Complete Profile <ArrowRight size={20} className="ml-2 rtl:mr-2 rtl:ml-0 rtl:rotate-180" /></>
+                                )}
                             </Button>
                         </div>
 
