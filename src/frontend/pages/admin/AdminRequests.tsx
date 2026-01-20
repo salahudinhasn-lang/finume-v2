@@ -725,17 +725,17 @@ const AdminRequests = () => {
                         </div>
                     </div>
                 </div>
-    )
-}
+            )}
 
-{/* Review Modal */ }
-<ReviewDetailsModal
-    isOpen={!!selectedRequestForReview}
-    request={selectedRequestForReview}
-    onClose={() => setSelectedRequestForReview(null)}
-/>
+            {/* Review Modal */}
+            <ReviewDetailsModal
+                isOpen={!!selectedRequestForReview}
+                request={selectedRequestForReview}
+                onClose={() => setSelectedRequestForReview(null)}
+            />
 
-        </div >
+        </div>
     );
 };
 export default AdminRequests;
+// FORCE_FOOTER_TEST
