@@ -7,7 +7,7 @@ import { useLocation } from 'react-router-dom';
 import { Expert } from '../../types';
 
 const AdminExperts = () => {
-  const { experts, updateExpertStatus, updateExpert, settings, updateSettings } = useAppContext();
+  const { experts, requests, updateExpertStatus, updateExpert, settings, updateSettings } = useAppContext();
   // Force redeploy detection
   // console.log('Experts in AdminExperts:', experts); // Removed debug log
   const [filter, setFilter] = useState('VETTING'); // Default to VETTING view
@@ -15,6 +15,9 @@ const AdminExperts = () => {
   const [activeTab, setActiveTab] = useState<'EXPERTS' | 'SKILLS'>('EXPERTS');
   const [newSkill, setNewSkill] = useState('');
   const location = useLocation();
+
+  // Modal State
+  const [activeModalTab, setActiveModalTab] = useState<'OVERVIEW' | 'DOCUMENTS' | 'REQUESTS'>('OVERVIEW');
 
   const availableSkills: string[] = React.useMemo(() => {
     try {
@@ -309,7 +312,7 @@ const AdminExperts = () => {
       {/* View Expert Details Modal */}
       {viewingExpert && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in zoom-in duration-200">
-          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="bg-white rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="bg-gray-900 p-6 text-white flex justify-between items-center shrink-0">
               <div>
                 <h3 className="font-bold text-xl">Expert Profile</h3>
@@ -318,82 +321,164 @@ const AdminExperts = () => {
               <button onClick={() => setViewingExpert(null)} className="hover:bg-white/20 p-2 rounded-full transition-colors"><X size={24} /></button>
             </div>
 
-            <div className="p-8 overflow-y-auto">
-              <div className="flex flex-col md:flex-row gap-8">
-                {/* Left Column: Avatar & Quick Info */}
-                <div className="flex flex-col items-center gap-4 md:w-1/3 border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-6 shrink-0">
-                  <img src={viewingExpert.avatarUrl || ''} className="w-32 h-32 rounded-full object-cover border-4 border-gray-50 shadow-lg" />
-                  <div className="text-center">
-                    <h2 className="text-xl font-bold text-gray-900">{viewingExpert.name}</h2>
-                    <Badge status={viewingExpert.status} className="mt-2" />
-                  </div>
+            {/* Modal Tabs */}
+            <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-4 gap-6">
+              {['OVERVIEW', 'DOCUMENTS', 'REQUESTS'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveModalTab(tab as any)}
+                  className={`pb-3 text-sm font-bold uppercase tracking-wider transition-all border-b-2 ${activeModalTab === tab ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                >
+                  {tab === 'REQUESTS' ? `Tasks (${(requests || []).filter((r: any) => r.assignedExpertId === viewingExpert.id).length})` : tab}
+                  {tab === 'DOCUMENTS' && viewingExpert.documents && Array.isArray(viewingExpert.documents) && ` (${viewingExpert.documents.length})`}
+                </button>
+              ))}
+            </div>
 
-                  <div className="w-full space-y-3 mt-4">
-                    <div className="p-3 bg-gray-50 rounded-lg text-center">
-                      <p className="text-xs text-gray-500 uppercase font-bold">Hourly Rate</p>
-                      <p className="text-lg font-bold text-gray-900">{viewingExpert.hourlyRate} SAR</p>
+            <div className="p-8 overflow-y-auto min-h-[400px]">
+              {activeModalTab === 'OVERVIEW' && (
+                <div className="flex flex-col md:flex-row gap-8">
+                  {/* Left Column: Avatar & Quick Info */}
+                  <div className="flex flex-col items-center gap-4 md:w-1/3 border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-6 shrink-0">
+                    <img src={viewingExpert.avatarUrl || ''} className="w-32 h-32 rounded-full object-cover border-4 border-gray-50 shadow-lg" />
+                    <div className="text-center">
+                      <h2 className="text-xl font-bold text-gray-900">{viewingExpert.name}</h2>
+                      <Badge status={viewingExpert.status} className="mt-2" />
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-lg text-center">
-                      <p className="text-xs text-gray-500 uppercase font-bold">Experience</p>
-                      <p className="text-lg font-bold text-gray-900">{viewingExpert.yearsExperience} Years</p>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Right Column: Detailed Info */}
-                <div className="flex-1 space-y-6">
-                  <div>
-                    <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Contact Information</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><span className="text-xs">@</span></div>
-                        <span className="font-medium">{viewingExpert.email}</span>
+                    <div className="w-full space-y-3 mt-4">
+                      <div className="p-3 bg-gray-50 rounded-lg text-center">
+                        <p className="text-xs text-gray-500 uppercase font-bold">Hourly Rate</p>
+                        <p className="text-lg font-bold text-gray-900">{viewingExpert.hourlyRate} SAR</p>
                       </div>
-                      {viewingExpert.mobileNumber && (
+                      <div className="p-3 bg-gray-50 rounded-lg text-center">
+                        <p className="text-xs text-gray-500 uppercase font-bold">Experience</p>
+                        <p className="text-lg font-bold text-gray-900">{viewingExpert.yearsExperience} Years</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Detailed Info */}
+                  <div className="flex-1 space-y-6">
+                    <div>
+                      <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Contact Information</h4>
+                      <div className="space-y-3">
                         <div className="flex items-center gap-3 text-gray-700">
-                          <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">PH</div>
-                          <span className="font-medium">{viewingExpert.mobileNumber}</span>
+                          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><span className="text-xs">@</span></div>
+                          <span className="font-medium">{viewingExpert.email}</span>
                         </div>
-                      )}
-                      {viewingExpert.linkedinUrl && (
-                        <div className="flex items-center gap-3 text-gray-700">
-                          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-700">IN</div>
-                          <a href={viewingExpert.linkedinUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline break-all">
-                            LinkedIn Profile
-                          </a>
-                        </div>
-                      )}
+                        {viewingExpert.mobileNumber && (
+                          <div className="flex items-center gap-3 text-gray-700">
+                            <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">PH</div>
+                            <span className="font-medium">{viewingExpert.mobileNumber}</span>
+                          </div>
+                        )}
+                        {viewingExpert.linkedinUrl && (
+                          <div className="flex items-center gap-3 text-gray-700">
+                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-700">IN</div>
+                            <a href={viewingExpert.linkedinUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline break-all">
+                              LinkedIn Profile
+                            </a>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Professional Bio</h4>
-                    <p className="text-gray-600 leading-relaxed text-sm bg-gray-50 p-4 rounded-xl border border-gray-100">
-                      {viewingExpert.bio || 'No bio provided.'}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Specializations</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {(viewingExpert.specializations || []).map((s, i) => (
-                        <span key={i} className="bg-gray-100 px-3 py-1 rounded-full text-xs font-bold text-gray-700 border border-gray-200">
-                          {String(s)}
-                        </span>
-                      ))}
-                      {(!viewingExpert.specializations || viewingExpert.specializations.length === 0) && <span className="text-sm text-gray-400 italic">None listed</span>}
+                    <div>
+                      <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Professional Bio</h4>
+                      <p className="text-gray-600 leading-relaxed text-sm bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        {viewingExpert.bio || 'No bio provided.'}
+                      </p>
                     </div>
-                  </div>
 
-                  {viewingExpert.cvUrl && (
-                    <div className="pt-4 border-t border-gray-100">
-                      <a href={viewingExpert.cvUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 font-bold hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50 transition-all">
-                        View Attached CV / Resume
-                      </a>
+                    <div>
+                      <h4 className="text-xs uppercase font-bold text-gray-400 mb-2">Specializations</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {(viewingExpert.specializations || []).map((s, i) => (
+                          <span key={i} className="bg-gray-100 px-3 py-1 rounded-full text-xs font-bold text-gray-700 border border-gray-200">
+                            {String(s)}
+                          </span>
+                        ))}
+                        {(!viewingExpert.specializations || viewingExpert.specializations.length === 0) && <span className="text-sm text-gray-400 italic">None listed</span>}
+                      </div>
                     </div>
-                  )}
+
+                    {viewingExpert.cvUrl && (
+                      <div className="pt-4 border-t border-gray-100">
+                        <a href={viewingExpert.cvUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 font-bold hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50 transition-all">
+                          View Attached CV / Resume
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {activeModalTab === 'DOCUMENTS' && (
+                <div className="space-y-4">
+                  <h4 className="font-bold text-gray-800">Uploaded Documents</h4>
+                  {(() => {
+                    let docs: any[] = [];
+                    try {
+                      if (Array.isArray(viewingExpert.documents)) docs = viewingExpert.documents;
+                      else if (typeof viewingExpert.documents === 'string') docs = JSON.parse(viewingExpert.documents);
+                    } catch (e) { }
+
+                    if (docs.length === 0) return <p className="text-gray-500 italic">No documents uploaded.</p>;
+
+                    return docs.map((doc: any, i: number) => (
+                      <div key={i} className="flex justify-between items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><FileText size={18} /></div>
+                          <div>
+                            <p className="font-bold text-gray-800">{doc.label || 'Untitled Document'}</p>
+                            <p className="text-xs text-gray-400">{new Date(doc.uploadedAt).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                        <a href={doc.url} target="_blank" rel="noreferrer" className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1">
+                          Open <ChevronRight size={14} />
+                        </a>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              )}
+
+              {activeModalTab === 'REQUESTS' && (
+                <div className="space-y-4">
+                  <h4 className="font-bold text-gray-800">Assigned Tasks</h4>
+                  {(() => {
+                    // @ts-ignore
+                    const expertTasks = (requests || []).filter(r => r.assignedExpertId === viewingExpert.id);
+                    if (expertTasks.length === 0) return <p className="text-gray-500 italic">No tasks assigned.</p>;
+
+                    return (
+                      <div className="overflow-x-auto border border-gray-200 rounded-xl">
+                        <table className="w-full text-sm text-left">
+                          <thead className="bg-gray-50 text-gray-500 font-bold">
+                            <tr>
+                              <th className="px-4 py-2">ID</th>
+                              <th className="px-4 py-2">Service</th>
+                              <th className="px-4 py-2">Status</th>
+                              <th className="px-4 py-2 text-right">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {expertTasks.map((t: any) => (
+                              <tr key={t.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-2 font-mono text-gray-500">{t.id}</td>
+                                <td className="px-4 py-2 font-medium">{t.serviceName}</td>
+                                <td className="px-4 py-2"><Badge status={t.status} /></td>
+                                <td className="px-4 py-2 text-right">{t.amount} SAR</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
 
             <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 shrink-0">

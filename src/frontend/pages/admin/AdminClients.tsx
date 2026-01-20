@@ -135,6 +135,14 @@ const AdminClients = () => {
                                         <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 type="button"
+                                                onClick={(e) => { e.stopPropagation(); setViewingClient(client); }}
+                                                className="p-2 text-gray-500 hover:bg-gray-100 hover:text-blue-600 rounded-lg transition-colors"
+                                                title="View Profile Details"
+                                            >
+                                                <User size={18} />
+                                            </button>
+                                            <button
+                                                type="button"
                                                 onClick={(e) => { e.stopPropagation(); setSelectedClientOrders(client); }}
                                                 className="p-2 text-gray-500 hover:bg-gray-100 hover:text-primary-600 rounded-lg transition-colors"
                                                 title="View Orders"
@@ -311,6 +319,72 @@ const AdminClients = () => {
                             <Button onClick={handleSaveProfile} className="bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-200">
                                 <Save size={18} /> Save Changes
                             </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* --- View Client Profile Modal --- */}
+            {viewingClient && (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in zoom-in duration-200">
+                    <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col">
+                        <div className="bg-gray-900 p-6 text-white flex justify-between items-center">
+                            <div>
+                                <h3 className="font-bold text-lg">Client Profile</h3>
+                                <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">{viewingClient.id}</p>
+                            </div>
+                            <button onClick={() => setViewingClient(null)} className="hover:bg-white/20 p-2 rounded-full transition-colors"><X size={20} /></button>
+                        </div>
+
+                        <div className="p-8">
+                            <div className="flex flex-col md:flex-row gap-8">
+                                <div className="flex flex-col items-center gap-4 text-center md:w-1/3 border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-6 shrink-0">
+                                    <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-3xl font-bold text-gray-400 border-4 border-gray-50 uppercase">
+                                        {viewingClient.avatarUrl ? <img src={viewingClient.avatarUrl} className="w-full h-full rounded-full object-cover" /> : viewingClient.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold text-gray-900">{viewingClient.name}</h2>
+                                        <p className="text-sm text-gray-500">{viewingClient.companyName}</p>
+                                        <Badge status={viewingClient.zatcaStatus} className="mt-2" />
+                                    </div>
+
+                                    <div className="w-full bg-blue-50 p-4 rounded-xl mt-2">
+                                        <p className="text-xs text-blue-600 font-bold uppercase mb-1">Total Spend</p>
+                                        <p className="text-2xl font-bold text-blue-900">{viewingClient.totalSpent.toLocaleString()} SAR</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 space-y-6">
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Email Address</label>
+                                            <p className="font-medium text-gray-800 flex items-center gap-2">
+                                                <Mail size={16} className="text-blue-500" />
+                                                <a href={`mailto:${viewingClient.email}`} className="hover:underline">{viewingClient.email}</a>
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Company</label>
+                                            <p className="font-medium text-gray-800 flex items-center gap-2">
+                                                <Building2 size={16} className="text-gray-400" /> {viewingClient.companyName}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Industry</label>
+                                            <p className="font-medium text-gray-800">{viewingClient.industry}</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Account Created</label>
+                                            <p className="font-medium text-gray-800">{new Date(viewingClient.createdAt || Date.now()).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-6 border-t border-gray-100 flex gap-2">
+                                        <Button variant="secondary" onClick={() => { setViewingClient(null); setSelectedClientOrders(viewingClient); }} className="w-full">
+                                            View Order History
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
