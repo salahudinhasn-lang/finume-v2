@@ -48,11 +48,8 @@ export async function createFolder(folderName: string, parentId?: string) {
         const file = await drive.files.create({
             requestBody: fileMetadata,
             fields: 'id, name, webViewLink',
+            supportsAllDrives: true,
         });
-
-        // Permission: Share with Salahudin (User) so he can see it? 
-        // Actually, if it is in the Master Shared Folder, he already inherits access!
-        // So no need to explicitly add permission if we nest it correctly.
 
         return file.data;
     } catch (err) {
@@ -79,6 +76,7 @@ export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, fo
             requestBody: fileMetadata,
             media: media,
             fields: 'id, name, webViewLink, webContentLink',
+            supportsAllDrives: true,
         });
         return file.data;
     } catch (err) {
@@ -97,6 +95,8 @@ export async function findSubfolder(parentFolderId: string, subfolderName: strin
             q: query,
             fields: 'files(id, name)',
             spaces: 'drive',
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true,
         });
 
         if (res.data.files && res.data.files.length > 0) {
