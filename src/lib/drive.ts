@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { Readable } from 'stream';
 
 // These should be in your .env
 // GOOGLE_CLIENT_EMAIL=...
@@ -71,7 +72,7 @@ export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, fo
         };
         const media = {
             mimeType: mimeType,
-            body: (await import('stream')).Readable.from(fileBuffer),
+            body: Readable.from(fileBuffer),
         };
 
         const file = await drive.files.create({
