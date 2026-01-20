@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/UI';
-import { Star, ChevronRight, Users, UserCheck, ShieldCheck, Briefcase, Search, Edit, LifeBuoy, X, Save, ArrowRight } from 'lucide-react';
+import { Star, ChevronRight, Users, UserCheck, ShieldCheck, Briefcase, Search, Edit, LifeBuoy, X, Save, ArrowRight, FileText } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Expert } from '../../types';
 

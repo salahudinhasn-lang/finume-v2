@@ -12,6 +12,7 @@ const AdminClients = () => {
 
     // State for viewing a specific client's orders
     const [selectedClientOrders, setSelectedClientOrders] = useState<Client | null>(null);
+    const [viewingClient, setViewingClient] = useState<Client | null>(null);
 
     // State for editing a specific client profile
     const [editingClient, setEditingClient] = useState<Client | null>(null);

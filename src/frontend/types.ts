@@ -11,6 +11,8 @@ export interface User {
   mobileNumber?: string;
   linkedinUrl?: string; // Experts
   status?: 'NEW' | 'VETTING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'SUSPENDED';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Client extends User {
