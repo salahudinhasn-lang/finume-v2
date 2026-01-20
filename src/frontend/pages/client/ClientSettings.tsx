@@ -70,11 +70,13 @@ const ClientSettings = () => {
             body: formData
         });
 
-        if (res.ok) {
-            const data = await res.json();
-            return data.url;
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.error || 'Upload failed');
         }
-        return null;
+
+        return data.url;
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, stateField: string, dbField: string) => {
@@ -90,23 +92,20 @@ const ClientSettings = () => {
 
             try {
                 const url = await uploadDocument(file);
-                if (url) {
-                    // Immediate Update to DB
-                    let updatePayload: any = {};
-                    if (stateField === 'other') {
-                        updatePayload[dbField] = { url, name: file.name, date: new Date().toISOString() };
-                    } else {
-                        updatePayload[dbField] = url;
-                    }
-
-                    await updateClient(user!.id, updatePayload);
-                    alert('Document uploaded successfully!');
+                // Immediate Update to DB
+                let updatePayload: any = {};
+                if (stateField === 'other') {
+                    updatePayload[dbField] = { url, name: file.name, date: new Date().toISOString() };
                 } else {
-                    alert('Upload failed. Please try again.');
+                    updatePayload[dbField] = url;
                 }
-            } catch (error) {
+
+                await updateClient(user!.id, updatePayload);
+                alert('Document uploaded successfully!');
+
+            } catch (error: any) {
                 console.error("Upload error", error);
-                alert("An error occurred during upload.");
+                alert(error.message || "An error occurred during upload.");
             } finally {
                 setUploadingDoc(null);
             }
