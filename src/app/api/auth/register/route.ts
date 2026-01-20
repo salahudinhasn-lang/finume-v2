@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import { createFolder } from '@/lib/drive';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-prod';
 
@@ -172,6 +173,26 @@ export async function POST(request: Request) {
         if (!newUser) {
             return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
         }
+
+        // --- Google Drive Integration ---
+        try {
+            const folderName = newUser.name;
+            // createFolder will use the Master Folder ID from env as parent by default
+            const driveFolder = await createFolder(folderName);
+
+            if (driveFolder && driveFolder.id) {
+                // Update user with folder ID
+                await prisma.user.update({
+                    where: { id: newUser.id },
+                    data: { googleDriveFolderId: driveFolder.id }
+                });
+                console.log(`Created Google Drive folder for ${newUser.email}: ${driveFolder.id}`);
+            }
+        } catch (driveError) {
+            // Non-blocking error: don't fail registration if Drive fails
+            console.error("Failed to create Google Drive folder during registration:", driveError);
+        }
+        // --------------------------------
 
         // 4. Generate Token
         const token = jwt.sign(
