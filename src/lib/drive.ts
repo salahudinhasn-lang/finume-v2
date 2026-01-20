@@ -2,30 +2,40 @@ import { google } from 'googleapis';
 import { Readable } from 'stream';
 
 // These should be in your .env
-// GOOGLE_CLIENT_EMAIL=...
-// GOOGLE_PRIVATE_KEY=...  (Newlines replaced by \n)
+// GOOGLE_CLIENT_ID=...
+// GOOGLE_CLIENT_SECRET=...
+// GOOGLE_REFRESH_TOKEN=...
 // GOOGLE_DRIVE_MASTER_FOLDER_ID=...
 
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
 
 export async function getDriveService() {
-    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
-    if (!clientEmail || !privateKey) {
-        console.error("Missing Google Drive Credentials");
+    if (!clientId || !clientSecret || !refreshToken) {
+        console.error("Missing Google Drive OAuth Credentials (ID, Secret, or Refresh Token)");
         return null;
     }
 
-    const auth = new google.auth.GoogleAuth({
-        credentials: {
-            client_email: clientEmail,
-            private_key: privateKey,
-        },
-        scopes: SCOPES,
-    });
+    try {
+        const auth = new google.auth.OAuth2(
+            clientId,
+            clientSecret,
+            'https://developers.google.com/oauthplayground' // Redirect URI used to get token
+        );
 
-    return google.drive({ version: 'v3', auth });
+        auth.setCredentials({
+            refresh_token: refreshToken
+        });
+
+        // No need to manually refresh; googleapis handles it if refresh_token is present
+        return google.drive({ version: 'v3', auth });
+    } catch (err) {
+        console.error("Google Auth initialization error", err);
+        return null;
+    }
 }
 
 export async function createFolder(folderName: string, parentId?: string) {
