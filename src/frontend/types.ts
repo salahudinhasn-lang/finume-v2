@@ -55,6 +55,7 @@ export interface Expert extends User {
   isFeatured?: boolean;
   linkedinUrl?: string;
   cvUrl?: string;
+  documents?: any;
 }
 
 export type AdminRole = 'SUPER_ADMIN' | 'ADMIN' | 'FINANCE' | 'SUPPORT' | 'EXPERT_RELATIONS' | 'SALES';
