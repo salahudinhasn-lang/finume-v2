@@ -44,22 +44,68 @@ export async function POST(req: NextRequest) {
         let driveFileId: string | undefined;
 
         // --- Google Drive Logic ---
-        if (user?.googleDriveFolderId) {
+        // --- Google Drive Logic ---
+        let userDriveFolderId = user?.googleDriveFolderId;
+        const masterFolderId = process.env.GOOGLE_DRIVE_MASTER_FOLDER_ID;
+
+        // 1. Auto-Create User Folder if missing
+        if (!userDriveFolderId && masterFolderId) {
             try {
-                let targetFolderId = user.googleDriveFolderId;
+                // We need the user's name. Since we selected specific fields, we might need to fetch name if not available or assume from context.
+                // Re-fetching user with name if needed, or just trusting userId for folder name fallback?
+                // Better to fetch name correctly.
+                const userFull = await prisma.user.findUnique({ where: { id: userId } });
+                const folderName = userFull?.name || `User_${userId}`;
 
-                // Client Logic: Subfolder by Date
-                if (user.role === 'CLIENT') {
-                    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-                    const dateFolder = await findSubfolder(user.googleDriveFolderId, today);
+                const newFolder = await createFolder(folderName, masterFolderId);
+                if (newFolder && newFolder.id) {
+                    userDriveFolderId = newFolder.id;
+                    // Update DB
+                    await prisma.user.update({
+                        where: { id: userId },
+                        data: { googleDriveFolderId: userDriveFolderId }
+                    });
+                    console.log(`Auto-created Drive folder for user ${userId}: ${userDriveFolderId}`);
+                }
+            } catch (err) {
+                console.error("Failed to auto-create missing Drive folder:", err);
+            }
+        }
 
-                    if (dateFolder && dateFolder.id) {
-                        targetFolderId = dateFolder.id;
+        if (userDriveFolderId) {
+            try {
+                let targetFolderId = userDriveFolderId;
+
+                // Client Logic: Subfolder by Date or Category
+                if (user?.role === 'CLIENT') {
+                    const category = formData.get('category') as string | null;
+
+                    if (category === 'legal') {
+                        // Legal Documents -> "Legal Entity Documents" folder
+                        const legalFolderName = "Legal Entity Documents";
+                        const legalFolder = await findSubfolder(userDriveFolderId, legalFolderName);
+
+                        if (legalFolder && legalFolder.id) {
+                            targetFolderId = legalFolder.id;
+                        } else {
+                            const newLegalFolder = await createFolder(legalFolderName, userDriveFolderId);
+                            if (newLegalFolder && newLegalFolder.id) {
+                                targetFolderId = newLegalFolder.id;
+                            }
+                        }
                     } else {
-                        // Create it
-                        const newDateFolder = await createFolder(today, user.googleDriveFolderId);
-                        if (newDateFolder && newDateFolder.id) {
-                            targetFolderId = newDateFolder.id;
+                        // Default / Daily Uploads
+                        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+                        const dateFolder = await findSubfolder(userDriveFolderId, today);
+
+                        if (dateFolder && dateFolder.id) {
+                            targetFolderId = dateFolder.id;
+                        } else {
+                            // Create it
+                            const newDateFolder = await createFolder(today, userDriveFolderId);
+                            if (newDateFolder && newDateFolder.id) {
+                                targetFolderId = newDateFolder.id;
+                            }
                         }
                     }
                 }
@@ -75,6 +121,7 @@ export async function POST(req: NextRequest) {
                 console.error("Google Drive Upload Failed, falling back to local:", driveErr);
             }
         }
+        // --------------------------
         // --------------------------
 
         // Fallback or Local Mirror (Optional: currently we do fallback if drive fails OR if no drive ID)

@@ -111,6 +111,9 @@ model Client {
   legalStructure  String?
   crDocumentUrl   String?
   vatDocumentUrl  String?
+  formationContractUrl String?
+  nationalAddressDocumentUrl String?
+  otherDocuments  Json?
   
   notifications   Notification[]
   teamMembers     TeamMember[]
