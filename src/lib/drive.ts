@@ -10,9 +10,9 @@ import { Readable } from 'stream';
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
 
 export async function getDriveService() {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+    const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN?.trim();
 
     if (!clientId || !clientSecret || !refreshToken) {
         console.error("Missing Google Drive OAuth Credentials (ID, Secret, or Refresh Token)");
