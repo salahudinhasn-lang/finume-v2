@@ -22,7 +22,7 @@ import ExpertEarnings from './pages/expert/ExpertEarnings';
 import ExpertProfile from './pages/expert/ExpertProfile';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminClients from './pages/admin/AdminClients';
-import AdminExpertsV2 from './pages/admin/AdminExpertsV2';
+import AdminExperts from './pages/admin/AdminExperts';
 import AdminRequests from './pages/admin/AdminRequests';
 import AdminFinancials from './pages/admin/AdminFinancials';
 import AdminSitePages from './pages/admin/AdminSitePages';
@@ -265,7 +265,7 @@ const AppContent = () => {
         <Route path="/admin/experts" element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <Layout title="Manage Experts">
-              <AdminExpertsV2 />
+              <AdminExperts />
             </Layout>
           </ProtectedRoute>
         } />
