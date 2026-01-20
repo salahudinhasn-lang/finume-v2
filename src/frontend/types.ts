@@ -33,6 +33,9 @@ export interface Client extends User {
   legalStructure?: string;
   crDocumentUrl?: string;
   vatDocumentUrl?: string;
+  nationalAddressDocumentUrl?: string;
+  formationContractUrl?: string;
+  otherDocuments?: any;
 
   totalSpent: number;
   zatcaStatus: 'GREEN' | 'YELLOW' | 'RED';

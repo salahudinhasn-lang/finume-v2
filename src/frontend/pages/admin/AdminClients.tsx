@@ -13,6 +13,7 @@ const AdminClients = () => {
     // State for viewing a specific client's orders
     const [selectedClientOrders, setSelectedClientOrders] = useState<Client | null>(null);
     const [viewingClient, setViewingClient] = useState<Client | null>(null);
+    const [activeClientTab, setActiveClientTab] = useState<'OVERVIEW' | 'DOCUMENTS' | 'SETTINGS'>('OVERVIEW');
 
     // State for editing a specific client profile
     const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -136,7 +137,7 @@ const AdminClients = () => {
                                         <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); setViewingClient(client); }}
+                                                onClick={(e) => { e.stopPropagation(); setViewingClient(client); setActiveClientTab('OVERVIEW'); }}
                                                 className="p-2 text-gray-500 hover:bg-gray-100 hover:text-blue-600 rounded-lg transition-colors"
                                                 title="View Profile Details"
                                             >
@@ -230,7 +231,7 @@ const AdminClients = () => {
                                     <tbody className="divide-y divide-gray-100">
                                         {clientRequests.map(req => (
                                             <tr key={req.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 font-mono text-gray-500">{req.id}</td>
+                                                <td className="px-6 py-4 font-mono text-gray-500">{req.displayId || req.id}</td>
                                                 <td className="px-6 py-4 font-bold text-gray-800">{req.serviceName}</td>
                                                 <td className="px-6 py-4">
                                                     {req.assignedExpertId ? (
@@ -327,8 +328,8 @@ const AdminClients = () => {
             {/* --- View Client Profile Modal --- */}
             {viewingClient && (
                 <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in zoom-in duration-200">
-                    <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col">
-                        <div className="bg-gray-900 p-6 text-white flex justify-between items-center">
+                    <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="bg-gray-900 p-6 text-white flex justify-between items-center shrink-0">
                             <div>
                                 <h3 className="font-bold text-lg">Client Profile</h3>
                                 <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">{viewingClient.id}</p>
@@ -336,56 +337,164 @@ const AdminClients = () => {
                             <button onClick={() => setViewingClient(null)} className="hover:bg-white/20 p-2 rounded-full transition-colors"><X size={20} /></button>
                         </div>
 
-                        <div className="p-8">
-                            <div className="flex flex-col md:flex-row gap-8">
-                                <div className="flex flex-col items-center gap-4 text-center md:w-1/3 border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-6 shrink-0">
-                                    <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-3xl font-bold text-gray-400 border-4 border-gray-50 uppercase">
-                                        {viewingClient.avatarUrl ? <img src={viewingClient.avatarUrl} className="w-full h-full rounded-full object-cover" /> : viewingClient.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-bold text-gray-900">{viewingClient.name}</h2>
-                                        <p className="text-sm text-gray-500">{viewingClient.companyName}</p>
-                                        <Badge status={viewingClient.zatcaStatus} className="mt-2" />
+                        {/* Tabs */}
+                        <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-4 gap-6 shrink-0">
+                            {['OVERVIEW', 'DOCUMENTS', 'SETTINGS'].map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveClientTab(tab as any)}
+                                    className={`pb-3 text-sm font-bold uppercase tracking-wider transition-all border-b-2 ${activeClientTab === tab ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="p-8 overflow-y-auto">
+                            {activeClientTab === 'OVERVIEW' && (
+                                <div className="flex flex-col md:flex-row gap-8">
+                                    <div className="flex flex-col items-center gap-4 text-center md:w-1/3 border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-6 shrink-0">
+                                        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-3xl font-bold text-gray-400 border-4 border-gray-50 uppercase">
+                                            {viewingClient.avatarUrl ? <img src={viewingClient.avatarUrl} className="w-full h-full rounded-full object-cover" /> : viewingClient.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-bold text-gray-900">{viewingClient.name}</h2>
+                                            <p className="text-sm text-gray-500">{viewingClient.companyName}</p>
+                                            <Badge status={viewingClient.zatcaStatus} className="mt-2" />
+                                        </div>
+
+                                        <div className="w-full bg-blue-50 p-4 rounded-xl mt-2">
+                                            <p className="text-xs text-blue-600 font-bold uppercase mb-1">Total Spend</p>
+                                            <p className="text-2xl font-bold text-blue-900">{viewingClient.totalSpent.toLocaleString()} SAR</p>
+                                        </div>
                                     </div>
 
-                                    <div className="w-full bg-blue-50 p-4 rounded-xl mt-2">
-                                        <p className="text-xs text-blue-600 font-bold uppercase mb-1">Total Spend</p>
-                                        <p className="text-2xl font-bold text-blue-900">{viewingClient.totalSpent.toLocaleString()} SAR</p>
+                                    <div className="flex-1 space-y-6">
+                                        <div className="grid grid-cols-1 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Email Address</label>
+                                                <p className="font-medium text-gray-800 flex items-center gap-2">
+                                                    <Mail size={16} className="text-blue-500" />
+                                                    <a href={`mailto:${viewingClient.email}`} className="hover:underline">{viewingClient.email}</a>
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Company</label>
+                                                <p className="font-medium text-gray-800 flex items-center gap-2">
+                                                    <Building2 size={16} className="text-gray-400" /> {viewingClient.companyName}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Industry</label>
+                                                <p className="font-medium text-gray-800">{viewingClient.industry}</p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Account Created</label>
+                                                <p className="font-medium text-gray-800">{new Date(viewingClient.createdAt || Date.now()).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-6 border-t border-gray-100 flex gap-2">
+                                            <Button variant="secondary" onClick={() => { setViewingClient(null); setSelectedClientOrders(viewingClient); }} className="w-full">
+                                                View Order History
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
+                            )}
 
-                                <div className="flex-1 space-y-6">
-                                    <div className="grid grid-cols-1 gap-4">
+                            {activeClientTab === 'DOCUMENTS' && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><FileText size={20} /></div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Email Address</label>
-                                            <p className="font-medium text-gray-800 flex items-center gap-2">
-                                                <Mail size={16} className="text-blue-500" />
-                                                <a href={`mailto:${viewingClient.email}`} className="hover:underline">{viewingClient.email}</a>
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Company</label>
-                                            <p className="font-medium text-gray-800 flex items-center gap-2">
-                                                <Building2 size={16} className="text-gray-400" /> {viewingClient.companyName}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Industry</label>
-                                            <p className="font-medium text-gray-800">{viewingClient.industry}</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Account Created</label>
-                                            <p className="font-medium text-gray-800">{new Date(viewingClient.createdAt || Date.now()).toLocaleDateString()}</p>
+                                            <h3 className="font-bold text-gray-900">Uploaded Documents</h3>
+                                            <p className="text-xs text-gray-500">Legal and compliance files</p>
                                         </div>
                                     </div>
 
-                                    <div className="pt-6 border-t border-gray-100 flex gap-2">
-                                        <Button variant="secondary" onClick={() => { setViewingClient(null); setSelectedClientOrders(viewingClient); }} className="w-full">
-                                            View Order History
-                                        </Button>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {[
+                                            { label: 'CR Document', url: viewingClient.crDocumentUrl },
+                                            { label: 'VAT Certificate', url: viewingClient.vatDocumentUrl },
+                                            { label: 'National Address', url: viewingClient.nationalAddressDocumentUrl },
+                                            { label: 'Formation Contract', url: viewingClient.formationContractUrl }
+                                        ].map((doc, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2 rounded-lg ${doc.url ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                                                        <FileText size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-800">{doc.label}</p>
+                                                        <p className="text-xs text-gray-400">{doc.url ? 'Available' : 'Not Uploaded'}</p>
+                                                    </div>
+                                                </div>
+                                                {doc.url && (
+                                                    <a href={doc.url} target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-600 hover:underline px-3 py-1 bg-blue-50 rounded-md">
+                                                        View
+                                                    </a>
+                                                )}
+                                            </div>
+                                        ))}
+
+                                        {/* Other Documents JSON */}
+                                        {(() => {
+                                            const otherDocs = viewingClient.otherDocuments ? (typeof viewingClient.otherDocuments === 'string' ? JSON.parse(viewingClient.otherDocuments) : viewingClient.otherDocuments) : [];
+                                            if (Array.isArray(otherDocs) && otherDocs.length > 0) {
+                                                return otherDocs.map((doc: any, i: number) => (
+                                                    <div key={`other-${i}`} className="flex justify-between items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><FileText size={18} /></div>
+                                                            <div>
+                                                                <p className="font-bold text-gray-800">{doc.label || doc.name || 'Document'}</p>
+                                                                <p className="text-xs text-gray-400">{new Date(doc.uploadedAt || Date.now()).toLocaleDateString()}</p>
+                                                            </div>
+                                                        </div>
+                                                        <a href={doc.url} target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-600 hover:underline px-3 py-1 bg-blue-50 rounded-md">
+                                                            View
+                                                        </a>
+                                                    </div>
+                                                ));
+                                            }
+                                            return null;
+                                        })()}
                                     </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {activeClientTab === 'SETTINGS' && (
+                                <div className="space-y-6">
+                                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                        <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                            <Unlock size={18} /> Feature Permissions
+                                        </h4>
+                                        <div className="space-y-3">
+                                            {viewingClient.permissions ? (
+                                                Object.entries(viewingClient.permissions)
+                                                    .filter(([key]) => key.startsWith('can'))
+                                                    .map(([key, value]) => (
+                                                        <div key={key} className="flex justify-between items-center">
+                                                            <span className="text-sm font-medium text-gray-700 capitalize">{key.replace('can', '').replace(/([A-Z])/g, ' $1').trim()}</span>
+                                                            <Badge status={value ? 'GREEN' : 'RED'} className="text-[10px]" />
+                                                        </div>
+                                                    ))
+                                            ) : (
+                                                <p className="text-sm text-gray-500 italic">No custom permissions configured.</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                        <h4 className="font-bold text-gray-800 mb-4">Account Metadata</h4>
+                                        <div className="space-y-2 text-sm text-gray-600">
+                                            <p><strong>Database ID:</strong> <span className="font-mono text-xs bg-white px-1 border rounded">{viewingClient.id}</span></p>
+                                            <p><strong>Created:</strong> {viewingClient.createdAt ? new Date(viewingClient.createdAt).toLocaleString() : 'N/A'}</p>
+                                            <p><strong>Last Updated:</strong> {viewingClient.updatedAt ? new Date(viewingClient.updatedAt).toLocaleString() : 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

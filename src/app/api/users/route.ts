@@ -50,7 +50,12 @@ export async function GET(request: Request) {
 
                     // Include timestamps for debugging
                     createdAt: baseUser.createdAt,
-                    updatedAt: baseUser.updatedAt
+                    updatedAt: baseUser.updatedAt,
+
+                    // Documents
+                    documents: expertProfile.documents,
+                    linkedinUrl: expertProfile.linkedinUrl,
+                    cvUrl: expertProfile.cvUrl
                 };
 
                 experts.push(flattenedExpert);
