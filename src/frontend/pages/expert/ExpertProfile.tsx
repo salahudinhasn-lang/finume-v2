@@ -458,6 +458,78 @@ const ExpertProfile = () => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Documents Section */}
+                                <div className="md:col-span-2 pt-4 border-t border-gray-100">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h4 className="font-bold text-gray-800 flex items-center gap-2">
+                                            <FileText size={18} className="text-gray-500" /> My Documents
+                                        </h4>
+                                        <Button type="button" size="sm" variant="secondary" onClick={handleAddDocumentRow}>
+                                            + Add More
+                                        </Button>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {formData.documents.map((doc, idx) => (
+                                            <div key={doc.id} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center p-3 bg-gray-50 rounded-xl border border-gray-200">
+                                                <div className="flex-1 w-full">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Document Name (e.g. CPA Certificate)"
+                                                        value={doc.label}
+                                                        onChange={(e) => handleDocumentLabelChange(doc.id, e.target.value)}
+                                                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-primary-500"
+                                                    />
+                                                </div>
+
+                                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                                    {doc.url ? (
+                                                        <>
+                                                            <a href={doc.url} target="_blank" rel="noreferrer" className="px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-100 transition-colors">
+                                                                View
+                                                            </a>
+                                                            <div className="relative">
+                                                                <input
+                                                                    type="file"
+                                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                                    onChange={(e) => e.target.files?.[0] && handleDocumentUpload(doc.id, e.target.files[0])}
+                                                                />
+                                                                <button type="button" disabled={uploadingDocId === doc.id} className="px-3 py-2 bg-primary-50 text-primary-700 border border-primary-100 text-sm font-bold rounded-lg hover:bg-primary-100 transition-colors">
+                                                                    {uploadingDocId === doc.id ? '...' : 'Update'}
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="relative w-full sm:w-auto">
+                                                            <input
+                                                                type="file"
+                                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                                onChange={(e) => e.target.files?.[0] && handleDocumentUpload(doc.id, e.target.files[0])}
+                                                            />
+                                                            <button type="button" disabled={uploadingDocId === doc.id} className="w-full sm:w-auto px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 transition-colors shadow-sm flex items-center justify-center gap-2">
+                                                                <Upload size={14} />
+                                                                {uploadingDocId === doc.id ? 'Uploading...' : 'Upload'}
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveDocumentRow(doc.id)}
+                                                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                                        title="Remove"
+                                                    >
+                                                        &times;
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {formData.documents.length === 0 && (
+                                            <p className="text-sm text-gray-500 italic text-center py-2">No documents added yet.</p>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="pt-4 border-t border-gray-100 flex justify-end">
