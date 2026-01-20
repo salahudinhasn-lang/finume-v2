@@ -59,11 +59,23 @@ export async function POST(req: NextRequest) {
         // 1. Auto-Create User Folder if missing
         if (!userDriveFolderId && masterFolderId) {
             try {
-                // We need the user's name. Since we selected specific fields, we might need to fetch name if not available or assume from context.
-                // Re-fetching user with name if needed, or just trusting userId for folder name fallback?
-                // Better to fetch name correctly.
-                const userFull = await prisma.user.findUnique({ where: { id: userId } });
-                const folderName = userFull?.name || `User_${userId}`;
+                // Fetch full profile to get Company Name if possible
+                const userFull = await prisma.user.findUnique({
+                    where: { id: userId },
+                    include: { clientProfile: true }
+                });
+
+                let folderName = `User_${userId}`;
+                if (userFull) {
+                    if (userFull.role === 'CLIENT' && userFull.clientProfile?.companyName) {
+                        folderName = userFull.clientProfile.companyName;
+                    } else if (userFull.name) {
+                        folderName = userFull.name;
+                    }
+                }
+
+                // Sanitize folder name (remove slashes just in case)
+                folderName = folderName.replace(/[\/\\]/g, '-');
 
                 const newFolder = await createFolder(folderName, masterFolderId);
                 if (newFolder && newFolder.id) {
@@ -73,7 +85,7 @@ export async function POST(req: NextRequest) {
                         where: { id: userId },
                         data: { googleDriveFolderId: userDriveFolderId }
                     });
-                    console.log(`Auto-created Drive folder for user ${userId}: ${userDriveFolderId}`);
+                    console.log(`Auto-created Drive folder for user ${userId}: ${userDriveFolderId} (${folderName})`);
                 }
             } catch (err) {
                 console.error("Failed to auto-create missing Drive folder:", err);
@@ -125,22 +137,14 @@ export async function POST(req: NextRequest) {
                     console.log(`Uploaded to Drive: ${driveFileUrl}`);
                 }
 
-            } catch (driveErr) {
-                console.error("Google Drive Upload Failed, falling back to local:", driveErr);
+            } catch (driveErr: any) {
+                console.error("Google Drive Upload Failed:", driveErr);
+                return NextResponse.json({ error: `Google Drive Upload Failed: ${driveErr.message}` }, { status: 500 });
             }
         }
-        // --------------------------
-        // --------------------------
 
-        // Fallback or Local Mirror (Optional: currently we do fallback if drive fails OR if no drive ID)
         if (!driveFileUrl) {
-            const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
-            const filePath = path.join(uploadDir, filename);
-            await fs.promises.writeFile(filePath, buffer);
-            driveFileUrl = `/uploads/${filename}`;
+            return NextResponse.json({ error: 'Upload failed: No URL returned from Drive' }, { status: 500 });
         }
 
         return NextResponse.json({

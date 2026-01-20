@@ -80,9 +80,9 @@ const ClientSettings = () => {
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, stateField: string, dbField: string) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            // 5MB Validation
-            if (file.size > 5 * 1024 * 1024) {
-                alert('File size exceeds 5MB limit.');
+            // 4MB Validation (Vercel Serverless has 4.5MB limit, keep safe margin)
+            if (file.size > 4 * 1024 * 1024) {
+                alert('File size exceeds 4MB limit.');
                 return;
             }
 
