@@ -157,6 +157,11 @@ const ClientDashboard = () => {
     // Calculate exact count of items needing client review
     const needsReviewCount = activeRequests.filter(r => r.status === 'REVIEW_CLIENT').length;
 
+    // Calculate Total Spend dynamically from requests
+    const calculatedTotalSpend = myRequests
+        .filter(r => !['PENDING_PAYMENT', 'CANCELLED'].includes(r.status))
+        .reduce((sum, r) => sum + r.amount, 0);
+
     return (
         <div className="space-y-8 animate-in fade-in duration-700 max-w-6xl mx-auto pb-12">
 
@@ -316,7 +321,7 @@ const ClientDashboard = () => {
                                 </div>
                                 <p className="text-indigo-200 font-medium text-sm uppercase tracking-wider mb-1">Total Spend</p>
                                 <h3 className="text-4xl font-black tracking-tight text-white mb-2">
-                                    {currentClient?.totalSpent?.toLocaleString() || '0'} <span className="text-lg text-white/50 font-medium">SAR</span>
+                                    {calculatedTotalSpend.toLocaleString()} <span className="text-lg text-white/50 font-medium">SAR</span>
                                 </h3>
                                 <p className="text-xs text-white/40">Lifetime investment</p>
                             </div>
