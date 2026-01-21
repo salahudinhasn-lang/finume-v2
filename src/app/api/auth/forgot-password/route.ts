@@ -34,7 +34,11 @@ export async function POST(req: Request) {
         });
 
         // Send Email
-        const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+        // Detect Base URL from request or env
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
+        // Construct Link (Assumes HashRouter for SPA, adjust if using Browser Router without hash)
+        // Since project uses HashRouter (verified in App.tsx), we need /#/
+        const resetUrl = `${baseUrl}/#/reset-password?token=${resetToken}`;
 
         const emailResult = await sendEmail({
             to: email,
