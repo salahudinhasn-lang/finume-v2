@@ -146,11 +146,13 @@ const LoginPage = () => {
   // Forgot Password Logic
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [resetStatus, setResetStatus] = useState<'IDLE' | 'SUCCESS' | 'ERROR'>('IDLE');
+  const [isMock, setIsMock] = useState(false);
 
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setResetStatus('IDLE');
+    setIsMock(false);
 
     try {
       const res = await fetch('/api/auth/forgot-password', {
@@ -162,6 +164,7 @@ const LoginPage = () => {
       const data = await res.json();
       if (res.ok) {
         setResetStatus('SUCCESS');
+        if (data.mock) setIsMock(true);
       } else {
         setResetStatus('ERROR');
         alert(data.error || 'Failed to send reset link');
@@ -307,6 +310,13 @@ const LoginPage = () => {
                   <p className="text-sm text-gray-600 mb-4">
                     We have sent a password reset link to <strong>{email}</strong>.
                   </p>
+                  {isMock && (
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 text-left">
+                      <p className="text-sm text-yellow-700">
+                        <strong>Development Mode:</strong> Email sending is mocked. Please check your <strong>server terminal/console</strong> for the reset link.
+                      </p>
+                    </div>
+                  )}
                   <Button onClick={() => setIsForgotPassword(false)} variant="outline" className="w-full">
                     Return to Login
                   </Button>

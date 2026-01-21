@@ -36,7 +36,7 @@ export async function POST(req: Request) {
         // Send Email
         const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
 
-        await sendEmail({
+        const emailResult = await sendEmail({
             to: email,
             subject: 'Reset your Finume Password',
             html: `
@@ -49,7 +49,10 @@ export async function POST(req: Request) {
             `
         });
 
-        return NextResponse.json({ message: 'Reset link sent' });
+        return NextResponse.json({
+            message: 'Reset link sent',
+            mock: (emailResult as any)?.mock
+        });
 
     } catch (error) {
         console.error('Forgot Password Error:', error);
