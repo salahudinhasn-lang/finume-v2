@@ -160,7 +160,7 @@ const ClientDashboard = () => {
     // Calculate Total Spend dynamically from requests
     const calculatedTotalSpend = myRequests
         .filter(r => !['PENDING_PAYMENT', 'CANCELLED'].includes(r.status))
-        .reduce((sum, r) => sum + r.amount, 0);
+        .reduce((sum, r) => sum + Number(r.amount), 0);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700 max-w-6xl mx-auto pb-12">
