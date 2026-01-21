@@ -189,7 +189,10 @@ const ClientDashboard = () => {
                             <Plus size={24} className="mr-2" /> Add Request
                         </Button>
 
-                        <div className="group/card bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20 w-full md:w-auto min-w-[260px] hover:bg-white/15 transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-xl">
+                        <div
+                            onClick={() => navigate('/client/requests')}
+                            className="group/card bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20 w-full md:w-auto min-w-[260px] hover:bg-white/15 transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-xl"
+                        >
                             <p className="text-xs text-emerald-100 opacity-80 uppercase tracking-widest font-bold mb-3">{t('client.actionNeeded')}</p>
                             <div className="flex items-center gap-5">
                                 <span className="text-6xl font-black tracking-tighter drop-shadow-md">{needsReviewCount}</span>
