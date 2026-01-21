@@ -119,9 +119,9 @@ const ClientDashboard = () => {
 
     const myRequests = requests.filter(r => r.clientId === user?.id);
     const activeRequests = myRequests.filter(r => ['NEW', 'MATCHED', 'IN_PROGRESS', 'REVIEW_CLIENT', 'REVIEW_ADMIN'].includes(r.status));
-    const needsAction = activeRequests.some(r => r.status === 'REVIEW_CLIENT');
 
-
+    // Calculate exact count of items needing client review
+    const needsReviewCount = activeRequests.filter(r => r.status === 'REVIEW_CLIENT').length;
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700 max-w-6xl mx-auto pb-12">
@@ -192,10 +192,10 @@ const ClientDashboard = () => {
                         <div className="group/card bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20 w-full md:w-auto min-w-[260px] hover:bg-white/15 transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-xl">
                             <p className="text-xs text-emerald-100 opacity-80 uppercase tracking-widest font-bold mb-3">{t('client.actionNeeded')}</p>
                             <div className="flex items-center gap-5">
-                                <span className="text-6xl font-black tracking-tighter drop-shadow-md">{needsAction ? '1' : '0'}</span>
+                                <span className="text-6xl font-black tracking-tighter drop-shadow-md">{needsReviewCount}</span>
                                 <div className="flex flex-col text-sm font-bold opacity-90 leading-snug">
-                                    <span className="text-lg">{needsAction ? 'Urgent Items' : 'All Clear'}</span>
-                                    <span className="opacity-75 font-medium">{needsAction ? 'Review Now' : 'Relax & Focus'}</span>
+                                    <span className="text-lg">{needsReviewCount > 0 ? 'Urgent Items' : 'All Clear'}</span>
+                                    <span className="opacity-75 font-medium">{needsReviewCount > 0 ? 'Review Now' : 'Relax & Focus'}</span>
                                 </div>
                             </div>
                         </div>
