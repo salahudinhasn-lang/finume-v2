@@ -340,6 +340,44 @@ const ExpertTasks = () => {
                                 </div>
                             </div>
 
+                            {/* Direct Files Section (New) */}
+                            {selectedTask.files && selectedTask.files.length > 0 && (
+                                <div>
+                                    <h3 className="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">Included Files</h3>
+                                    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden divide-y divide-gray-100">
+                                        {selectedTask.files.map(file => (
+                                            <div key={file.id} className="p-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                    <FileText size={16} className="text-gray-400 shrink-0" />
+                                                    <div className="min-w-0">
+                                                        <a
+                                                            href={file.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-sm text-gray-700 font-medium truncate hover:text-blue-600 hover:underline block"
+                                                        >
+                                                            {file.name}
+                                                        </a>
+                                                        <p className="text-[10px] text-gray-400 mt-0.5">
+                                                            {file.size}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <a
+                                                    href={file.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-gray-400 hover:text-blue-600 p-1"
+                                                    title="View File"
+                                                >
+                                                    <FileText size={14} />
+                                                </a>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* File Batch Manager (The Task Manager) */}
                             <div className="bg-blue-50/50 rounded-xl p-6 border border-blue-100">
                                 <FileBatchManager
