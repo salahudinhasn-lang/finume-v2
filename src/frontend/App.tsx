@@ -4,6 +4,7 @@ import './i18n';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
 import LoginPage from './pages/Auth';
+import ResetPasswordPage from './pages/auth/ResetPassword';
 import RegisterPage from './pages/Register';
 import HomePage from './pages/Home';
 import JoinExpert from './pages/JoinExpert';
@@ -148,6 +149,7 @@ const AppContent = () => {
 
         {/* Auth Pages */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Client Routes */}
