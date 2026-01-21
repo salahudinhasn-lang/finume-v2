@@ -51,7 +51,8 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
             message: 'Reset link sent',
-            mock: (emailResult as any)?.mock
+            mock: (emailResult as any)?.mock,
+            resetLink: (emailResult as any)?.mock ? resetUrl : undefined
         });
 
     } catch (error) {
