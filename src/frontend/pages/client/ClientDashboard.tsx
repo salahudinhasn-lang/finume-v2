@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Button, Badge } from '../../components/UI';
-import { Plus, Clock, CheckCircle, Search, Eye, X, Check, UploadCloud, ShieldAlert, ShieldCheck, Zap, FileText, ChevronRight, AlertTriangle, Sparkles, Loader2, ArrowRight, File } from 'lucide-react';
+import { Plus, Clock, CheckCircle, Search, Eye, X, Check, UploadCloud, ShieldAlert, ShieldCheck, Zap, FileText, ChevronRight, AlertTriangle, Sparkles, Loader2, ArrowRight, File, Wallet, Coins } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Request, UploadedFile, DocumentCategory } from '../../types';
 import { matchServiceWithAI } from '../../services/geminiService';
@@ -308,20 +308,22 @@ const ClientDashboard = () => {
                             </div>
                         )}
 
-                        {/* Promo Card */}
-                        <div className="bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 rounded-[2rem] p-8 text-white text-center shadow-2xl relative overflow-hidden group cursor-pointer hover:shadow-indigo-500/30 transition-all duration-500">
-                            {/* Animated Background */}
-                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-25 transition-opacity duration-700 animate-[spin_20s_linear_infinite]">
-                                <Sparkles size={140} />
+                        {/* Total Spend Card */}
+                        <div className="bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 rounded-[2rem] p-8 text-white text-center shadow-2xl relative overflow-hidden group hover:shadow-indigo-500/30 transition-all duration-500">
+                            <div className="relative z-10 flex flex-col items-center justify-center h-full">
+                                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-4 backdrop-blur-sm border border-white/10 group-hover:scale-110 transition-transform">
+                                    <Wallet size={24} className="text-emerald-400" />
+                                </div>
+                                <p className="text-indigo-200 font-medium text-sm uppercase tracking-wider mb-1">Total Spend</p>
+                                <h3 className="text-4xl font-black tracking-tight text-white mb-2">
+                                    {currentClient?.totalSpent?.toLocaleString() || '0'} <span className="text-lg text-white/50 font-medium">SAR</span>
+                                </h3>
+                                <p className="text-xs text-white/40">Lifetime investment</p>
                             </div>
-                            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
 
-                            <div className="relative z-10">
-                                <h4 className="font-black text-2xl mb-2 tracking-tight">Need a dedicated expert?</h4>
-                                <p className="text-indigo-100 mb-6 font-medium max-w-xs mx-auto">Get a full-time CFO or accountant today.</p>
-                                <button className="bg-white text-indigo-900 px-8 py-3 rounded-xl text-sm font-bold hover:bg-indigo-50 transition-all hover:scale-105 shadow-lg flex items-center gap-2 mx-auto">
-                                    Browse Experts <ArrowRight size={16} />
-                                </button>
+                            {/* Decorative Background */}
+                            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity duration-700 animate-[spin_20s_linear_infinite]">
+                                <Coins size={140} />
                             </div>
                         </div>
                     </div>
