@@ -291,7 +291,14 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
                       <FileText size={16} className="text-gray-400 shrink-0" />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm text-gray-700 font-medium truncate">{file.name}</p>
+                          <a
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-gray-700 font-medium truncate hover:text-blue-600 hover:underline"
+                          >
+                            {file.name}
+                          </a>
                           {/* Source Indicator */}
                           <div className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-[9px] text-gray-500 font-bold uppercase tracking-wider" title={`Uploaded via ${formatSource(file.source)}`}>
                             {getSourceIcon(file.source)}
@@ -304,9 +311,15 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button className="text-gray-400 hover:text-blue-600 p-1" title="Preview">
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-blue-600 p-1"
+                        title="Preview"
+                      >
                         <FileText size={14} />
-                      </button>
+                      </a>
                       {(userRole === 'ADMIN' || (userRole === 'CLIENT' && batch.status !== 'COMPLETED')) && (
                         <button
                           onClick={() => handleDeleteFile(batch.id, file.id)}
