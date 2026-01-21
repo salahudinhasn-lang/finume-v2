@@ -94,7 +94,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                                                     <p className="font-bold text-gray-700 text-sm truncate max-w-[200px] sm:max-w-md" title={file.name}>{file.name}</p>
                                                     <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-2">
                                                         <Clock size={10} />
-                                                        {new Date(file.createdAt).toLocaleString()}
+                                                        {new Date(file.createdAt || file.uploadedAt).toLocaleString()}
                                                         <span className="w-1 h-1 rounded-full bg-gray-300"></span>
                                                         <span>{file.size ? (parseFloat(file.size) / 1024).toFixed(0) + ' KB' : 'Unknown Size'}</span>
                                                     </p>
