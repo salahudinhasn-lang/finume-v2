@@ -3,7 +3,7 @@ import { X, Check, FileText, Download, Clock, CheckCircle } from 'lucide-react';
 import { Button } from './UI';
 import { SmartUploadWidget } from './SmartUploadWidget';
 import { DocumentBatchList } from './DocumentBatchList';
-import { Request, FileBatch, GamificationProfile } from '../types';
+import { Request, FileBatch, ClientGamification } from '../types';
 
 interface RequestDetailModalProps {
     request: Request;
@@ -11,7 +11,7 @@ interface RequestDetailModalProps {
     onApprove: (req: Request) => void;
     onUpdateBatches: (newBatches: FileBatch[]) => void;
     onSmartUpload: (files: File[], requestId: string) => void;
-    clientGamification?: GamificationProfile;
+    clientGamification?: ClientGamification;
     onComplianceAction?: (action: 'nothing_today' | 'upload_clicked') => void;
 }
 
