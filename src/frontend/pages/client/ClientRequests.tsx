@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/UI';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, Filter, Eye, CheckCircle, Star, ThumbsUp, X, FileText, Download, Clock, Check, Plus, RefreshCw } from 'lucide-react';
 import { Request, Review, FileBatch, DocumentCategory, UploadedFile } from '../../types';
 import { DocumentBatchList } from '../../components/DocumentBatchList';
@@ -12,6 +12,7 @@ import { RequestDetailModal } from '../../components/RequestDetailModal';
 const ClientRequests = () => {
     const { user, requests, updateRequestStatus, submitReview, updateRequest, updateClient, clients, refreshData } = useAppContext();
     const navigate = useNavigate();
+    const location = useLocation();
     const [filter, setFilter] = useState('All');
     const [search, setSearch] = useState('');
 
@@ -28,9 +29,11 @@ const ClientRequests = () => {
     const myRequests = requests.filter(r => r.clientId === user?.id);
 
     // Handle incoming navigation state for auto-opening review
+    // Handle incoming navigation state for auto-opening review
     React.useEffect(() => {
-        if (location.state?.openReviewFor) {
-            const targetReq = requests.find(r => r.id === location.state.openReviewFor);
+        const state = location.state as any;
+        if (state?.openReviewFor) {
+            const targetReq = requests.find(r => r.id === state.openReviewFor);
             if (targetReq) openReviewModal(targetReq);
             // Clear state
             window.history.replaceState({}, document.title);
