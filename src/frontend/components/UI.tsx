@@ -8,10 +8,10 @@ export const Card: React.FC<{ children?: React.ReactNode, className?: string, on
 );
 
 export const Button = ({
-  children, onClick, variant = 'primary', size = 'md', className = '', type = 'button', disabled = false
+  children, onClick, variant = 'primary', size = 'md', className = '', type = 'button', disabled = false, ...props
 }: {
   children?: React.ReactNode, onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void, variant?: 'primary' | 'secondary' | 'danger' | 'outline', size?: 'sm' | 'md' | 'lg', className?: string, type?: 'button' | 'submit', disabled?: boolean
-}) => {
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) => {
   const baseStyle = "rounded-lg font-medium transition-colors flex items-center justify-center gap-2";
 
   const sizes = {
@@ -33,6 +33,7 @@ export const Button = ({
       className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`}
       onClick={onClick}
       disabled={disabled}
+      {...props}
     >
       {children}
     </button>
