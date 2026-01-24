@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
         const meetings = await prisma.meeting.findMany({
             where: whereClause,
             include: {
-                client: { select: { name: true, avatarUrl: true, companyName: true } },
+                client: { select: { user: { select: { name: true, avatarUrl: true } }, companyName: true } },
                 expert: { select: { user: { select: { name: true, avatarUrl: true } } } },
                 request: { select: { serviceId: true, displayId: true } },
                 messages: { orderBy: { createdAt: 'asc' } }
@@ -36,15 +36,15 @@ export async function GET(req: NextRequest) {
             ...m,
             expertName: m.expert.user.name,
             expertAvatar: m.expert.user.avatarUrl,
-            clientName: m.client.name,
-            clientAvatar: m.client.user?.avatarUrl // Need to fetch user from client? Client model has relation to User
+            clientName: m.client.user.name,
+            clientAvatar: m.client.user.avatarUrl
         }));
 
         // Wait, 'client' in simplified query above relates to Client model. 
         // Client model -> User model relation is 'user'. 
         // I need to include 'user' in client include to get avatar.
 
-        return NextResponse.json(meetings);
+        return NextResponse.json(formattedMeetings);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
