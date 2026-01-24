@@ -104,6 +104,16 @@ export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, fo
             fields: 'id, name, webViewLink, webContentLink',
             supportsAllDrives: true,
         });
+
+        // Make the file readable by anyone with the link
+        await drive.permissions.create({
+            fileId: file.data.id!,
+            requestBody: {
+                role: 'reader',
+                type: 'anyone',
+            },
+        });
+
         return file.data;
     } catch (err) {
         console.error("Upload to Drive failed", err);

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UploadCloud, FileText, CheckCircle, Loader2, X, ChevronDown, Zap, AlertTriangle } from 'lucide-react';
 import { Button } from './UI';
-import { Request } from '../types';
+import { Request, DocumentCategory } from '../types';
 
 interface SmartUploadWidgetProps {
     activeRequests: Request[];
@@ -19,8 +19,13 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
     const [dragActive, setDragActive] = useState(false);
     const [files, setFiles] = useState<File[]>([]);
     const [selectedRequestId, setSelectedRequestId] = useState<string>(preselectedRequestId || (activeRequests.length > 0 ? activeRequests[0].id : ''));
+    const [selectedCategory, setSelectedCategory] = useState<DocumentCategory | ''>('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState<{ current: number; total: number; stage: string }>({ current: 0, total: 0, stage: 'idle' });
+
+    const categories: DocumentCategory[] = [
+        'Sales Invoice', 'Purchase Invoice', 'Contract', 'Expense', 'Petty Cash', 'Bank Statement', 'VAT Return', 'Other'
+    ];
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,6 +75,9 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('requestId', selectedRequestId);
+                if (selectedCategory) {
+                    formData.append('category', selectedCategory);
+                }
 
                 const response = await fetch('/api/upload', {
                     method: 'POST',
@@ -104,6 +112,7 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
         setIsProcessing(false);
         onUploadComplete(files, selectedRequestId); // Pass original files for now, parent will refresh or we can pass uploadedFiles if we change signature
         setFiles([]); // Reset
+        setSelectedCategory('');
     };
 
 
@@ -146,23 +155,44 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
 
                     {/* Request Selector */}
                     {activeRequests.length > 0 ? (
-                        <div className="mb-8 max-w-sm mx-auto w-full">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 text-center">Assign to Request</label>
-                            <div className="relative group/select">
-                                <select
-                                    value={selectedRequestId}
-                                    onChange={(e) => setSelectedRequestId(e.target.value)}
-                                    className="w-full appearance-none bg-gray-50 hover:bg-white border border-gray-200 text-gray-900 text-sm rounded-xl py-4 pl-5 pr-12 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:border-blue-200 font-bold transition-all shadow-sm hover:shadow-md cursor-pointer"
-                                    disabled={!!preselectedRequestId}
-                                >
-                                    {activeRequests.map(req => (
-                                        <option key={req.id} value={req.id}>
-                                            {req.serviceName} ({req.displayId || req.id})
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover/select:text-blue-500 transition-colors pointer-events-none" size={20} />
+                        <div className="mb-4 max-w-sm mx-auto w-full space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 text-center">Assign to Request</label>
+                                <div className="relative group/select">
+                                    <select
+                                        value={selectedRequestId}
+                                        onChange={(e) => setSelectedRequestId(e.target.value)}
+                                        className="w-full appearance-none bg-gray-50 hover:bg-white border border-gray-200 text-gray-900 text-sm rounded-xl py-3 pl-5 pr-12 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:border-blue-200 font-bold transition-all shadow-sm hover:shadow-md cursor-pointer"
+                                        disabled={!!preselectedRequestId}
+                                    >
+                                        {activeRequests.map(req => (
+                                            <option key={req.id} value={req.id}>
+                                                {req.serviceName} ({req.displayId || req.id})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover/select:text-blue-500 transition-colors pointer-events-none" size={20} />
+                                </div>
                             </div>
+
+                            {/* Category Selector */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 text-center">Document Category (Optional)</label>
+                                <div className="relative group/select">
+                                    <select
+                                        value={selectedCategory}
+                                        onChange={(e) => setSelectedCategory(e.target.value as DocumentCategory)}
+                                        className="w-full appearance-none bg-gray-50 hover:bg-white border border-gray-200 text-gray-900 text-sm rounded-xl py-3 pl-5 pr-12 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:border-blue-200 font-bold transition-all shadow-sm hover:shadow-md cursor-pointer"
+                                    >
+                                        <option value="">Auto-Detect / Unknown</option>
+                                        {categories.map(cat => (
+                                            <option key={cat} value={cat}>{cat}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover/select:text-blue-500 transition-colors pointer-events-none" size={20} />
+                                </div>
+                            </div>
+
                         </div>
                     ) : (
                         <div className="mb-8 text-center">
