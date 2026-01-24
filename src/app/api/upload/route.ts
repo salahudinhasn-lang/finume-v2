@@ -150,9 +150,14 @@ export async function POST(req: NextRequest) {
             }
 
         } else {
-            // BRANCH B: Settings Upload -> [Legal_Entity_Files] or [Other]
-            // Default to Legal_Entity_Files for settings uploads
-            const folderName = (category === 'legal' || !category) ? 'Legal_Entity_Files' : 'Other_Files';
+            // BRANCH B: Settings Upload -> [Documents] (Expert) or [Legal_Entity_Files] (Client)
+            let folderName = 'Other_Files';
+
+            if (userRole === 'EXPERT') {
+                folderName = 'Documents';
+            } else {
+                folderName = (category === 'legal' || !category) ? 'Legal_Entity_Files' : 'Other_Files';
+            }
 
             const legalFolder = await findSubfolder(currentFolderId, folderName);
             if (legalFolder?.id) {

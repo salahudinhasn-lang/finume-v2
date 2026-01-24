@@ -473,13 +473,14 @@ const ExpertProfile = () => {
                                     <div className="space-y-3">
                                         {formData.documents.map((doc, idx) => (
                                             <div key={doc.id} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center p-3 bg-gray-50 rounded-xl border border-gray-200">
-                                                <div className="flex-1 w-full">
+                                                <div className="flex-1 w-full relative">
                                                     <input
                                                         type="text"
-                                                        placeholder="Document Name (e.g. CPA Certificate)"
+                                                        placeholder="Document Name (Required)"
                                                         value={doc.label}
                                                         onChange={(e) => handleDocumentLabelChange(doc.id, e.target.value)}
-                                                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-primary-500"
+                                                        disabled={!!doc.url || uploadingDocId === doc.id}
+                                                        className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-primary-500 ${!!doc.url ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-white border-gray-300'}`}
                                                     />
                                                 </div>
 
@@ -505,9 +506,14 @@ const ExpertProfile = () => {
                                                             <input
                                                                 type="file"
                                                                 className="absolute inset-0 opacity-0 cursor-pointer"
+                                                                disabled={!doc.label.trim()}
                                                                 onChange={(e) => e.target.files?.[0] && handleDocumentUpload(doc.id, e.target.files[0])}
                                                             />
-                                                            <button type="button" disabled={uploadingDocId === doc.id} className="w-full sm:w-auto px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 transition-colors shadow-sm flex items-center justify-center gap-2">
+                                                            <button
+                                                                type="button"
+                                                                disabled={uploadingDocId === doc.id || !doc.label.trim()}
+                                                                className={`w-full sm:w-auto px-4 py-2 text-white text-sm font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors ${!doc.label.trim() ? 'bg-gray-400 cursor-not-allowed' : 'bg-slate-900 hover:bg-slate-800'}`}
+                                                            >
                                                                 <Upload size={14} />
                                                                 {uploadingDocId === doc.id ? 'Uploading...' : 'Upload'}
                                                             </button>

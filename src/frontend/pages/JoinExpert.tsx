@@ -8,8 +8,9 @@ import { Expert } from '../types';
 import { Logo } from '../components/Logo';
 
 const JoinExpert = () => {
-    const { register, t, language, setLanguage } = useAppContext();
+    const { register, updateExpert, t, language, setLanguage } = useAppContext();
     const navigate = useNavigate();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -81,25 +82,66 @@ const JoinExpert = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSubmitting(true);
 
-        // Map form data to API payload schema
-        const payload = {
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            role: 'EXPERT',
-            mobileNumber: `${(formData as any).countryCode || '+966'}${formData.phone}`, // Map phone to mobileNumber with code
-            bio: formData.bio,
-            yearsExperience: Number(formData.yearsExperience),
-            hourlyRate: Number(formData.hourlyRate),
-            specializations: formData.specializations,
-            linkedinUrl: formData.linkedin,
-        };
+        try {
+            // Map form data to API payload schema
+            const payload = {
+                name: formData.name,
+                email: formData.email,
+                password: formData.password,
+                role: 'EXPERT',
+                mobileNumber: `${(formData as any).countryCode || '+966'}${formData.phone}`,
+                bio: formData.bio,
+                yearsExperience: Number(formData.yearsExperience),
+                hourlyRate: Number(formData.hourlyRate),
+                specializations: formData.specializations,
+                linkedinUrl: formData.linkedin,
+            };
 
-        const user = await register(payload);
+            const user = await register(payload);
 
-        if (user) {
-            navigate('/expert');
+            if (user) {
+                // If CV file is present, upload it and update profile
+                if (formData.cvFile) {
+                    try {
+                        const uploadData = new FormData();
+                        uploadData.append('file', formData.cvFile);
+                        uploadData.append('category', 'profile'); // Will go to Documents folder based on updated API
+
+                        const token = localStorage.getItem('finume_token');
+                        const res = await fetch('/api/upload', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: uploadData
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            // Create document object
+                            const cvDoc = {
+                                id: Date.now().toString(),
+                                label: 'CV / Resume', // Mandatory name
+                                url: data.url,
+                                uploadedAt: new Date().toISOString()
+                            };
+
+                            // Save to expert profile
+                            // Access updateExpert from context
+                            await updateExpert(user.id, { documents: [cvDoc] } as any);
+                        } else {
+                            console.error("Failed to upload CV silently");
+                        }
+                    } catch (uploadErr) {
+                        console.error("Error uploading CV:", uploadErr);
+                    }
+                }
+                navigate('/expert');
+            }
+        } catch (error) {
+            console.error("Registration flow error", error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
