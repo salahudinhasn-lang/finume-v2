@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { createFolder, findSubfolder } from '@/lib/drive';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-prod';
+const JWT_SECRET = process.env.JWT_SECRET || 'finume-secret-key-change-me-in-prod';
 
 // Validation Schema
 const RegisterSchema = z.object({
