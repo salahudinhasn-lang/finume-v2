@@ -19,7 +19,11 @@ const ClientDashboard = () => {
 
     // Modal State
     const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+    const [isBookMeetingOpen, setIsBookMeetingOpen] = useState(false);
     const [reviewModalOpen, setReviewModalOpen] = useState(false); // For review part if needed, or we just navigate
+
+    // Filter requests for this client
+    const myRequests = requests.filter(r => r.clientId === user?.id);
     // Ideally, we might want to share Review Modal logic too, but for "Approve & Close" we might need it. 
     // For now, let's keep it simple: if they click approve in modal, we can just navigate to Requests page with that ID selected or handle it here?
     // The user request is "preview... like *MyRequests > Preview*". 
