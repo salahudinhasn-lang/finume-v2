@@ -249,7 +249,10 @@ const Meetings = () => {
                     const dayMeetings = getMeetingsForDay(day);
                     const isToday = isSameDay(day, today);
                     return (
-                        <div key={idx} className={`min-h-[200px] bg-white rounded-xl border p-3 flex flex-col gap-2 ${isToday ? 'border-indigo-200 shadow-md ring-1 ring-indigo-50' : 'border-gray-100'}`}>
+                        <div key={idx}
+                            onClick={() => { setCurrentDate(day); setView('day'); }}
+                            className={`min-h-[200px] bg-white rounded-xl border p-3 flex flex-col gap-2 cursor-pointer hover:border-indigo-300 transition-colors ${isToday ? 'border-indigo-200 shadow-md ring-1 ring-indigo-50' : 'border-gray-100'}`}
+                        >
                             <div className="text-center pb-2 border-b border-gray-50 mb-1">
                                 <p className="text-xs text-gray-400 font-bold uppercase">{day.toLocaleDateString('en-US', { weekday: 'short' })}</p>
                                 <p className={`text-lg font-bold ${isToday ? 'text-indigo-600' : 'text-gray-800'}`}>{day.getDate()}</p>
@@ -257,7 +260,7 @@ const Meetings = () => {
                             <div className="space-y-2 overflow-y-auto max-h-[300px] pr-1 scrollbar-hide">
                                 {dayMeetings.map(m => (
                                     <div key={m.id}
-                                        onClick={() => onMeetingClick(m)}
+                                        onClick={(e) => { e.stopPropagation(); onMeetingClick(m); }}
                                         className="p-2 bg-indigo-50/50 hover:bg-indigo-50 rounded-lg border border-indigo-100/50 cursor-pointer transition-colors"
                                     >
                                         <p className="text-xs font-bold text-indigo-900 truncate">{m.startTime}</p>
