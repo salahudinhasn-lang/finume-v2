@@ -40,6 +40,7 @@ export const BookMeetingModal: React.FC<BookMeetingModalProps> = ({ onClose, req
         try {
             const res = await fetch('/api/meetings', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     requestId: selectedRequestId,
