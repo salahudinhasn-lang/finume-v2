@@ -164,6 +164,8 @@ export async function POST(req: NextRequest) {
         // Prisma doesn't strictly require Batch for UploadedFile (it's optional in schema? Check schema).
         // Schema: `fileBatch FileBatch?` -> Yes optional.
 
+        const category = formData.get('category') as string | null;
+
         const newFile = await prisma.uploadedFile.create({
             data: {
                 name: file.name,
@@ -171,7 +173,8 @@ export async function POST(req: NextRequest) {
                 type: file.type,
                 url: uploadedDriveFile.webViewLink,
                 uploadedById: userId,
-                requestId: request.id
+                requestId: request.id,
+                category: category || undefined
             }
         });
 

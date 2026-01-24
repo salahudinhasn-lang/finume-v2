@@ -294,6 +294,7 @@ model FileBatch {
 
 model UploadedFile {
   id           String   @id @default(cuid())
+  category     String?
   name         String
   size         String
   type         String

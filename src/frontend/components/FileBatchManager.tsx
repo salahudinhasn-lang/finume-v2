@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
-import { FileBatch, UploadedFile, UserRole, Expert } from '../types';
-import { Folder, Upload, FileText, CheckCircle, Clock, Trash2, Download, Archive, RefreshCcw, Plus, UserPlus, User, Monitor, Smartphone, MessageCircle, Box } from 'lucide-react';
+import { FileBatch, UploadedFile, UserRole, Expert, DocumentCategory } from '../types';
+import { Folder, Upload, FileText, CheckCircle, Clock, Trash2, Download, Archive, RefreshCcw, Plus, UserPlus, User, Monitor, Smartphone, MessageCircle, Box, Tag, Edit2, Save, X } from 'lucide-react';
 import { Button } from './UI';
 
 interface FileBatchManagerProps {
@@ -23,6 +22,14 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
   mainExpertId
 }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadCategory, setUploadCategory] = useState<DocumentCategory | ''>(''); // Default category for new uploads
+  const [editingFileId, setEditingFileId] = useState<string | null>(null); // Track which file is being edited
+  const [editingCategory, setEditingCategory] = useState<DocumentCategory | null>(null); // Track temp category during edit
+  const [isUpdatingCategory, setIsUpdatingCategory] = useState(false);
+
+  const categories: DocumentCategory[] = [
+    'Sales Invoice', 'Purchase Invoice', 'Contract', 'Expense', 'Petty Cash', 'Bank Statement', 'VAT Return', 'Other'
+  ];
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -39,6 +46,9 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
         try {
           const formData = new FormData();
           formData.append('file', file);
+          if (uploadCategory) {
+            formData.append('category', uploadCategory);
+          }
 
           const response = await fetch('/api/upload', {
             method: 'POST',
@@ -55,7 +65,8 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
               url: data.url, // Real URL from server
               uploadedBy: userRole,
               uploadedAt: new Date().toISOString(),
-              source: source as any
+              source: source as any,
+              category: uploadCategory || undefined
             });
           } else {
             throw new Error('Upload failed');
@@ -71,7 +82,8 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
             url: '#',
             uploadedBy: userRole,
             uploadedAt: new Date().toISOString(),
-            source: source as any
+            source: source as any,
+            category: uploadCategory || undefined
           });
         }
       }
@@ -101,6 +113,42 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
 
       onUpdateBatches(updatedBatches);
       setIsUploading(false);
+      setUploadCategory(''); // Reset category after upload
+    }
+  };
+
+  const handleUpdateFileCategory = async (batchId: string, fileId: string, newCategory: DocumentCategory) => {
+    setIsUpdatingCategory(true);
+    try {
+      // Optimistic Update
+      const updatedBatches = batches.map(b => {
+        if (b.id === batchId) {
+          const newFiles = b.files.map(f =>
+            f.id === fileId ? { ...f, category: newCategory } : f
+          );
+          return { ...b, files: newFiles };
+        }
+        return b;
+      });
+      onUpdateBatches(updatedBatches);
+
+      // API Call
+      const response = await fetch(`/api/files/${fileId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: newCategory })
+      });
+
+      if (!response.ok) throw new Error('Failed to update category');
+
+    } catch (err) {
+      console.error("Failed to update category:", err);
+      // Could revert optimistic update here if needed
+      alert("Failed to update category. Please try again.");
+    } finally {
+      setIsUpdatingCategory(false);
+      setEditingFileId(null);
+      setEditingCategory(null);
     }
   };
 
@@ -150,22 +198,35 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide flex items-center gap-2">
           <Archive size={16} /> Daily File Batches (Sub-tasks)
         </h3>
         {(userRole === 'CLIENT' || userRole === 'ADMIN' || userRole === 'EXPERT') && (
-          <div className="relative">
-            <input
-              type="file"
-              multiple
-              onChange={handleUpload}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {/* Category Selector for Upload */}
+            <select
+              className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:ring-1 focus:ring-primary-500 focus:outline-none"
+              value={uploadCategory}
+              onChange={(e) => setUploadCategory(e.target.value as DocumentCategory)}
               disabled={isUploading}
-            />
-            <Button size="sm" variant="outline" className={`text-xs ${isUploading ? 'opacity-50' : ''}`}>
-              {isUploading ? 'Uploading...' : <><Plus size={14} className="mr-1" /> Upload Files</>}
-            </Button>
+            >
+              <option value="">Category (Optional)</option>
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            <div className="relative">
+              <input
+                type="file"
+                multiple
+                onChange={handleUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={isUploading}
+              />
+              <Button size="sm" variant="outline" className={`text-xs ${isUploading ? 'opacity-50' : ''}`}>
+                {isUploading ? 'Uploading...' : <><Plus size={14} className="mr-1" /> Upload Files</>}
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -175,7 +236,7 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
           <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 text-gray-400">
             <Folder size={32} className="mx-auto mb-2 opacity-50" />
             <p className="text-sm">No files uploaded yet.</p>
-            {userRole === 'CLIENT' && <p className="text-xs mt-1">Upload documents to create a daily batch.</p>}
+            {userRole === 'CLIENT' && <p className="text-xs mt-1">Select a category and upload documents to create a daily batch.</p>}
           </div>
         )}
 
@@ -299,8 +360,55 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
                           >
                             {file.name}
                           </a>
+
+                          {/* Category Badge / Editor */}
+                          <div className="flex items-center">
+                            {editingFileId === file.id ? (
+                              <div className="flex items-center gap-1 relative z-10">
+                                <select
+                                  className="text-[10px] py-0.5 px-1 border border-blue-300 rounded focus:outline-none bg-blue-50"
+                                  value={editingCategory || file.category || ''}
+                                  onChange={(e) => setEditingCategory(e.target.value as DocumentCategory)}
+                                  autoFocus
+                                >
+                                  <option value="">No Category</option>
+                                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                                <button
+                                  onClick={() => handleUpdateFileCategory(batch.id, file.id, editingCategory as DocumentCategory)}
+                                  className="p-0.5 text-green-600 hover:bg-green-100 rounded"
+                                  disabled={isUpdatingCategory}
+                                >
+                                  <Save size={12} />
+                                </button>
+                                <button
+                                  onClick={() => { setEditingFileId(null); setEditingCategory(null); }}
+                                  className="p-0.5 text-red-500 hover:bg-red-50 rounded"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div
+                                className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[9px] font-medium border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors"
+                                onClick={() => {
+                                  // Allow editing for everyone as per request ("The client and the expert and the admin")
+                                  if (userRole === 'CLIENT' || userRole === 'ADMIN' || userRole === 'EXPERT') {
+                                    setEditingFileId(file.id);
+                                    setEditingCategory(file.category || null);
+                                  }
+                                }}
+                                title="Click to edit category"
+                              >
+                                <Tag size={10} />
+                                <span>{file.category || 'Uncategorized'}</span>
+                                <Edit2 size={8} className="opacity-50" />
+                              </div>
+                            )}
+                          </div>
+
                           {/* Source Indicator */}
-                          <div className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-[9px] text-gray-500 font-bold uppercase tracking-wider" title={`Uploaded via ${formatSource(file.source)}`}>
+                          <div className="hidden sm:flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-[9px] text-gray-500 font-bold uppercase tracking-wider" title={`Uploaded via ${formatSource(file.source)}`}>
                             {getSourceIcon(file.source)}
                             <span>{formatSource(file.source)}</span>
                           </div>
