@@ -43,8 +43,12 @@ const RegisterPage = () => {
 
     if (user) {
       // Successful registration
+      // Successful registration
       if (redirect) {
-        navigate(redirect);
+        // Decode to ensure we have the full path
+        const target = decodeURIComponent(redirect);
+        console.log("Redirecting to:", target);
+        navigate(target);
       } else {
         navigate('/client');
       }

@@ -84,51 +84,76 @@ export async function POST(req: Request) {
             return NextResponse.json(duplicateCheck, { headers: corsHeaders });
         }
 
-        // Generate Custom Sequential DISPLAY ID (REQ-000001)
-        const lastRequest = await prisma.request.findFirst({
-            where: { displayId: { startsWith: 'REQ-' } }, // Check displayId
-            orderBy: { displayId: 'desc' } // Order by displayId
-        });
+        // Generate Custom Sequential DISPLAY ID with Retry Logic
+        let newRequest;
+        let attempts = 0;
+        const maxAttempts = 5;
 
-        let nextDisplayId = 'REQ-000001';
-        if (lastRequest && lastRequest.displayId) {
-            const currentNum = parseInt(lastRequest.displayId.replace('REQ-', ''), 10);
-            if (!isNaN(currentNum)) {
-                nextDisplayId = `REQ-${String(currentNum + 1).padStart(6, '0')}`;
+        while (!newRequest && attempts < maxAttempts) {
+            attempts++;
+            try {
+                const lastRequest = await prisma.request.findFirst({
+                    where: { displayId: { startsWith: 'REQ-' } }, // Check displayId
+                    orderBy: { displayId: 'desc' } // Order by displayId
+                });
+
+                let nextDisplayId = 'REQ-000001';
+                if (lastRequest && lastRequest.displayId) {
+                    const currentNum = parseInt(lastRequest.displayId.replace('REQ-', ''), 10);
+                    if (!isNaN(currentNum)) {
+                        // Optimistically increment. If concurrent requests happened, lastRequest might be stale, 
+                        // but PRISMA unique constraint will fail, catching us below.
+                        // We add attempts to the number to reduce collision probability in retry
+                        const increment = attempts > 1 ? attempts : 1;
+                        // Actually, just strictly +1 based on DB state is safer, rely on "findFirst" picking up the *new* latest.
+                        nextDisplayId = `REQ-${String(currentNum + 1).padStart(6, '0')}`;
+                    }
+                }
+
+                // Create Request
+                newRequest = await prisma.request.create({
+                    data: {
+                        displayId: nextDisplayId,
+                        clientId,
+                        serviceId,
+                        pricingPlanId,
+                        amount,
+                        description: description || '',
+                        status: body.status || 'PENDING_PAYMENT',
+                        batches: {
+                            create: batches ? batches.map((b: any) => ({
+                                status: b.status,
+                                files: {
+                                    create: b.files.map((f: any) => ({
+                                        name: f.name,
+                                        size: f.size,
+                                        type: f.type,
+                                        url: f.url,
+                                        uploadedById: clientId
+                                    }))
+                                }
+                            })) : []
+                        }
+                    },
+                    include: {
+                        batches: {
+                            include: { files: true }
+                        }
+                    }
+                });
+            } catch (createError: any) {
+                // Check for Unique Constraint Violation on displayId
+                if (createError.code === 'P2002' && createError.meta?.target?.includes('displayId')) {
+                    console.warn(`[REQ_CREATE] Display ID collision. Retrying... (Attempt ${attempts})`);
+                    continue; // Loop again
+                }
+                throw createError; // Rethrow other errors
             }
         }
 
-        // Create Request with auto-generated ID (CUID) and custom displayId
-        const newRequest = await prisma.request.create({
-            data: {
-                displayId: nextDisplayId, // Set the custom display ID
-                clientId,
-                serviceId,
-                pricingPlanId,
-                amount,
-                description: description || '',
-                status: body.status || 'PENDING_PAYMENT',
-                batches: {
-                    create: batches ? batches.map((b: any) => ({
-                        status: b.status,
-                        files: {
-                            create: b.files.map((f: any) => ({
-                                name: f.name,
-                                size: f.size,
-                                type: f.type,
-                                url: f.url,
-                                uploadedById: clientId
-                            }))
-                        }
-                    })) : []
-                }
-            },
-            include: {
-                batches: {
-                    include: { files: true }
-                }
-            }
-        });
+        if (!newRequest) {
+            throw new Error(`Failed to generate unique Display ID after ${maxAttempts} attempts.`);
+        }
 
         return NextResponse.json(newRequest, { headers: corsHeaders });
     } catch (error) {

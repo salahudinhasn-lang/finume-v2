@@ -7,10 +7,15 @@ const RequestInitiator = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { user, addRequest, plans, services, settings } = useAppContext();
+    const submittedRef = React.useRef(false);
 
     useEffect(() => {
         const init = async () => {
             if (!user) return; // Should be protected route
+
+            // Prevent double submission in Strict Mode
+            if (submittedRef.current) return;
+            submittedRef.current = true;
 
             const planId = searchParams.get('planId');
             const serviceId = searchParams.get('serviceId');
