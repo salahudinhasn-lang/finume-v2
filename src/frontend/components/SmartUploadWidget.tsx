@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { UploadCloud, FileText, CheckCircle, Loader2, X, ChevronDown, Zap, AlertTriangle } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle, Loader2, X, ChevronDown, Zap, AlertTriangle, Sparkles } from 'lucide-react';
 import { Button } from './UI';
 import { Request, DocumentCategory } from '../types';
 
@@ -10,6 +10,13 @@ interface SmartUploadWidgetProps {
     preselectedRequestId?: string;
 }
 
+interface FileItem {
+    id: string; // unique temp id
+    file: File;
+    category: DocumentCategory | '';
+    isAnalyzing: boolean;
+}
+
 export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
     activeRequests,
     onUploadComplete,
@@ -17,9 +24,9 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
     preselectedRequestId
 }) => {
     const [dragActive, setDragActive] = useState(false);
-    const [files, setFiles] = useState<File[]>([]);
+    const [fileItems, setFileItems] = useState<FileItem[]>([]);
     const [selectedRequestId, setSelectedRequestId] = useState<string>(preselectedRequestId || (activeRequests.length > 0 ? activeRequests[0].id : ''));
-    const [selectedCategory, setSelectedCategory] = useState<DocumentCategory | ''>('');
+    // Removed global selectedCategory as we now do per-file
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState<{ current: number; total: number; stage: string }>({ current: 0, total: 0, stage: 'idle' });
 
@@ -52,14 +59,64 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
         }
     };
 
-    const handleFiles = (newFiles: File[]) => {
-        setFiles(prev => [...prev, ...newFiles]);
+    const handleFiles = async (newFiles: File[]) => {
+        // Create initial items
+        const newItems: FileItem[] = newFiles.map(f => ({
+            id: Math.random().toString(36).substr(2, 9),
+            file: f,
+            category: '', // Start empty
+            isAnalyzing: true // Start analyzing immediately
+        }));
+
+        setFileItems(prev => [...prev, ...newItems]);
+
+        // Trigger Analysis for each new item
+        newItems.forEach(item => analyzeFile(item));
+    };
+
+    const analyzeFile = async (item: FileItem) => {
+        try {
+            const formData = new FormData();
+            formData.append('file', item.file);
+
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.category) {
+                    // Update item with detected category
+                    setFileItems(prev => prev.map(i =>
+                        i.id === item.id
+                            ? { ...i, category: data.category as DocumentCategory, isAnalyzing: false }
+                            : i
+                    ));
+                    return;
+                }
+            }
+        } catch (err) {
+            console.error("Analysis failed for", item.file.name, err);
+        }
+
+        // Output fail or done without result
+        setFileItems(prev => prev.map(i =>
+            i.id === item.id ? { ...i, isAnalyzing: false } : i
+        ));
+    };
+
+    const updateItemCategory = (id: string, category: DocumentCategory) => {
+        setFileItems(prev => prev.map(i => i.id === id ? { ...i, category } : i));
     };
 
     const uploadFiles = async () => {
-        if (!selectedRequestId || files.length === 0) return;
-        if (!selectedCategory) {
-            alert("Please select a document category.");
+        if (!selectedRequestId || fileItems.length === 0) return;
+
+        // Validate all have categories
+        const missingCategory = fileItems.find(f => !f.category);
+        if (missingCategory) {
+            alert(`Please select a category for "${missingCategory.file.name}"`);
             return;
         }
 
@@ -71,15 +128,16 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
 
         console.log("Starting upload with token:", token ? "Present" : "Missing");
 
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            setProgress({ current: i + 1, total: files.length, stage: `Uploading: ${file.name}...` });
+        for (let i = 0; i < fileItems.length; i++) {
+            const item = fileItems[i];
+            const file = item.file;
+            setProgress({ current: i + 1, total: fileItems.length, stage: `Uploading: ${file.name}...` });
 
             try {
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('requestId', selectedRequestId);
-                formData.append('category', selectedCategory);
+                formData.append('category', item.category); // Use per-file category
 
                 const response = await fetch('/api/upload', {
                     method: 'POST',
@@ -100,21 +158,18 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                         url: data.url,
                         type: data.type || file.type,
                         size: file.size,
-                        // driveId: data.driveId
                     });
                 }
             } catch (error: any) {
                 console.error(`Upload error for file ${file.name}:`, error);
                 alert(`Error uploading ${file.name}: ${error.message || 'Unknown error'}`);
-                // Optionally handle error (continue or stop)
             }
         }
 
         // Done
         setIsProcessing(false);
-        onUploadComplete(files, selectedRequestId); // Pass original files for now, parent will refresh or we can pass uploadedFiles if we change signature
-        setFiles([]); // Reset
-        setSelectedCategory('');
+        onUploadComplete(fileItems.map(f => f.file), selectedRequestId);
+        setFileItems([]); // Reset
     };
 
 
@@ -148,6 +203,7 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
             ) : (
                 <div className="p-10 relative z-10 flex flex-col h-full justify-center">
                     <div className="text-center mb-8">
+                        {/* Header Icons */}
                         <div className={`w-24 h-24 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6 transform transition-transform duration-500 ${dragActive ? 'scale-110 rotate-3' : 'group-hover:scale-105 group-hover:-rotate-3'} shadow-inner border border-white`}>
                             <UploadCloud size={48} className={`transition-all duration-500 ${dragActive ? 'text-blue-700 scale-110' : ''}`} />
                         </div>
@@ -176,25 +232,6 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover/select:text-blue-500 transition-colors pointer-events-none" size={20} />
                                 </div>
                             </div>
-
-                            {/* Category Selector */}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 text-center">Document Category <span className="text-red-500">*</span></label>
-                                <div className="relative group/select">
-                                    <select
-                                        value={selectedCategory}
-                                        onChange={(e) => setSelectedCategory(e.target.value as DocumentCategory)}
-                                        className="w-full appearance-none bg-gray-50 hover:bg-white border border-gray-200 text-gray-900 text-sm rounded-xl py-3 pl-5 pr-12 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:border-blue-200 font-bold transition-all shadow-sm hover:shadow-md cursor-pointer"
-                                    >
-                                        <option value="">Select Category</option>
-                                        {categories.map(cat => (
-                                            <option key={cat} value={cat}>{cat}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover/select:text-blue-500 transition-colors pointer-events-none" size={20} />
-                                </div>
-                            </div>
-
                         </div>
                     ) : (
                         <div className="mb-8 text-center">
@@ -204,23 +241,45 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                         </div>
                     )}
 
-                    {/* File List */}
-                    {files.length > 0 && (
-                        <div className="mb-8 bg-white border border-gray-100 rounded-2xl p-2 max-h-48 overflow-y-auto shadow-inner custom-scrollbar">
-                            {files.map((file, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group/file animate-in fade-in slide-in-from-bottom-2">
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
+                    {/* File List with Analysis & Category Selectors */}
+                    {fileItems.length > 0 && (
+                        <div className="mb-8 bg-white border border-gray-100 rounded-2xl p-2 max-h-64 overflow-y-auto shadow-inner custom-scrollbar">
+                            {fileItems.map((item) => (
+                                <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group/file animate-in fade-in slide-in-from-bottom-2 gap-3">
+                                    <div className="flex items-center gap-3 overflow-hidden flex-1">
+                                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
                                             <FileText size={20} />
                                         </div>
                                         <div className="flex flex-col overflow-hidden">
-                                            <span className="text-sm font-bold text-gray-700 truncate max-w-[180px]">{file.name}</span>
-                                            <span className="text-[10px] text-gray-400 font-medium">{(file.size / 1024).toFixed(1)} KB</span>
+                                            <span className="text-sm font-bold text-gray-700 truncate max-w-[180px]">{item.file.name}</span>
+                                            <span className="text-[10px] text-gray-400 font-medium">{(item.file.size / 1024).toFixed(1)} KB</span>
                                         </div>
                                     </div>
-                                    <button onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all">
-                                        <X size={18} />
-                                    </button>
+
+                                    {/* Per-File Category Selector */}
+                                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                                        {item.isAnalyzing ? (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold animate-pulse whitespace-nowrap">
+                                                <Sparkles size={12} /> Analyzing...
+                                            </div>
+                                        ) : (
+                                            <div className="relative w-full sm:w-40">
+                                                <select
+                                                    value={item.category}
+                                                    onChange={(e) => updateItemCategory(item.id, e.target.value as DocumentCategory)}
+                                                    className={`w-full appearance-none text-xs font-bold py-1.5 pl-2 pr-6 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-200 cursor-pointer ${item.category ? 'bg-white border-gray-200 text-gray-800' : 'bg-red-50 border-red-200 text-red-500'}`}
+                                                >
+                                                    <option value="">Select Category *</option>
+                                                    {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                                </select>
+                                                <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                            </div>
+                                        )}
+
+                                        <button onClick={() => setFileItems(prev => prev.filter(i => i.id !== item.id))} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all shrink-0">
+                                            <X size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -241,11 +300,11 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                         >
                             Select Files
                         </Button>
-                        {files.length > 0 && (
+                        {fileItems.length > 0 && (
                             <Button
                                 onClick={uploadFiles}
-                                disabled={!selectedRequestId}
-                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-200 py-3 px-8 rounded-xl font-bold transform hover:scale-105 transition-all"
+                                disabled={!selectedRequestId || isProcessing || fileItems.some(f => f.isAnalyzing)}
+                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-200 py-3 px-8 rounded-xl font-bold transform hover:scale-105 transition-all disabled:opacity-50 disabled:pointer-events-none"
                             >
                                 <Zap size={18} className="mr-2 fill-yellow-400 text-yellow-500" />
                                 Process Upload
