@@ -478,6 +478,7 @@ model Meeting {
   date      DateTime // YYYY-MM-DD
   startTime String   // HH:mm
   endTime   String   // HH:mm
+  notes     String?
 
   status    String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
   
