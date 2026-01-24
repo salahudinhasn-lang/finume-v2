@@ -11,6 +11,7 @@ import JoinExpert from './pages/JoinExpert';
 import ClientPortal from './pages/client/ClientDashboard';
 import ClientRequests from './pages/client/ClientRequests';
 import RequestReceived from './pages/client/RequestReceived';
+import RequestInitiator from './pages/client/RequestInitiator';
 import ClientPayments from './pages/client/ClientPayments';
 import PaymentPage from './pages/client/PaymentPage';
 import ClientSettings from './pages/client/ClientSettings';
@@ -180,6 +181,13 @@ const AppContent = () => {
           <ProtectedRoute allowedRoles={['CLIENT']}>
             <Layout title="Request Received">
               <RequestReceived />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/client/initiate-request" element={
+          <ProtectedRoute allowedRoles={['CLIENT']}>
+            <Layout title="Processing Request...">
+              <RequestInitiator />
             </Layout>
           </ProtectedRoute>
         } />

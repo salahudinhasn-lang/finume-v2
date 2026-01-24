@@ -74,7 +74,8 @@ const TierCalculator: React.FC<TierCalculatorProps> = ({ onRecommend }) => {
             await addRequest(newReq);
             navigate(`/client/request-received/${newReq.id}`);
         } else {
-            navigate(`/login?redirect=${encodeURIComponent('/pricing')}`);
+            const redirectPath = `/client/initiate-request?planId=${targetPlanId}&billing=YEARLY`; // Calc assumes yearly
+            navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
         }
     };
 

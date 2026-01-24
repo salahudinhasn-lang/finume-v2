@@ -191,11 +191,11 @@ const PricingTable = ({ billingCycle: externalBilling, highlightedPlanId }: Pric
                                                     if (createdRequest) {
                                                         navigate(`/client/request-received/${createdRequest.id}`);
                                                     } else {
-                                                        // Error handling is done in addRequest, but we shouldn't navigate
                                                         console.error("Failed to create request, navigation aborted.");
                                                     }
                                                 } else {
-                                                    navigate(`/login?redirect=${encodeURIComponent('/pricing')}`);
+                                                    const redirectPath = `/client/initiate-request?planId=${plan.id}&billing=${billingCycle === 'yearly' ? 'YEARLY' : 'MONTHLY'}`;
+                                                    navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
                                                 }
                                             }}
                                             className={`block w-full py-3 text-center rounded-xl font-bold transition-all shadow-sm hover:shadow-md ${plan.isPopular || isHighlighted

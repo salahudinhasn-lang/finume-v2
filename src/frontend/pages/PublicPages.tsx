@@ -82,7 +82,7 @@ export const ServicesPage = () => {
             }
         } else {
             // Redirect to Checkout page after login
-            const redirectPath = `/client/checkout?serviceId=${serviceId}`;
+            const redirectPath = `/client/initiate-request?serviceId=${serviceId}`;
             navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
         }
     };
@@ -221,8 +221,8 @@ export const PricingPage = () => {
                 console.error("Failed to create request");
             }
         } else {
-            // Redirect to Checkout page after login so they can verify/complete
-            const redirectPath = `/client/checkout?planId=${planId}&billing=${billing}`;
+            // Redirect to Request Initiator -> Request Received
+            const redirectPath = `/client/initiate-request?planId=${planId}&billing=${billing}`;
             navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
         }
     };
