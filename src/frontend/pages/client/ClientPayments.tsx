@@ -16,7 +16,7 @@ const ClientPayments = () => {
         .filter(r => r.clientId === user?.id && r.status !== 'NEW')
         .map(r => {
             const isCreditNote = r.status === 'CANCELLED';
-            const subtotal = r.amount;
+            const subtotal = Number(r.amount);
             const vatAmount = subtotal * VAT_RATE;
             const totalAmount = subtotal + vatAmount;
 
