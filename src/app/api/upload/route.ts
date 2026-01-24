@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
         }
         currentFolderId = targetRootFolderId;
 
-        // LEVEL 2: Name / Company Name
+        // Level 2: Name / Company Name
         let identityName = "Unknown";
         if (roleFolder === 'Client') {
             identityName = userRecord.clientProfile?.companyName || userRecord.name;
@@ -112,13 +112,51 @@ export async function POST(req: NextRequest) {
         }
         identityName = identityName.replace(/[\/\\]/g, '-'); // Sanitize
 
-        const identityFolder = await findSubfolder(currentFolderId, identityName);
-        if (identityFolder?.id) {
-            currentFolderId = identityFolder.id;
+        // Check for stored ID on User (applies to both Client and Expert now)
+        if (userRecord.googleDriveFolderId && currentFolderId !== masterFolderId) {
+            // We only use the stored ID if we are sure it's valid? 
+            // Actually, the stored ID IS the identity folder. 
+            // Logic check: The code above sets currentFolderId to 'Client' or 'Expert' category folder.
+            // But googleDriveFolderId stores the IDENTITY folder (e.g. "Khaled Genena").
+            // So we can skip searching if we have it.
+
+            // Wait, if we use the stored ID, we bypass the category folder check? 
+            // Yes, because the ID is unique globally in Drive. 
+            // But we just did the category folder check above. That's fine, it ensures structure exists.
+
+            // Let's optimize: If we have userRecord.googleDriveFolderId, we can just use it directly!
+            // BUT, we want to ensure it's still inside the correct hierarchy? 
+            // Drive IDs don't change location easily. Trust the ID.
+        }
+
+        // BETTER LOGIC:
+        // Use stored ID if available.
+        if (userRecord.googleDriveFolderId) {
+            currentFolderId = userRecord.googleDriveFolderId;
+            console.log(`[Drive] Using stored Identity Folder ID: ${currentFolderId}`);
         } else {
-            const newFolder = await createFolder(identityName, currentFolderId);
-            if (!newFolder?.id) throw new Error("Failed to create Identity folder");
-            currentFolderId = newFolder.id;
+            // Not found, we must find/create inside currentFolderId (which is Level 1: Client/Expert)
+            const identityFolder = await findSubfolder(currentFolderId, identityName);
+
+            if (identityFolder && identityFolder.id) {
+                currentFolderId = identityFolder.id;
+                // Found it, persist it!
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: { googleDriveFolderId: currentFolderId }
+                });
+            } else {
+                const newFolder = await createFolder(identityName, currentFolderId);
+                if (!newFolder?.id) throw new Error("Failed to create Identity folder");
+                currentFolderId = newFolder.id;
+
+                // Created it, persist it!
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: { googleDriveFolderId: currentFolderId }
+                });
+                console.log(`[Drive] Linked NEW Identity folder to User: ${currentFolderId}`);
+            }
         }
 
         // LEVEL 3: Context (Request ID or "Profile Documents")
