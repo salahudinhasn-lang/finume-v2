@@ -133,6 +133,7 @@ model Client {
   // Permissions
   permissions     ClientFeaturePermissions?
   gamification    GamificationProfile?
+  meetings        Meeting[]
 }
 
 model Expert {
@@ -170,6 +171,7 @@ model Expert {
   updatedAt       DateTime @updatedAt
   
   tasks           ExpertTask[]
+  meetings        Meeting[]
 }
 
 model Review {
@@ -458,4 +460,39 @@ model ExpertTask {
   
   createdAt   DateTime @default(now())
   completedAt DateTime?
+}
+
+model Meeting {
+  id        String   @id @default(cuid())
+  
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  
+  expertId  String
+  expert    Expert   @relation(fields: [expertId], references: [id])
+  
+  requestId String?
+  request   Request? @relation(fields: [requestId], references: [id])
+
+  date      DateTime // YYYY-MM-DD
+  startTime String   // HH:mm
+  endTime   String   // HH:mm
+
+  status    String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
+  
+  messages  MeetingMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MeetingMessage {
+  id        String   @id @default(cuid())
+  meetingId String
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  senderId  String   // User ID
+  content   String
+  
+  createdAt DateTime @default(now())
 }

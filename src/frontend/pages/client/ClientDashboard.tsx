@@ -353,6 +353,13 @@ const ClientDashboard = () => {
                 />
             )}
 
+            {isBookMeetingOpen && (
+                <BookMeetingModal
+                    onClose={() => setIsBookMeetingOpen(false)}
+                    requests={myRequests}
+                    userId={user?.id || ''}
+                />
+            )}
         </div >
     );
 };

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import './i18n';
+import Meetings from './pages/shared/Meetings';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
 import LoginPage from './pages/Auth';
@@ -161,6 +162,13 @@ const AppContent = () => {
             </Layout>
           </ProtectedRoute>
         } />
+        <Route path="/client/meetings" element={
+          <ProtectedRoute allowedRoles={['CLIENT']}>
+            <Layout title="Meetings">
+              <Meetings />
+            </Layout>
+          </ProtectedRoute>
+        } />
         <Route path="/client/experts" element={
           <ProtectedRoute allowedRoles={['CLIENT']}>
             <VisibilityGuard pageKey="experts" type="client">
@@ -227,6 +235,13 @@ const AppContent = () => {
           <ProtectedRoute allowedRoles={['EXPERT']}>
             <Layout title="Expert Portal">
               <ExpertPortal />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/expert/meetings" element={
+          <ProtectedRoute allowedRoles={['EXPERT']}>
+            <Layout title="Meetings">
+              <Meetings />
             </Layout>
           </ProtectedRoute>
         } />

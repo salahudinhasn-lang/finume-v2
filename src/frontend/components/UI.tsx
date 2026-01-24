@@ -7,10 +7,12 @@ export const Card: React.FC<{ children?: React.ReactNode, className?: string, on
   </div>
 );
 
+import { Loader2 } from 'lucide-react';
+
 export const Button = ({
-  children, onClick, variant = 'primary', size = 'md', className = '', type = 'button', disabled = false, ...props
+  children, onClick, variant = 'primary', size = 'md', className = '', type = 'button', disabled = false, isLoading = false, ...props
 }: {
-  children?: React.ReactNode, onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void, variant?: 'primary' | 'secondary' | 'danger' | 'outline', size?: 'sm' | 'md' | 'lg', className?: string, type?: 'button' | 'submit', disabled?: boolean
+  children?: React.ReactNode, onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void, variant?: 'primary' | 'secondary' | 'danger' | 'outline', size?: 'sm' | 'md' | 'lg', className?: string, type?: 'button' | 'submit', disabled?: boolean, isLoading?: boolean
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) => {
   const baseStyle = "rounded-lg font-medium transition-colors flex items-center justify-center gap-2";
 
@@ -32,9 +34,10 @@ export const Button = ({
       type={type}
       className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || isLoading}
       {...props}
     >
+      {isLoading && <Loader2 className="animate-spin" size={16} />}
       {children}
     </button>
   );

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Users, DollarSign, Settings, LogOut, Menu, X, Bell, Search, Shield, Tag, HelpCircle, ChevronRight, LayoutTemplate } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, DollarSign, Settings, LogOut, Menu, X, Bell, Search, Shield, Tag, HelpCircle, ChevronRight, LayoutTemplate, Calendar } from 'lucide-react';
 import { Logo } from './Logo';
 
 interface LayoutProps {
@@ -37,6 +37,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
     if (user?.role === 'CLIENT') {
       return [
         { icon: LayoutDashboard, label: t('sidebar.dashboard'), path: '/client', visible: true },
+        { icon: Calendar, label: 'Calendar', path: '/client/meetings', visible: true },
 
         { icon: Search, label: t('sidebar.browseExperts'), path: '/client/experts', visible: getVisibility('experts') },
         { icon: FileText, label: t('sidebar.myRequests'), path: '/client/requests', visible: true },
@@ -46,6 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
     } else if (user?.role === 'EXPERT') {
       return [
         { icon: LayoutDashboard, label: t('sidebar.dashboard'), path: '/expert' },
+        { icon: Calendar, label: 'Calendar', path: '/expert/meetings' },
         { icon: FileText, label: t('sidebar.myTasks'), path: '/expert/tasks' },
         { icon: DollarSign, label: t('sidebar.earnings'), path: '/expert/earnings' },
         { icon: Settings, label: t('sidebar.profile'), path: '/expert/profile' },
