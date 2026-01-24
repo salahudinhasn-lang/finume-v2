@@ -8,6 +8,14 @@ interface Meeting {
     clientId: string;
     expertId: string;
     requestId: string;
+    request?: {
+        displayId: string;
+        serviceId: string;
+    };
+    request?: {
+        displayId: string;
+        serviceId: string;
+    };
     date: string;
     startTime: string;
     endTime: string;
