@@ -62,10 +62,22 @@ export async function POST(request: Request) {
             finalUser = { ...finalUser, ...adminProfile, role: 'ADMIN' };
         }
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             user: finalUser,
             token
         });
+
+        response.cookies.set({
+            name: 'finume_token',
+            value: token,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+        });
+
+        return response;
 
     } catch (error) {
         console.error('Login error:', error);

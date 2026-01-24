@@ -29,6 +29,7 @@ export async function verifyToken(token: string): Promise<any> {
         });
         return payload;
     } catch (e) {
+        console.error('[Auth] Token verification failed:', e);
         return null;
     }
 }
