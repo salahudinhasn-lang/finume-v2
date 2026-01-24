@@ -65,16 +65,18 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
             id: Math.random().toString(36).substr(2, 9),
             file: f,
             category: '', // Start empty
-            isAnalyzing: true // Start analyzing immediately
+            isAnalyzing: false // Start NOT analyzing
         }));
 
         setFileItems(prev => [...prev, ...newItems]);
-
-        // Trigger Analysis for each new item
-        newItems.forEach(item => analyzeFile(item));
     };
 
     const analyzeFile = async (item: FileItem) => {
+        // Set analyzing state
+        setFileItems(prev => prev.map(i =>
+            i.id === item.id ? { ...i, isAnalyzing: true } : i
+        ));
+
         try {
             const formData = new FormData();
             formData.append('file', item.file);
@@ -257,24 +259,31 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                                     </div>
 
                                     {/* Per-File Category Selector */}
-                                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                                        {item.isAnalyzing ? (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold animate-pulse whitespace-nowrap">
-                                                <Sparkles size={12} /> Analyzing...
-                                            </div>
-                                        ) : (
-                                            <div className="relative w-full sm:w-40">
-                                                <select
-                                                    value={item.category}
-                                                    onChange={(e) => updateItemCategory(item.id, e.target.value as DocumentCategory)}
-                                                    className={`w-full appearance-none text-xs font-bold py-1.5 pl-2 pr-6 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-200 cursor-pointer ${item.category ? 'bg-white border-gray-200 text-gray-800' : 'bg-red-50 border-red-200 text-red-500'}`}
-                                                >
-                                                    <option value="">Select Category *</option>
-                                                    {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                                                </select>
-                                                <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                                            </div>
-                                        )}
+                                    <div className="flex items-center gap-2 w-full sm:w-auto self-end sm:self-center">
+                                        {/* Auto Detect Button */}
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => analyzeFile(item)}
+                                            disabled={item.isAnalyzing || !!item.category}
+                                            className="h-8 text-[10px] px-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 whitespace-nowrap"
+                                            title="Auto-Detect with AI"
+                                        >
+                                            {item.isAnalyzing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="mr-1" />}
+                                            {item.isAnalyzing ? 'Analyzing...' : 'Auto Detect'}
+                                        </Button>
+
+                                        <div className="relative w-full sm:w-40">
+                                            <select
+                                                value={item.category}
+                                                onChange={(e) => updateItemCategory(item.id, e.target.value as DocumentCategory)}
+                                                className={`w-full appearance-none text-xs font-bold py-1.5 pl-2 pr-6 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-200 cursor-pointer ${item.category ? 'bg-white border-gray-200 text-gray-800' : 'bg-red-50 border-red-200 text-red-500'}`}
+                                            >
+                                                <option value="">Select Category *</option>
+                                                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                            </select>
+                                            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                        </div>
 
                                         <button onClick={() => setFileItems(prev => prev.filter(i => i.id !== item.id))} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all shrink-0">
                                             <X size={18} />
