@@ -147,9 +147,9 @@ const ExpertDashboard = () => {
 
                         <Button
                             onClick={() => navigate('/expert/earnings')}
-                            className="bg-white text-indigo-900 hover:bg-blue-50 shadow-lg shadow-black/20 font-bold px-6 py-3 h-auto rounded-xl border border-transparent"
+                            className="bg-white text-indigo-900 hover:bg-blue-50 shadow-lg shadow-black/20 font-bold px-6 py-3 h-auto rounded-xl border border-transparent flex items-center"
                         >
-                            <DollarSign size={18} className="mr-2" /> {t('expert.viewWallet')}
+                            <DollarSign size={18} className="mr-2" /> View Wallet
                         </Button>
                     </div>
                 </div>
