@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import { NextRequest } from 'next/server';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'finume-secret-key-change-me-in-prod';
 const key = new TextEncoder().encode(SECRET_KEY);
@@ -53,7 +54,14 @@ export async function setSession(token: string) {
     });
 }
 
+
 export async function clearSession() {
     const cookieStore = await cookies();
     cookieStore.delete('finume_token');
+}
+
+export async function getUserFromToken(req: NextRequest) {
+    const token = req.cookies.get('finume_token')?.value;
+    if (!token) return null;
+    return await verifyToken(token);
 }

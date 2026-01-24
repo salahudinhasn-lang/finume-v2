@@ -1,13 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Button, Badge } from '../../components/UI';
-import { Plus, Clock, CheckCircle, Search, Eye, X, Check, UploadCloud, ShieldAlert, ShieldCheck, Zap, FileText, ChevronRight, AlertTriangle, Sparkles, Loader2, ArrowRight, File, Wallet, Coins } from 'lucide-react';
+import { Plus, Clock, CheckCircle, Search, Eye, X, Check, UploadCloud, ShieldAlert, ShieldCheck, Zap, FileText, ChevronRight, AlertTriangle, Sparkles, Loader2, ArrowRight, File, Wallet, Coins, Calendar } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Request, UploadedFile, DocumentCategory } from '../../types';
 import { matchServiceWithAI } from '../../services/geminiService';
 import { SmartUploadWidget } from '../../components/SmartUploadWidget';
 import { GamificationBar } from '../../components/GamificationBar';
 import { RequestDetailModal } from '../../components/RequestDetailModal';
+import { BookMeetingModal } from '../../components/BookMeetingModal';
 import { FileBatch, Review } from '../../types';
 
 const ClientDashboard = () => {
