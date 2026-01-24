@@ -6,9 +6,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-prod';
 
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { fileId: string } }
+    props: { params: Promise<{ fileId: string }> }
 ) {
     try {
+        const params = await props.params;
+        const { fileId } = params;
+
         // Authenticate User
         const authHeader = req.headers.get('Authorization');
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -23,7 +26,6 @@ export async function PATCH(
         }
 
         const userId = decodedToken.userId || decodedToken.id;
-        const { fileId } = params;
         const body = await req.json();
         const { category } = body;
 
