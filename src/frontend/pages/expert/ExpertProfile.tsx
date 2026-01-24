@@ -7,6 +7,7 @@ import { User, Mail, DollarSign, Briefcase, Save, Eye, CheckCircle, Shield, File
 const ExpertProfile = () => {
     const { user, updateExpert, isLoading, isRestoringSession } = useAppContext();
     const [isPublic, setIsPublic] = useState(true);
+    const [showPasswordFields, setShowPasswordFields] = useState(false);
 
     const [avatarPreview, setAvatarPreview] = useState(user?.avatarUrl);
 
@@ -430,33 +431,60 @@ const ExpertProfile = () => {
 
                                 {/* Password Management */}
                                 <div className="md:col-span-2 pt-4 border-t border-gray-100">
-                                    <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                        <Lock size={18} className="text-gray-500" /> Change Password
-                                    </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                                            <input
-                                                type="password"
-                                                name="password"
-                                                value={formData.password}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
-                                                placeholder="Leave blank to keep current"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-                                            <input
-                                                type="password"
-                                                name="confirmPassword"
-                                                value={formData.confirmPassword}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
-                                                placeholder="Confirm new password"
-                                            />
-                                        </div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="font-bold text-gray-800 flex items-center gap-2">
+                                            <Lock size={18} className="text-gray-500" /> Password
+                                        </h4>
+                                        {!showPasswordFields && (
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => setShowPasswordFields(true)}
+                                            >
+                                                Change Password
+                                            </Button>
+                                        )}
                                     </div>
+
+                                    {showPasswordFields && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                                                <input
+                                                    type="password"
+                                                    name="password"
+                                                    value={formData.password}
+                                                    onChange={handleChange}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
+                                                    placeholder="Enter new password"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                                                <input
+                                                    type="password"
+                                                    name="confirmPassword"
+                                                    value={formData.confirmPassword}
+                                                    onChange={handleChange}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
+                                                    placeholder="Confirm new password"
+                                                />
+                                            </div>
+                                            <div className="md:col-span-2 flex justify-end">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setShowPasswordFields(false);
+                                                        setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
+                                                    }}
+                                                    className="text-sm text-gray-500 hover:text-gray-700 font-medium px-4 py-2"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Documents Section */}
