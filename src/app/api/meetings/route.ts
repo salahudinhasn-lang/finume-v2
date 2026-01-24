@@ -52,10 +52,15 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        console.log('[API] Processing Meeting Booking...');
+        const token = req.cookies.get('finume_token')?.value;
+        console.log('[API] Token found:', !!token);
+
         const user = await getUserFromToken(req);
+        console.log('[API] User resolved:', user ? `${user.id} (${user.role})` : 'null');
+
         if (!user || user.role !== 'CLIENT') {
-            // Only clients book meetings? Prompt says "client click on book meeting".
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ error: 'Unauthorized', debug: { hasToken: !!token, user: user || 'null' } }, { status: 401 });
         }
 
         const body = await req.json();
