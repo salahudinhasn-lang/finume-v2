@@ -58,6 +58,10 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
 
     const uploadFiles = async () => {
         if (!selectedRequestId || files.length === 0) return;
+        if (!selectedCategory) {
+            alert("Please select a document category.");
+            return;
+        }
 
         setIsProcessing(true);
         // setProgress({ current: 0, total: files.length, stage: 'Starting Upload...' });
@@ -75,9 +79,7 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('requestId', selectedRequestId);
-                if (selectedCategory) {
-                    formData.append('category', selectedCategory);
-                }
+                formData.append('category', selectedCategory);
 
                 const response = await fetch('/api/upload', {
                     method: 'POST',
@@ -177,14 +179,14 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
 
                             {/* Category Selector */}
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 text-center">Document Category (Optional)</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 text-center">Document Category <span className="text-red-500">*</span></label>
                                 <div className="relative group/select">
                                     <select
                                         value={selectedCategory}
                                         onChange={(e) => setSelectedCategory(e.target.value as DocumentCategory)}
                                         className="w-full appearance-none bg-gray-50 hover:bg-white border border-gray-200 text-gray-900 text-sm rounded-xl py-3 pl-5 pr-12 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:border-blue-200 font-bold transition-all shadow-sm hover:shadow-md cursor-pointer"
                                     >
-                                        <option value="">Auto-Detect / Unknown</option>
+                                        <option value="">Select Category</option>
                                         {categories.map(cat => (
                                             <option key={cat} value={cat}>{cat}</option>
                                         ))}
