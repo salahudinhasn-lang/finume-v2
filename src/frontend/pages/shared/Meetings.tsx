@@ -12,10 +12,6 @@ interface Meeting {
         displayId: string;
         serviceId: string;
     };
-    request?: {
-        displayId: string;
-        serviceId: string;
-    };
     date: string;
     startTime: string;
     endTime: string;
@@ -342,7 +338,7 @@ const Meetings = () => {
                                                     </h4>
                                                     <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
                                                         <Clock size={14} /> {m.startTime} - {m.endTime}
-                                                        {m.requestId && <span className="px-2 py-0.5 bg-gray-100 rounded text-xs">Req #{m.requestId.substring(0, 8)}</span>}
+                                                        {m.request?.displayId && <span className="px-2 py-0.5 bg-gray-100 rounded text-xs">Req #{m.request.displayId}</span>}
                                                     </p>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-2">
@@ -467,7 +463,7 @@ const Meetings = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-gray-900 text-sm">{getDisplayName(m)}</p>
-                                                    {m.requestId && <p className="text-xs text-gray-400">Req #{m.requestId.substring(0, 8)}</p>}
+                                                    {m.request?.displayId && <p className="text-xs text-gray-400">Req #{m.request.displayId}</p>}
                                                 </div>
                                             </div>
                                         </td>
