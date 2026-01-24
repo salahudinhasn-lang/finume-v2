@@ -10,10 +10,8 @@ export async function POST(req: NextRequest) {
         // Authenticate User
         console.log("Upload API: Received request");
         const authHeader = req.headers.get('Authorization');
-        console.log("Upload API: Auth Header:", authHeader ? "Present" : "Missing");
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            console.error("Upload API: Unauthorized - missing header");
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
         const token = authHeader.split(' ')[1];
@@ -25,118 +23,153 @@ export async function POST(req: NextRequest) {
         }
 
         const userId = decodedToken.userId || decodedToken.id;
+        const userRole = decodedToken.role; // Assuming role is in token, otherwise fetch user
 
         const formData = await req.formData();
         const file = formData.get('file') as File | null;
         const requestId = formData.get('requestId') as string | null;
+        const category = formData.get('category') as string | null; // e.g. 'legal', 'profile'
 
         if (!file) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
-        if (!requestId) {
-            return NextResponse.json({ error: 'Request ID is required for this upload' }, { status: 400 });
-        }
+        // REMOVED STRICT CHECK FOR requestId
 
         const buffer = Buffer.from(await file.arrayBuffer());
         // Clean filename: remove special chars, keep extension
         const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const filename = `${Date.now()}-${cleanName}`;
 
-        // Fetch Request & Client details
-        const request = await prisma.request.findUnique({
-            where: { id: requestId },
-            include: {
-                client: {
-                    include: { user: true }
-                },
-                assignedExpert: true
-            }
+        let request: any = null;
+        let clientUser: any = null;
+
+        // Fetch user details to know name/company
+        const userRecord = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { clientProfile: true, expertProfile: true }
         });
 
-        if (!request) {
-            return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+        if (!userRecord) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
+
+        if (requestId) {
+            request = await prisma.request.findUnique({
+                where: { id: requestId },
+                include: {
+                    client: { include: { user: true } },
+                    assignedExpert: true
+                }
+            });
+            if (!request) {
+                return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+            }
+            clientUser = request.client?.user;
+        } else {
+            // No request, likely settings upload
+            clientUser = userRecord;
         }
 
         // --- Google Drive Logic ---
         const masterFolderId = process.env.GOOGLE_DRIVE_MASTER_FOLDER_ID;
-
         if (!masterFolderId) {
             return NextResponse.json({ error: 'Server Config Error: Drive Master Folder ID missing' }, { status: 503 });
         }
 
         let currentFolderId = masterFolderId;
 
-        // Level 1: Company Folder
-        let companyFolderName = "Unknown_Client";
-        let userToUpdate = null;
+        // LEVEL 1: "Client" VS "Expert"
+        // Determine main branch based on who is uploading or the context
+        // User asked: "if client upload... goes to Client", "if expert upload... goes to Expert"
 
-        // Try getting name and user ID for persistence
-        if (request.client) {
-            if (request.client.companyName) companyFolderName = request.client.companyName;
+        // However, usually files adhere to the OWNER of the file context. 
+        // If an Expert uploads a file TO A CLIENT REQUEST, should it go to Client folder or Expert folder?
+        // Usually Client folder is better for case management.
+        // But let's stick STRICTLY to user instruction: "if the expert upload it goes to ... Expert"
 
-            // We want to access the user record to check/save folder ID
-            if (request.client.user) {
-                userToUpdate = request.client.user;
-                if (userToUpdate.googleDriveFolderId) {
-                    currentFolderId = userToUpdate.googleDriveFolderId;
-                    console.log(`[Drive] Using stored Company Folder ID: ${currentFolderId}`);
-                }
-            }
-        }
+        const mainBranchName = userRole === 'CLIENT' ? 'Client' : 'Expert';
+        // OR simply use the role from the userRecord we fetched
+        const roleFolder = userRecord.role === 'CLIENT' ? 'Client' : 'Expert';
 
-        // Only search/create if we didn't find a stored ID
-        if (currentFolderId === masterFolderId) {
-            companyFolderName = companyFolderName.replace(/[\/\\]/g, '-'); // Sanitize
+        let targetRootFolderId = currentFolderId;
 
-            const companyFolder = await findSubfolder(currentFolderId, companyFolderName);
-            if (companyFolder && companyFolder.id) {
-                currentFolderId = companyFolder.id;
-                // Found it, let's persist it for next time!
-                if (userToUpdate) {
-                    await prisma.user.update({
-                        where: { id: userToUpdate.id },
-                        data: { googleDriveFolderId: currentFolderId }
-                    });
-                    console.log(`[Drive] Linked existing folder to User: ${currentFolderId}`);
-                }
-
-            } else {
-                const newFolder = await createFolder(companyFolderName, currentFolderId);
-                if (!newFolder || !newFolder.id) throw new Error("Failed to create Company folder");
-                currentFolderId = newFolder.id;
-
-                // Created it, persist it!
-                if (userToUpdate) {
-                    await prisma.user.update({
-                        where: { id: userToUpdate.id },
-                        data: { googleDriveFolderId: currentFolderId }
-                    });
-                    console.log(`[Drive] Linked NEW folder to User: ${currentFolderId}`);
-                }
-            }
-        }
-
-        // Level 2: Request Folder (Display ID)
-        const requestFolderName = request.displayId || `REQ-${request.id.slice(0, 8)}`;
-        const requestFolder = await findSubfolder(currentFolderId, requestFolderName);
-        if (requestFolder && requestFolder.id) {
-            currentFolderId = requestFolder.id;
+        const rootTypeFolder = await findSubfolder(targetRootFolderId, roleFolder);
+        if (rootTypeFolder?.id) {
+            targetRootFolderId = rootTypeFolder.id;
         } else {
-            const newFolder = await createFolder(requestFolderName, currentFolderId);
-            if (!newFolder || !newFolder.id) throw new Error("Failed to create Request folder");
+            const newFolder = await createFolder(roleFolder, targetRootFolderId);
+            if (!newFolder?.id) throw new Error(`Failed to create ${roleFolder} folder`);
+            targetRootFolderId = newFolder.id;
+        }
+        currentFolderId = targetRootFolderId;
+
+        // LEVEL 2: Name / Company Name
+        let identityName = "Unknown";
+        if (roleFolder === 'Client') {
+            identityName = userRecord.clientProfile?.companyName || userRecord.name;
+        } else {
+            identityName = userRecord.expertProfile?.name || userRecord.name;
+        }
+        identityName = identityName.replace(/[\/\\]/g, '-'); // Sanitize
+
+        const identityFolder = await findSubfolder(currentFolderId, identityName);
+        if (identityFolder?.id) {
+            currentFolderId = identityFolder.id;
+        } else {
+            const newFolder = await createFolder(identityName, currentFolderId);
+            if (!newFolder?.id) throw new Error("Failed to create Identity folder");
             currentFolderId = newFolder.id;
         }
 
-        // Level 3: Date Folder (YYYY-MM-DD)
+        // LEVEL 3: Context (Request ID or "Profile Documents")
+        let contextFolderName = "General";
+        if (requestId && request) {
+            contextFolderName = request.displayId || `REQ-${request.id.slice(0, 8)}`;
+        } else {
+            contextFolderName = "Profile_Documents";
+        }
+
+        const contextFolder = await findSubfolder(currentFolderId, contextFolderName);
+        if (contextFolder?.id) {
+            currentFolderId = contextFolder.id;
+        } else {
+            const newFolder = await createFolder(contextFolderName, currentFolderId);
+            if (!newFolder?.id) throw new Error("Failed to create Context folder");
+            currentFolderId = newFolder.id;
+        }
+
+        // LEVEL 4: Date (Optional, but good for organization)
+        // User said "same old logic", old logic had date.
+        /* 
         const today = new Date().toISOString().split('T')[0];
         const dateFolder = await findSubfolder(currentFolderId, today);
-        if (dateFolder && dateFolder.id) {
-            currentFolderId = dateFolder.id;
+        if (dateFolder?.id) {
+             currentFolderId = dateFolder.id;
         } else {
-            const newFolder = await createFolder(today, currentFolderId);
-            if (!newFolder || !newFolder.id) throw new Error("Failed to create Date folder");
-            currentFolderId = newFolder.id;
+             const newFolder = await createFolder(today, currentFolderId);
+             if (!newFolder?.id) throw new Error("Failed to create Date folder");
+             currentFolderId = newFolder.id;
         }
+        */
+        // Actually, for Profile Documents, separating by date might be annoying. 
+        // For Requests it makes sense.
+        // Let's keep it clean: Request -> File. Profile -> File.
+        // Unless user strictly asked for "same old logic" recursively. 
+        // "with the same old logic" likely implies the [Company > Request > Date] structure *inside* the Client folder.
+        // I will add the date folder ONLY if it is a REQUEST.
+
+        if (requestId) {
+            const today = new Date().toISOString().split('T')[0];
+            const dateFolder = await findSubfolder(currentFolderId, today);
+            if (dateFolder?.id) {
+                currentFolderId = dateFolder.id;
+            } else {
+                const newFolder = await createFolder(today, currentFolderId);
+                if (!newFolder?.id) throw new Error("Failed to create Date folder");
+                currentFolderId = newFolder.id;
+            }
+        }
+
 
         // Upload File
         const uploadedDriveFile = await uploadFileToDrive(buffer, filename, currentFolderId, file.type);
@@ -146,26 +179,6 @@ export async function POST(req: NextRequest) {
 
         // --- Database Logic ---
 
-        // 1. Find or Create FileBatch for this Request + Date? 
-        // Logic says "create task for expert". Maybe one task per batch?
-        // Let's create a NEW batch for this upload session if one doesn't exist for today, or just append.
-        // Simplest: Create a FileBatch for this upload (or group uploads if sequential, but here we process one by one).
-        // To avoid spamming tasks, we can check if there is already a PENDING task for this request created TODAY.
-
-        let relatedBatchId = null;
-
-        // Create UploadedFile record
-        // We need a batch. Let's find recent batch or create one.
-        // For simplicity, let's create a new Batch for "Daily Uploads - [Date]"
-
-        const batchName = `Uploads ${today}`;
-        // Try to find existing batch for this request & date? 
-        // For now, simple approach: Create Batch if not exists, else append.
-        // Prisma doesn't strictly require Batch for UploadedFile (it's optional in schema? Check schema).
-        // Schema: `fileBatch FileBatch?` -> Yes optional.
-
-        const category = formData.get('category') as string | null;
-
         const newFile = await prisma.uploadedFile.create({
             data: {
                 name: file.name,
@@ -173,14 +186,14 @@ export async function POST(req: NextRequest) {
                 type: file.type,
                 url: uploadedDriveFile.webViewLink,
                 uploadedById: userId,
-                requestId: request.id,
+                requestId: requestId || undefined, // Can be undefined now
                 category: category || undefined
             }
         });
 
-        // 2. Expert Task Logic
-        // "I want to enevolp every upload the client make as a task for the expert"
-        if (request.assignedExpertId) {
+        // Expert Task Logic (Only if associated with a request)
+        if (requestId && request && request.assignedExpertId) {
+            const today = new Date().toISOString().split('T')[0];
             // Check if there is already an open task for "Review files from [Today]"
             const taskTile = `Review files uploaded by client on ${today}`;
 
@@ -200,7 +213,6 @@ export async function POST(req: NextRequest) {
                         status: 'PENDING',
                         requestId: request.id,
                         expertId: request.assignedExpertId,
-                        // relatedBatchId: ... (link if we had batch)
                     }
                 });
             }
