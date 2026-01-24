@@ -78,132 +78,88 @@ export async function POST(req: NextRequest) {
 
         let currentFolderId = masterFolderId;
 
-        // LEVEL 1: "Client" VS "Expert"
-        // Determine main branch based on who is uploading or the context
-        // User asked: "if client upload... goes to Client", "if expert upload... goes to Expert"
-
-        // However, usually files adhere to the OWNER of the file context. 
-        // If an Expert uploads a file TO A CLIENT REQUEST, should it go to Client folder or Expert folder?
-        // Usually Client folder is better for case management.
-        // But let's stick STRICTLY to user instruction: "if the expert upload it goes to ... Expert"
-
-        const mainBranchName = userRole === 'CLIENT' ? 'Client' : 'Expert';
-        // OR simply use the role from the userRecord we fetched
-        const roleFolder = userRecord.role === 'CLIENT' ? 'Client' : 'Expert';
-
-        let targetRootFolderId = currentFolderId;
-
-        const rootTypeFolder = await findSubfolder(targetRootFolderId, roleFolder);
-        if (rootTypeFolder?.id) {
-            targetRootFolderId = rootTypeFolder.id;
-        } else {
-            const newFolder = await createFolder(roleFolder, targetRootFolderId);
-            if (!newFolder?.id) throw new Error(`Failed to create ${roleFolder} folder`);
-            targetRootFolderId = newFolder.id;
-        }
-        currentFolderId = targetRootFolderId;
-
-        // Level 2: Name / Company Name
-        let identityName = "Unknown";
-        if (roleFolder === 'Client') {
-            identityName = userRecord.clientProfile?.companyName || userRecord.name;
-        } else {
-            identityName = userRecord.expertProfile?.name || userRecord.name;
-        }
-        identityName = identityName.replace(/[\/\\]/g, '-'); // Sanitize
-
-        // Check for stored ID on User (applies to both Client and Expert now)
-        if (userRecord.googleDriveFolderId && currentFolderId !== masterFolderId) {
-            // We only use the stored ID if we are sure it's valid? 
-            // Actually, the stored ID IS the identity folder. 
-            // Logic check: The code above sets currentFolderId to 'Client' or 'Expert' category folder.
-            // But googleDriveFolderId stores the IDENTITY folder (e.g. "Khaled Genena").
-            // So we can skip searching if we have it.
-
-            // Wait, if we use the stored ID, we bypass the category folder check? 
-            // Yes, because the ID is unique globally in Drive. 
-            // But we just did the category folder check above. That's fine, it ensures structure exists.
-
-            // Let's optimize: If we have userRecord.googleDriveFolderId, we can just use it directly!
-            // BUT, we want to ensure it's still inside the correct hierarchy? 
-            // Drive IDs don't change location easily. Trust the ID.
-        }
-
-        // BETTER LOGIC:
-        // Use stored ID if available.
+        // LEVEL 1 & 2: Identity Folder (Company/User Name)
+        // Check if we already have the folder ID stored (Best Case)
         if (userRecord.googleDriveFolderId) {
             currentFolderId = userRecord.googleDriveFolderId;
             console.log(`[Drive] Using stored Identity Folder ID: ${currentFolderId}`);
         } else {
-            // Not found, we must find/create inside currentFolderId (which is Level 1: Client/Expert)
-            const identityFolder = await findSubfolder(currentFolderId, identityName);
+            // Not found on user, we need to find or create it.
+            // 1. Determine Category (Client vs Expert)
+            const roleFolder = userRecord.role === 'CLIENT' ? 'Client' : 'Expert';
 
+            let categoryFolderId = masterFolderId;
+            const categoryFolder = await findSubfolder(masterFolderId, roleFolder);
+            if (categoryFolder && categoryFolder.id) {
+                categoryFolderId = categoryFolder.id;
+            } else {
+                const newCat = await createFolder(roleFolder, masterFolderId);
+                if (newCat && newCat.id) categoryFolderId = newCat.id;
+            }
+
+            // 2. Determine Identity Name
+            let identityName = "Unknown";
+            if (userRecord.role === 'CLIENT') {
+                identityName = userRecord.clientProfile?.companyName || userRecord.name;
+            } else {
+                identityName = userRecord.expertProfile?.name || userRecord.name;
+            }
+            identityName = identityName.replace(/[\/\\]/g, '-'); // Sanitize
+
+            // 3. Find/Create Identity Folder
+            const identityFolder = await findSubfolder(categoryFolderId, identityName);
             if (identityFolder && identityFolder.id) {
                 currentFolderId = identityFolder.id;
-                // Found it, persist it!
-                await prisma.user.update({
-                    where: { id: userId },
-                    data: { googleDriveFolderId: currentFolderId }
-                });
             } else {
-                const newFolder = await createFolder(identityName, currentFolderId);
+                const newFolder = await createFolder(identityName, categoryFolderId);
                 if (!newFolder?.id) throw new Error("Failed to create Identity folder");
                 currentFolderId = newFolder.id;
-
-                // Created it, persist it!
-                await prisma.user.update({
-                    where: { id: userId },
-                    data: { googleDriveFolderId: currentFolderId }
-                });
-                console.log(`[Drive] Linked NEW Identity folder to User: ${currentFolderId}`);
             }
+
+            // 4. Save for next time
+            await prisma.user.update({
+                where: { id: userId },
+                data: { googleDriveFolderId: currentFolderId }
+            });
         }
 
-        // LEVEL 3: Context (Request ID or "Profile Documents")
-        let contextFolderName = "General";
+        // LEVEL 3: Context Branching (Request vs Settings)
         if (requestId && request) {
-            contextFolderName = request.displayId || `REQ-${request.id.slice(0, 8)}`;
-        } else {
-            contextFolderName = "Profile_Documents";
-        }
+            // BRANCH A: Request Upload -> [Request ID] -> [Date]
+            const requestFolderName = request.displayId || `REQ-${request.id.slice(0, 8)}`;
 
-        const contextFolder = await findSubfolder(currentFolderId, contextFolderName);
-        if (contextFolder?.id) {
-            currentFolderId = contextFolder.id;
-        } else {
-            const newFolder = await createFolder(contextFolderName, currentFolderId);
-            if (!newFolder?.id) throw new Error("Failed to create Context folder");
-            currentFolderId = newFolder.id;
-        }
+            let requestFolderId = currentFolderId;
+            const reqFolder = await findSubfolder(currentFolderId, requestFolderName);
+            if (reqFolder?.id) {
+                requestFolderId = reqFolder.id;
+            } else {
+                const newFolder = await createFolder(requestFolderName, currentFolderId);
+                if (!newFolder?.id) throw new Error("Failed to create Request folder");
+                requestFolderId = newFolder.id;
+            }
 
-        // LEVEL 4: Date (Optional, but good for organization)
-        // User said "same old logic", old logic had date.
-        /* 
-        const today = new Date().toISOString().split('T')[0];
-        const dateFolder = await findSubfolder(currentFolderId, today);
-        if (dateFolder?.id) {
-             currentFolderId = dateFolder.id;
-        } else {
-             const newFolder = await createFolder(today, currentFolderId);
-             if (!newFolder?.id) throw new Error("Failed to create Date folder");
-             currentFolderId = newFolder.id;
-        }
-        */
-        // Actually, for Profile Documents, separating by date might be annoying. 
-        // For Requests it makes sense.
-        // Let's keep it clean: Request -> File. Profile -> File.
-        // Unless user strictly asked for "same old logic" recursively. 
-        // "with the same old logic" likely implies the [Company > Request > Date] structure *inside* the Client folder.
-        // I will add the date folder ONLY if it is a REQUEST.
-
-        if (requestId) {
+            // Date Folder
             const today = new Date().toISOString().split('T')[0];
-            const dateFolder = await findSubfolder(currentFolderId, today);
+            const dateFolder = await findSubfolder(requestFolderId, today);
             if (dateFolder?.id) {
                 currentFolderId = dateFolder.id;
             } else {
-                const newFolder = await createFolder(today, currentFolderId);
+                const newFolder = await createFolder(today, requestFolderId);
                 if (!newFolder?.id) throw new Error("Failed to create Date folder");
+                currentFolderId = newFolder.id;
+            }
+
+        } else {
+            // BRANCH B: Settings Upload -> [Legal_Entity_Files] or [Other]
+            // Default to Legal_Entity_Files for settings uploads
+            const folderName = (category === 'legal' || !category) ? 'Legal_Entity_Files' : 'Other_Files';
+
+            const legalFolder = await findSubfolder(currentFolderId, folderName);
+            if (legalFolder?.id) {
+                currentFolderId = legalFolder.id;
+            } else {
+                const newFolder = await createFolder(folderName, currentFolderId);
+                if (!newFolder?.id) throw new Error(`Failed to create ${folderName} folder`);
                 currentFolderId = newFolder.id;
             }
         }
