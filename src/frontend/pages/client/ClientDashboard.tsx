@@ -164,6 +164,8 @@ const ClientDashboard = () => {
         .filter(r => !['PENDING_PAYMENT', 'CANCELLED'].includes(r.status))
         .reduce((sum, r) => sum + Number(r.amount), 0);
 
+    const canBookMeeting = myRequests.some(r => r.assignedExpertId);
+
     return (
         <div className="space-y-8 animate-in fade-in duration-700 max-w-6xl mx-auto pb-12">
 
@@ -223,6 +225,15 @@ const ClientDashboard = () => {
 
 
                     <div className="flex flex-col gap-4 w-full md:w-auto">
+                        <Button
+                            onClick={() => setIsBookMeetingOpen(true)}
+                            variant={canBookMeeting ? 'secondary' : 'outline'}
+                            disabled={!canBookMeeting}
+                            className={`w-full justify-center md:w-auto text-lg h-auto py-3 ${canBookMeeting ? 'bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-md' : 'opacity-50 cursor-not-allowed border-white/10 text-white/50'}`}
+                        >
+                            <Calendar size={24} className="mr-2" /> Book Meeting
+                        </Button>
+
                         <Button
                             onClick={() => navigate('/', { state: { scrollTo: 'calculator' } })}
                             className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white shadow-lg w-full justify-center md:w-auto text-lg h-auto py-3"
