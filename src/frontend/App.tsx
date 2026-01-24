@@ -280,6 +280,13 @@ const AppContent = () => {
             </Layout>
           </ProtectedRoute>
         } />
+        <Route path="/admin/calendar" element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <Layout title="Global Calendar">
+              <Meetings />
+            </Layout>
+          </ProtectedRoute>
+        } />
         <Route path="/admin/clients" element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <Layout title="Manage Clients">

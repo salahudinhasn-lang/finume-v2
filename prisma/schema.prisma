@@ -269,6 +269,7 @@ model Request {
   completedAt      DateTime?
 
   expertTasks      ExpertTask[]
+  meetings         Meeting[]
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

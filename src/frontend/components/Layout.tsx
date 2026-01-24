@@ -56,6 +56,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
       // ADMIN
       return [
         { icon: LayoutDashboard, label: t('sidebar.overview'), path: '/admin' },
+        { icon: Calendar, label: 'Calendar', path: '/admin/calendar' },
         { icon: Users, label: t('sidebar.clients'), path: '/admin/clients' },
         { icon: Users, label: t('sidebar.experts'), path: '/admin/experts' },
         { icon: FileText, label: t('sidebar.myRequests'), path: '/admin/requests' },

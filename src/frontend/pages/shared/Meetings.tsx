@@ -37,6 +37,8 @@ const Meetings = () => {
         const fetchMeetings = async () => {
             if (!user) return;
             try {
+                // If admin, we might want to pass 'role=ADMIN' implicitly via user.role check in API? 
+                // The API listens to query param 'role', and falls back to user role if not overriding access.
                 const res = await fetch(`/api/meetings?role=${user.role}`);
                 if (res.ok) {
                     const data = await res.json();
@@ -63,6 +65,19 @@ const Meetings = () => {
         setMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, messages: [...m.messages, newMessage] } : m));
         setReplyText('');
     };
+
+    // --- Helper to get Display Name based on Role ---
+    const getDisplayName = (m: Meeting) => {
+        if (user?.role === 'ADMIN') {
+            return `${m.clientName} & ${m.expertName}`;
+        }
+        return user?.role === 'CLIENT' ? m.expertName : m.clientName;
+    };
+
+    const getDisplayAvatarChar = (m: Meeting) => {
+        if (user?.role === 'ADMIN') return 'M';
+        return (user?.role === 'CLIENT' ? m.expertName : m.clientName).charAt(0);
+    }
 
     // --- Calendar helpers ---
     const getDaysInMonth = (year: number, month: number) => {
@@ -154,7 +169,6 @@ const Meetings = () => {
     };
 
     const renderWeekView = () => {
-        // Find start of week (Sunday)
         const startOfWeek = new Date(currentDate);
         startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
 
@@ -183,7 +197,7 @@ const Meetings = () => {
                                         className="p-2 bg-indigo-50/50 hover:bg-indigo-50 rounded-lg border border-indigo-100/50 cursor-pointer transition-colors"
                                     >
                                         <p className="text-xs font-bold text-indigo-900 truncate">{m.startTime}</p>
-                                        <p className="text-xs text-gray-600 truncate">{user?.role === 'CLIENT' ? m.expertName : m.clientName}</p>
+                                        <p className="text-xs text-gray-600 truncate">{getDisplayName(m)}</p>
                                     </div>
                                 ))}
                             </div>
@@ -222,7 +236,7 @@ const Meetings = () => {
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <h4 className="font-bold text-gray-900 text-lg">
-                                                    {user?.role === 'CLIENT' ? `Meeting w/ ${m.expertName}` : `Meeting w/ ${m.clientName}`}
+                                                    Meeting w/ {getDisplayName(m)}
                                                 </h4>
                                                 <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
                                                     <Clock size={14} /> {m.startTime} - {m.endTime}
@@ -282,9 +296,11 @@ const Meetings = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
-                        <CalendarIcon className="text-indigo-600" size={32} /> My Calendar
+                        <CalendarIcon className="text-indigo-600" size={32} /> {user?.role === 'ADMIN' ? 'Global Calendar' : 'My Calendar'}
                     </h1>
-                    <p className="text-gray-500 font-medium">Manage your schedule and upcoming sessions.</p>
+                    <p className="text-gray-500 font-medium">
+                        {user?.role === 'ADMIN' ? 'Monitor all scheduled sessions across the platform.' : 'Manage your schedule and upcoming sessions.'}
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
@@ -334,10 +350,10 @@ const Meetings = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs">
-                                                    {(user?.role === 'CLIENT' ? m.expertName : m.clientName).charAt(0)}
+                                                    {getDisplayAvatarChar(m)}
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-gray-900 text-sm">{user?.role === 'CLIENT' ? m.expertName : m.clientName}</p>
+                                                    <p className="font-bold text-gray-900 text-sm">{getDisplayName(m)}</p>
                                                     {m.requestId && <p className="text-xs text-gray-400">Req #{m.requestId.substring(0, 8)}</p>}
                                                 </div>
                                             </div>
