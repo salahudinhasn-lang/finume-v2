@@ -81,7 +81,9 @@ export const ServicesPage = () => {
                 console.error("Failed to create request");
             }
         } else {
-            navigate(`/login?redirect=${encodeURIComponent('/client/services')}`);
+            // Redirect to Checkout page after login
+            const redirectPath = `/client/checkout?serviceId=${serviceId}`;
+            navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
         }
     };
 
@@ -219,7 +221,9 @@ export const PricingPage = () => {
                 console.error("Failed to create request");
             }
         } else {
-            navigate(`/login?redirect=${encodeURIComponent('/pricing')}`);
+            // Redirect to Checkout page after login so they can verify/complete
+            const redirectPath = `/client/checkout?planId=${planId}&billing=${billing}`;
+            navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
         }
     };
 

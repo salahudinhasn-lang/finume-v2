@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { createFolder } from '@/lib/drive';
+import { createFolder, findSubfolder } from '@/lib/drive';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-prod';
 
@@ -180,24 +180,6 @@ export async function POST(request: Request) {
 
             // 1. Determine Parent Category Folder (Client vs Expert)
             let categoryFolderName = newUser.role === 'CLIENT' ? 'Client' : 'Expert';
-
-            // We need to import findSubfolder. Since I can't easily change imports with this tool cleanly if they are far up, 
-            // I will assume findSubfolder is available or I'll use a dynamic import or just rely on createFolder if findSubfolder isn't imported.
-            // Wait, I should probably check imports first. 
-            // Better strategy: I'll replace the import line too or just use the existing createFolder if I can't easily find.
-            // Actually, I'll update the import in a separate tool call if needed, but here I can try to use what I have.
-            // The file currently only imports `createFolder`. 
-            // I will use `require` or update imports in a subsequent step if this fails? 
-            // No, TS might complain. 
-            // Let's assume I can use `createFolder` which we verified creates if not cached? 
-            // `createFolder` code: checks cache key `${effectiveParentId}__${folderName}`.
-            // But it doesn't SEARCH Drive if not in cache.
-            // So `findSubfolder` is safer. I'll stick to logic that assumes I can fix imports or they are available.
-            // Actually, I'll update the whole file import section + logic for safety in one go if I could, but replace_file_content works on chunks.
-            // I'll update the logic block here and rely on `findSubfolder` which I will add to imports in a separate small edit if needed.
-            // Let's try to utilize the helper function approach:
-
-            const { findSubfolder, createFolder } = require('@/lib/drive'); // Dynamic require to ensure availability
 
             let categoryFolderId = masterFolderId;
             if (masterFolderId) {

@@ -19,17 +19,70 @@ const PaymentPage = () => {
     // 2. Derive Request Data or Use State
     const [pendingRequest, setPendingRequest] = useState<Request | null>(stateRequest || null);
 
-    // (Logic for URL params to Request object omitted for brevity if state exists, assuming flow comes from RequestReceived)
-    // If flow comes directly from URL params (e.g. refresh), strictly we should reconstruct.
-    // Preserving logic from previous file read, but simplified for clarity as user flow is strictly defined now.
-
     useEffect(() => {
-        if (!pendingRequest && !stateRequest) {
-            // Fallback: try to find in requests context if ID is in URL? 
-            // Or navigate back.
-            navigate('/client');
-        }
-    }, [pendingRequest, stateRequest, navigate]);
+        const initializeFromParams = async () => {
+            if (pendingRequest) return;
+
+            const planId = searchParams.get('planId');
+            const serviceId = searchParams.get('serviceId');
+            const billing = searchParams.get('billing');
+
+            if (planId) {
+                const plan = plans.find(p => p.id === planId);
+                if (plan && user) {
+                    const discount = billing === 'YEARLY' ? (settings?.yearlyDiscountPercentage || 20) / 100 : 0;
+                    const finalPrice = billing === 'YEARLY' ? Math.round(plan.price * 12 * (1 - discount)) : plan.price;
+
+                    const newReq: any = {
+                        id: `SUB-${Date.now()}`,
+                        pricingPlanId: plan.id,
+                        serviceName: `${plan.name} (${billing || 'YEARLY'})`,
+                        clientId: user.id,
+                        clientName: user.name,
+                        expertId: null,
+                        expertName: null,
+                        status: 'PENDING_PAYMENT',
+                        dateCreated: new Date().toISOString(),
+                        amount: finalPrice,
+                        description: `Subscription to ${plan.name} plan. Billed ${billing || 'YEARLY'}.`,
+                        batches: []
+                    };
+                    setPendingRequest(newReq);
+                    // Optionally autosave to DB here if desired, 
+                    // but typically we wait for "Continue" or "Pay".
+                    // However, to match "Request Received" ID flow, we might need to save.
+                    // But PaymentPage is for Checkout. 
+                    // If user wants to see "Request Received" page content, we should maybe redirect there?
+                    // User said: "direct him to the request received".
+                    // Request Received page usually shows details.
+                    // Making this page handle the "Creation" on the fly is good.
+                }
+            } else if (serviceId) {
+                const service = services.find(s => s.id === serviceId);
+                if (service && user) {
+                    const newReq: any = {
+                        id: `REQ-${Date.now()}`,
+                        serviceId: service.id,
+                        serviceName: service.nameEn,
+                        clientId: user.id,
+                        clientName: user.name,
+                        expertId: null,
+                        expertName: null,
+                        status: 'PENDING_PAYMENT',
+                        dateCreated: new Date().toISOString(),
+                        amount: service.price,
+                        description: service.description,
+                        batches: []
+                    };
+                    setPendingRequest(newReq);
+                }
+            } else if (!stateRequest) {
+                navigate('/client');
+            }
+        };
+
+        initializeFromParams();
+    }, [pendingRequest, stateRequest, navigate, searchParams, plans, services, user, settings]);
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
