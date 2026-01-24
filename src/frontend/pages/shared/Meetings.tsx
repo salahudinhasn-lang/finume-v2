@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Button, Badge } from '../../components/UI';
-import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, MessageSquare, Send, ChevronDown, ChevronUp, User } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, MessageSquare, Send, ChevronDown, ChevronUp, User, Edit2, Save, X } from 'lucide-react';
 
 interface Meeting {
     id: string;
@@ -33,38 +33,95 @@ const Meetings = () => {
     const [expandedMeetingId, setExpandedMeetingId] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
 
-    useEffect(() => {
-        const fetchMeetings = async () => {
-            if (!user) return;
-            try {
-                // If admin, we might want to pass 'role=ADMIN' implicitly via user.role check in API? 
-                // The API listens to query param 'role', and falls back to user role if not overriding access.
-                const res = await fetch(`/api/meetings?role=${user.role}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setMeetings(data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch meetings", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    // Reschedule State
+    const [editingMeetingId, setEditingMeetingId] = useState<string | null>(null);
+    const [editDate, setEditDate] = useState('');
+    const [editStartTime, setEditStartTime] = useState('');
+    const [editEndTime, setEditEndTime] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
+    const fetchMeetings = async () => {
+        if (!user) return;
+        try {
+            const res = await fetch(`/api/meetings?role=${user.role}`);
+            if (res.ok) {
+                const data = await res.json();
+                setMeetings(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch meetings", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchMeetings();
     }, [user]);
 
-    const handleSendReply = (meetingId: string) => {
+    const handleSendReply = async (meetingId: string) => {
         if (!replyText.trim()) return;
-        const newMessage = {
-            id: Date.now().toString(),
-            senderId: user!.id,
-            content: replyText,
-            createdAt: new Date().toISOString()
-        };
-        setMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, messages: [...m.messages, newMessage] } : m));
-        setReplyText('');
+        try {
+            const res = await fetch('/api/meetings/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ meetingId, content: replyText })
+            });
+
+            if (res.ok) {
+                const newMessage = await res.json();
+                setMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, messages: [...m.messages, newMessage] } : m));
+                setReplyText('');
+            }
+        } catch (error) {
+            console.error("Failed to send message", error);
+        }
     };
+
+    const handleStartReschedule = (m: Meeting) => {
+        setEditingMeetingId(m.id);
+        setEditDate(new Date(m.date).toISOString().split('T')[0]);
+        setEditStartTime(m.startTime);
+        setEditEndTime(m.endTime);
+    };
+
+    const handleCancelReschedule = () => {
+        setEditingMeetingId(null);
+        setEditDate('');
+        setEditStartTime('');
+        setEditEndTime('');
+    };
+
+    const handleSaveReschedule = async () => {
+        if (!editingMeetingId) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch('/api/meetings', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: editingMeetingId,
+                    date: editDate,
+                    startTime: editStartTime,
+                    endTime: editEndTime
+                })
+            });
+
+            if (res.ok) {
+                const updated = await res.json();
+                // Refresh list or optimistic update. Refresh is safer for sorting.
+                await fetchMeetings();
+                handleCancelReschedule();
+            } else {
+                alert("Failed to reschedule. Please check values.");
+            }
+        } catch (error) {
+            console.error("Reschedule failed", error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
 
     // --- Helper to get Display Name based on Role ---
     const getDisplayName = (m: Meeting) => {
@@ -126,6 +183,13 @@ const Meetings = () => {
             newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
         }
         setCurrentDate(newDate);
+    };
+
+    const onMeetingClick = (m: Meeting) => {
+        // Navigate to Day view of that meeting
+        setCurrentDate(new Date(m.date));
+        setView('day');
+        setExpandedMeetingId(m.id);
     };
 
     const renderMonthView = () => {
@@ -193,7 +257,7 @@ const Meetings = () => {
                             <div className="space-y-2 overflow-y-auto max-h-[300px] pr-1 scrollbar-hide">
                                 {dayMeetings.map(m => (
                                     <div key={m.id}
-                                        onClick={() => setExpandedMeetingId(expandedMeetingId === m.id ? null : m.id)}
+                                        onClick={() => onMeetingClick(m)}
                                         className="p-2 bg-indigo-50/50 hover:bg-indigo-50 rounded-lg border border-indigo-100/50 cursor-pointer transition-colors"
                                     >
                                         <p className="text-xs font-bold text-indigo-900 truncate">{m.startTime}</p>
@@ -233,18 +297,56 @@ const Meetings = () => {
                                 </div>
                                 <div className="flex-1">
                                     <div className={`p-4 rounded-xl border ${m.status === 'CONFIRMED' ? 'bg-green-50 border-green-100' : 'bg-white border-gray-200 shadow-sm'}`}>
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div>
-                                                <h4 className="font-bold text-gray-900 text-lg">
-                                                    Meeting w/ {getDisplayName(m)}
-                                                </h4>
-                                                <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
-                                                    <Clock size={14} /> {m.startTime} - {m.endTime}
-                                                    {m.requestId && <span className="px-2 py-0.5 bg-gray-100 rounded text-xs">Req #{m.requestId.substring(0, 8)}</span>}
-                                                </p>
+
+                                        {/* Header Row: Info or Edit Mode */}
+                                        {editingMeetingId === m.id ? (
+                                            <div className="bg-indigo-50 p-4 rounded-lg mb-4 border border-indigo-100 space-y-3">
+                                                <h4 className="font-bold text-indigo-800 flex items-center gap-2"><Edit2 size={16} /> Rescheduling Meeting</h4>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="text-xs font-bold text-indigo-600">New Date</label>
+                                                        <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} className="w-full p-2 rounded border border-indigo-200 text-sm" />
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <div className="flex-1">
+                                                            <label className="text-xs font-bold text-indigo-600">Start</label>
+                                                            <input type="time" value={editStartTime} onChange={e => setEditStartTime(e.target.value)} className="w-full p-2 rounded border border-indigo-200 text-sm" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <label className="text-xs font-bold text-indigo-600">End</label>
+                                                            <input type="time" value={editEndTime} onChange={e => setEditEndTime(e.target.value)} className="w-full p-2 rounded border border-indigo-200 text-sm" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2 justify-end pt-2">
+                                                    <Button size="sm" variant="outline" onClick={handleCancelReschedule}><X size={14} /> Cancel</Button>
+                                                    <Button size="sm" onClick={handleSaveReschedule} disabled={isSaving} isLoading={isSaving}><Save size={14} /> Save Changes</Button>
+                                                </div>
                                             </div>
-                                            <Badge status={m.status} />
-                                        </div>
+                                        ) : (
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h4 className="font-bold text-gray-900 text-lg">
+                                                        Meeting w/ {getDisplayName(m)}
+                                                    </h4>
+                                                    <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
+                                                        <Clock size={14} /> {m.startTime} - {m.endTime}
+                                                        {m.requestId && <span className="px-2 py-0.5 bg-gray-100 rounded text-xs">Req #{m.requestId.substring(0, 8)}</span>}
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-col items-end gap-2">
+                                                    <Badge status={m.status} />
+                                                    {user?.role === 'CLIENT' && ['PENDING', 'CONFIRMED'].includes(m.status) && (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleStartReschedule(m); }}
+                                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1"
+                                                        >
+                                                            <Edit2 size={12} /> Reschedule
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* Expandable Details */}
                                         <button
