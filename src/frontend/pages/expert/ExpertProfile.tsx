@@ -8,6 +8,7 @@ const ExpertProfile = () => {
     const { user, updateExpert, isLoading, isRestoringSession } = useAppContext();
     const [isPublic, setIsPublic] = useState(true);
     const [showPasswordFields, setShowPasswordFields] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
 
     const [avatarPreview, setAvatarPreview] = useState(user?.avatarUrl);
 
@@ -607,14 +608,7 @@ const ExpertProfile = () => {
                             )}
 
                             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 opacity-60">
-                                <div className="flex items-center gap-3">
-                                    <FileText size={18} className="text-gray-500" />
-                                    <div className="text-sm">
-                                        <p className="font-bold text-gray-800">Professional License</p>
-                                        <p className="text-xs text-gray-500">Not Uploaded</p>
-                                    </div>
-                                </div>
-                                <button className="text-xs font-bold text-blue-600 hover:underline">Upload</button>
+                                {/* Removed Professional License Section */}
                             </div>
                         </div>
                     </Card>
@@ -625,13 +619,87 @@ const ExpertProfile = () => {
                             <img src={avatarPreview || user?.avatarUrl} className="w-16 h-16 rounded-full mx-auto border-2 border-white mb-2 object-cover" />
                             <p className="font-bold">{formData.name}</p>
                             <p className="text-xs text-gray-400 mb-3 line-clamp-1">{formData.bio || "No bio set"}</p>
-                            <Button size="sm" variant="secondary" className="w-full text-xs h-8">
+                            <Button size="sm" variant="secondary" className="w-full text-xs h-8" onClick={() => setShowPreview(true)}>
                                 <Eye size={14} /> View Public Profile
                             </Button>
                         </div>
                     </Card>
                 </div>
             </div>
+
+            {/* Public Profile Preview Modal */}
+            {showPreview && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+                        {/* Header / Cover */}
+                        <div className="h-32 bg-gradient-to-r from-slate-900 to-slate-800 relative">
+                            <button
+                                onClick={() => setShowPreview(false)}
+                                className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors"
+                            >
+                                &times;
+                            </button>
+                        </div>
+
+                        {/* Profile Content */}
+                        <div className="px-6 pb-6 -mt-12 relative">
+                            <div className="flex justify-between items-end mb-4">
+                                <img
+                                    src={avatarPreview || user?.avatarUrl}
+                                    className="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover bg-white"
+                                />
+                                <div className="mb-1 flex flex-col items-end">
+                                    <span className="text-2xl font-bold text-slate-900">{formData.hourlyRate} <span className="text-sm font-normal text-slate-500">SAR/hr</span></span>
+                                    <div className="flex items-center gap-1 text-amber-500 text-sm font-bold">
+                                        <span>★</span> {Number((user as any)?.rating || 0).toFixed(1)}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mb-4">
+                                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                    {formData.name}
+                                    <span className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-[8px] text-white">✓</span>
+                                </h2>
+                                <p className="text-slate-500 text-sm mt-1">{formData.bio || "No professional bio available."}</p>
+                            </div>
+
+                            <div className="mb-6">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Specializations</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {formData.specializations.length > 0 ? (
+                                        formData.specializations.map((spec, i) => (
+                                            <span key={i} className="px-2 py-1 bg-slate-100 text-slate-700 text-xs font-medium rounded-md">
+                                                {spec}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="text-slate-400 text-xs italic">No specializations listed</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                                    <span className="block text-lg font-bold text-slate-900">{user?.role === 'EXPERT' ? (user as any).totalEarned || '0' : '0'}</span>
+                                    <span className="text-xs text-slate-500">Jobs Completed</span>
+                                </div>
+                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                                    <span className="block text-lg font-bold text-slate-900">{user?.role === 'EXPERT' ? (user as any).yearsExperience || '1' : '1'}+</span>
+                                    <span className="text-xs text-slate-500">Years Exp.</span>
+                                </div>
+                            </div>
+
+                            <div className="mt-6">
+                                <Button className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl shadow-lg shadow-slate-900/10 pointer-events-none opacity-50">
+                                    Hire Expert
+                                </Button>
+                                <p className="text-center text-xs text-slate-400 mt-2">Preview Mode</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
