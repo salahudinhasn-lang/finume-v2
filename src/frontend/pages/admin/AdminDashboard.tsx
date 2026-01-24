@@ -277,19 +277,31 @@ const AdminDashboard = () => {
 
                         <div className="flex gap-2 mt-4">
                             {pendingPayouts.length > 0 && (
-                                <div className="flex-1 bg-white/20 backdrop-blur-sm rounded-lg p-2 text-center" title="Pending Payout Requests">
+                                <div
+                                    className="flex-1 bg-white/20 backdrop-blur-sm rounded-lg p-2 text-center hover:bg-white/30 transition-colors cursor-pointer"
+                                    title="Pending Payout Requests"
+                                    onClick={(e) => { e.stopPropagation(); navigate('/admin/financials'); }}
+                                >
                                     <p className="text-xs text-orange-100 mb-1 flex items-center justify-center gap-1"><Wallet size={10} /> {t('admin.payouts')}</p>
                                     <p className="font-bold">{pendingPayouts.length}</p>
                                 </div>
                             )}
                             {pendingExperts.length > 0 && (
-                                <div className="flex-1 bg-white/20 backdrop-blur-sm rounded-lg p-2 text-center" title="Expert Vetting">
+                                <div
+                                    className="flex-1 bg-white/20 backdrop-blur-sm rounded-lg p-2 text-center hover:bg-white/30 transition-colors cursor-pointer"
+                                    title="Expert Vetting"
+                                    onClick={(e) => { e.stopPropagation(); navigate('/admin/experts', { state: { filter: 'VETTING' } }); }}
+                                >
                                     <p className="text-xs text-orange-100 mb-1 flex items-center justify-center gap-1"><ShieldCheck size={10} /> {t('admin.vetting')}</p>
                                     <p className="font-bold">{pendingExperts.length}</p>
                                 </div>
                             )}
                             {pendingRequests.length > 0 && (
-                                <div className="flex-1 bg-white/20 backdrop-blur-sm rounded-lg p-2 text-center" title="New Orders">
+                                <div
+                                    className="flex-1 bg-white/20 backdrop-blur-sm rounded-lg p-2 text-center hover:bg-white/30 transition-colors cursor-pointer"
+                                    title="New Orders"
+                                    onClick={(e) => { e.stopPropagation(); navigate('/admin/requests', { state: { filter: 'NEW' } }); }}
+                                >
                                     <p className="text-xs text-orange-100 mb-1 flex items-center justify-center gap-1"><FileText size={10} /> {t('admin.orders')}</p>
                                     <p className="font-bold">{pendingRequests.length}</p>
                                 </div>
