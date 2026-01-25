@@ -13,11 +13,21 @@ export async function PATCH(
         const { fileId } = params;
 
         // Authenticate User
+        // Authenticate User
         const authHeader = req.headers.get('Authorization');
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        let token = '';
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+        } else {
+            // Fallback to Cookie
+            const cookie = req.cookies.get('finume_token');
+            if (cookie) token = cookie.value;
+        }
+
+        if (!token) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const token = authHeader.split(' ')[1];
         let decodedToken: any;
         try {
             decodedToken = jwt.verify(token, JWT_SECRET);

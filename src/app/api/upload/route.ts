@@ -10,11 +10,22 @@ export async function POST(req: NextRequest) {
         // Authenticate User
         console.log("Upload API: Received request");
         const authHeader = req.headers.get('Authorization');
+        let token = '';
 
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+        } else {
+            // Fallback to Cookie
+            const cookie = req.cookies.get('finume_token');
+            if (cookie) {
+                token = cookie.value;
+                console.log("Upload API: Using cookie token");
+            }
+        }
+
+        if (!token) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const token = authHeader.split(' ')[1];
         let decodedToken: any;
         try {
             decodedToken = jwt.verify(token, JWT_SECRET);
