@@ -193,7 +193,9 @@ export async function POST(req: NextRequest) {
 
 
         // Upload File
-        const uploadedDriveFile = await uploadFileToDrive(buffer, filename, currentFolderId, file.type);
+        // Pass user email for fallback permission sharing
+        const uploaderEmail = userRecord.email;
+        const uploadedDriveFile = await uploadFileToDrive(buffer, filename, currentFolderId, file.type, uploaderEmail);
         if (!uploadedDriveFile) {
             // Check if backend has creds
             if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {

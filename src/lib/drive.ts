@@ -84,7 +84,7 @@ export async function createFolder(folderName: string, parentId?: string) {
     }
 }
 
-export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, folderId: string, mimeType: string) {
+export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, folderId: string, mimeType: string, shareWithEmail?: string) {
     const drive = await getDriveService();
     if (!drive) return null;
 
@@ -105,14 +105,38 @@ export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, fo
             supportsAllDrives: true,
         });
 
-        // Make the file readable by anyone with the link
-        await drive.permissions.create({
-            fileId: file.data.id!,
-            requestBody: {
-                role: 'reader',
-                type: 'anyone',
-            },
-        });
+        if (!file.data.id) return file.data;
+
+        // Try to make Public (primary goal)
+        try {
+            await drive.permissions.create({
+                fileId: file.data.id,
+                requestBody: {
+                    role: 'reader',
+                    type: 'anyone',
+                },
+            });
+        } catch (pubErr) {
+            console.warn(`[Drive] Public sharing failed for ${fileName}, trying specific user sharing...`);
+
+            // Fallback: Share with uploader explicitly
+            if (shareWithEmail) {
+                try {
+                    await drive.permissions.create({
+                        fileId: file.data.id,
+                        requestBody: {
+                            role: 'reader',
+                            type: 'user',
+                            emailAddress: shareWithEmail
+                        },
+                        fields: 'id',
+                    });
+                    console.log(`[Drive] Shared ${fileName} with ${shareWithEmail}`);
+                } catch (userErr) {
+                    console.warn(`[Drive] User sharing also failed for ${shareWithEmail}`, userErr);
+                }
+            }
+        }
 
         return file.data;
     } catch (err) {
