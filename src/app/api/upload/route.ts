@@ -37,7 +37,11 @@ export async function POST(req: NextRequest) {
         }
 
         if (!decodedToken) {
-            return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
+            const hasHeader = !!authHeader;
+            const hasCookie = !!req.cookies.get('finume_token');
+            return NextResponse.json({
+                error: `Invalid Token (Header: ${hasHeader ? 'Present' : 'Missing'}, Cookie: ${hasCookie ? 'Present' : 'Missing'})`
+            }, { status: 401 });
         }
 
         const userId = decodedToken.userId || decodedToken.id;

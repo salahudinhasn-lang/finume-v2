@@ -141,11 +141,15 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                 formData.append('requestId', selectedRequestId);
                 formData.append('category', item.category); // Use per-file category
 
+                const headers: Record<string, string> = {};
+                if (token && token.trim() !== '') {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
                 const response = await fetch('/api/upload', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
+                    credentials: 'include', // Ensure cookies are sent
+                    headers: headers,
                     body: formData
                 });
 
