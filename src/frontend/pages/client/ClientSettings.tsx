@@ -79,6 +79,27 @@ const ClientSettings = () => {
         return data.url;
     };
 
+    const getProxyUrl = (originalUrl: string) => {
+        if (!originalUrl) return '#';
+        if (originalUrl.includes('/api/files/')) return originalUrl;
+
+        // Extract Drive ID to pass to proxy
+        let driveId = '';
+        if (originalUrl.includes('/file/d/')) {
+            const match = originalUrl.match(/\/file\/d\/([^\/]+)/);
+            if (match) driveId = match[1];
+        } else if (originalUrl.includes('id=')) {
+            const match = originalUrl.match(/id=([^&]+)/);
+            if (match) driveId = match[1];
+        }
+
+        if (driveId) {
+            return `/api/files/${driveId}`;
+        }
+
+        return originalUrl;
+    };
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, stateField: string, dbField: string) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -328,7 +349,7 @@ const ClientSettings = () => {
                                             <div className="flex items-center gap-2">
                                                 {/* View Button */}
                                                 {displayUrl && (
-                                                    <a href={displayUrl} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                                    <a href={getProxyUrl(displayUrl)} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                                                         View
                                                     </a>
                                                 )}

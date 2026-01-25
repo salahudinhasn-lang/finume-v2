@@ -115,22 +115,47 @@ export async function GET(
         }
 
         // Fetch File
-        const file = await prisma.uploadedFile.findUnique({
+        let file = await prisma.uploadedFile.findUnique({
             where: { id: fileId }
         });
 
+        // Fallback: If not found by ID (maybe fileId IS the driveId, or it's a legacy link)
         if (!file) {
-            return NextResponse.json({ error: 'File not found' }, { status: 404 });
+            // Try to find by URL containing this ID
+            // This is for Profile/Settings docs where we only have the URL, and we extract ID from there
+            const filesWithUrl = await prisma.uploadedFile.findMany({
+                where: {
+                    url: { contains: fileId }
+                },
+                take: 1
+            });
+            if (filesWithUrl.length > 0) {
+                file = filesWithUrl[0];
+            } else {
+                return NextResponse.json({ error: 'File not found' }, { status: 404 });
+            }
         }
 
         // Extract Drive ID
         let driveId = '';
+        // If fileId passed WAS the drive ID (fallback case logic optimization)
+        if (!file.url.includes(fileId) && file.id === fileId) {
+            // Normal case, extract from URL
+            // (Logic continues below)
+        }
+
         if (file.url.includes('/file/d/')) {
             const match = file.url.match(/\/file\/d\/([^\/]+)/);
             if (match) driveId = match[1];
         } else if (file.url.includes('id=')) {
             const match = file.url.match(/id=([^&]+)/);
             if (match) driveId = match[1];
+        }
+
+        // Final fallback: If the requested fileId looks like a Drive ID (long alphanumeric), use it directly
+        // This allows pure proxying if we trust the caller (authenticated user)
+        if (!driveId && fileId.length > 20 && !fileId.includes('-')) {
+            driveId = fileId;
         }
 
         if (!driveId) {
