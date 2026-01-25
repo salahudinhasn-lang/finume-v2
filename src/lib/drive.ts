@@ -209,19 +209,17 @@ export async function renameFileOrFolder(fileId: string, newName: string) {
     if (!drive) return null;
 
     try {
-        try {
-            const response = await drive.files.get({
-                fileId: fileId,
-                alt: 'media',
-            }, { responseType: 'stream' });
-
-            return {
-                stream: response.data,
-                contentType: response.headers['content-type'],
-                contentLength: response.headers['content-length']
-            };
-        } catch (err) {
-            console.error("Error getting file stream", err);
-            return null;
-        }
+        const file = await drive.files.update({
+            fileId: fileId,
+            requestBody: {
+                name: newName
+            },
+            fields: 'id, name',
+            supportsAllDrives: true,
+        });
+        return file.data;
+    } catch (err) {
+        console.error("Error renaming file/folder", err);
+        return null;
     }
+}
