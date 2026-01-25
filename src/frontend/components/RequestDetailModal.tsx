@@ -108,7 +108,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                                                 </div>
                                             </div>
                                             <a
-                                                href={file.url}
+                                                href={`/api/files/${file.id}`}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"

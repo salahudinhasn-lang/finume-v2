@@ -353,7 +353,7 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <a
-                            href={file.url}
+                            href={`/api/files/${file.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-gray-700 font-medium truncate hover:text-blue-600 hover:underline"
@@ -420,7 +420,7 @@ export const FileBatchManager: React.FC<FileBatchManagerProps> = ({
                     </div>
                     <div className="flex items-center gap-2">
                       <a
-                        href={file.url}
+                        href={`/api/files/${file.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-400 hover:text-blue-600 p-1"

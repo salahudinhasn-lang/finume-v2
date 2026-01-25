@@ -85,3 +85,84 @@ export async function PATCH(
         return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }
+
+export async function GET(
+    req: NextRequest,
+    props: { params: Promise<{ fileId: string }> }
+) {
+    try {
+        const params = await props.params;
+        const { fileId } = params;
+
+        // Authenticate User
+        const authHeader = req.headers.get('Authorization');
+        let decodedToken: any = null;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            try { decodedToken = jwt.verify(token, JWT_SECRET); } catch (err) { }
+        }
+
+        if (!decodedToken) {
+            const cookie = req.cookies.get('finume_token');
+            if (cookie) {
+                try { decodedToken = jwt.verify(cookie.value, JWT_SECRET); } catch (err) { }
+            }
+        }
+
+        if (!decodedToken) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Fetch File
+        const file = await prisma.uploadedFile.findUnique({
+            where: { id: fileId }
+        });
+
+        if (!file) {
+            return NextResponse.json({ error: 'File not found' }, { status: 404 });
+        }
+
+        // Extract Drive ID
+        let driveId = '';
+        if (file.url.includes('/file/d/')) {
+            const match = file.url.match(/\/file\/d\/([^\/]+)/);
+            if (match) driveId = match[1];
+        } else if (file.url.includes('id=')) {
+            const match = file.url.match(/id=([^&]+)/);
+            if (match) driveId = match[1];
+        }
+
+        if (!driveId) {
+            return NextResponse.json({ error: 'Invalid Drive Link' }, { status: 400 });
+        }
+
+        // Fetch Stream
+        const { getFileStream } = await import('@/lib/drive');
+        const fileData = await getFileStream(driveId);
+
+        if (!fileData || !fileData.stream) {
+            return NextResponse.json({ error: 'Failed to retrieve file stream' }, { status: 502 });
+        }
+
+        const headers = new Headers();
+        headers.set('Content-Type', fileData.contentType || 'application/octet-stream');
+        if (fileData.contentLength) {
+            headers.set('Content-Length', fileData.contentLength);
+        }
+
+        const download = req.nextUrl.searchParams.get('download') === 'true';
+        const disposition = download ? 'attachment' : 'inline';
+        const encodedFilename = encodeURIComponent(file.name).replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29');
+        headers.set('Content-Disposition', `${disposition}; filename*=UTF-8''${encodedFilename}`);
+
+        return new NextResponse(fileData.stream as any, {
+            status: 200,
+            headers
+        });
+
+    } catch (error: any) {
+        console.error('File Download Error', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
