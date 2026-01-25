@@ -61,37 +61,44 @@ export async function GET(req: NextRequest) {
 // PATCH: Update task status
 export async function PATCH(req: NextRequest) {
     try {
-        const cookie = req.cookies.get('finume_token');
-        if (cookie) token = cookie.value;
-    }
+        const authHeader = req.headers.get('Authorization');
+        let token = '';
 
-            if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    let decodedToken: any;
-    try {
-        decodedToken = jwt.verify(token, JWT_SECRET);
-    } catch (err) {
-        return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
-    }
-
-    const body = await req.json();
-    const { taskId, status } = body;
-
-    if (!taskId || !status) {
-        return NextResponse.json({ error: 'Missing taskId or status' }, { status: 400 });
-    }
-
-    const task = await prisma.expertTask.update({
-        where: { id: taskId },
-        data: {
-            status: status,
-            completedAt: status === 'COMPLETED' ? new Date() : null
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+        } else {
+            const cookie = req.cookies.get('finume_token');
+            if (cookie) token = cookie.value;
         }
-    });
 
-    return NextResponse.json(task);
+        if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-} catch (error) {
-    console.error("Error updating expert task:", error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-}
+        let decodedToken: any;
+        try {
+            decodedToken = jwt.verify(token, JWT_SECRET);
+        } catch (err) {
+            return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
+        }
+
+        const body = await req.json();
+        const { taskId, status } = body;
+
+        if (!taskId || !status) {
+            return NextResponse.json({ error: 'Missing taskId or status' }, { status: 400 });
+        }
+
+        const task = await prisma.expertTask.update({
+            where: { id: taskId },
+            data: {
+                status: status,
+                completedAt: status === 'COMPLETED' ? new Date() : null
+            }
+        });
+
+        return NextResponse.json(task);
+
+    } catch (error) {
+        console.error("Error updating expert task:", error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
+}
