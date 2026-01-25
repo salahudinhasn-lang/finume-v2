@@ -351,7 +351,7 @@ const ExpertTasks = () => {
                                                     <FileText size={16} className="text-gray-400 shrink-0" />
                                                     <div className="min-w-0">
                                                         <a
-                                                            href={file.url}
+                                                            href={`/api/files/${file.id}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="text-sm text-gray-700 font-medium truncate hover:text-blue-600 hover:underline block"
@@ -364,7 +364,7 @@ const ExpertTasks = () => {
                                                     </div>
                                                 </div>
                                                 <a
-                                                    href={file.url}
+                                                    href={`/api/files/${file.id}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="text-gray-400 hover:text-blue-600 p-1"

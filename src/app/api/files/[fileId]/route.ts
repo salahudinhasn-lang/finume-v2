@@ -94,25 +94,26 @@ export async function GET(
         const params = await props.params;
         const { fileId } = params;
 
-        // Authenticate User
-        const authHeader = req.headers.get('Authorization');
-        let decodedToken: any = null;
+        // Authenticate User - DISABLED FOR PUBLIC ACCESS
+        // const authHeader = req.headers.get('Authorization');
+        // let decodedToken: any = null;
 
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.split(' ')[1];
-            try { decodedToken = jwt.verify(token, JWT_SECRET); } catch (err) { }
-        }
+        // if (authHeader && authHeader.startsWith('Bearer ')) {
+        //     const token = authHeader.split(' ')[1];
+        //     try { decodedToken = jwt.verify(token, JWT_SECRET); } catch (err) { }
+        // }
 
-        if (!decodedToken) {
-            const cookie = req.cookies.get('finume_token');
-            if (cookie) {
-                try { decodedToken = jwt.verify(cookie.value, JWT_SECRET); } catch (err) { }
-            }
-        }
+        // if (!decodedToken) {
+        //     const cookie = req.cookies.get('finume_token');
+        //     if (cookie) {
+        //         try { decodedToken = jwt.verify(cookie.value, JWT_SECRET); } catch (err) { }
+        //     }
+        // }
 
-        if (!decodedToken) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        // if (!decodedToken && process.env.NEXT_PUBLIC_ALLOW_PUBLIC_FILES !== 'true') {
+        // For now, based on user request, we allow public. 
+        // Ideally we might want some check, but "UUID as capability" is acceptable here.
+        // }
 
         // Fetch File
         let file = await prisma.uploadedFile.findUnique({

@@ -250,7 +250,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            url: uploadedDriveFile.webViewLink,
+            url: `/api/files/${newFile.id}`, // Return Local Proxy URL
+            driveUrl: uploadedDriveFile.webViewLink, // Keep original just in case
             name: file.name,
             driveId: uploadedDriveFile.id
         });

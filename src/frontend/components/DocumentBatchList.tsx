@@ -209,7 +209,15 @@ export const DocumentBatchList: React.FC<DocumentBatchListProps> = ({
                                                                 <FileText size={16} />
                                                             </div>
                                                             <div>
-                                                                <p className="font-bold text-gray-800 truncate max-w-[200px]" title={file.name}>{file.name}</p>
+                                                                <a
+                                                                    href={`/api/files/${file.id}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="font-bold text-gray-800 truncate max-w-[200px] hover:text-blue-600 hover:underline block"
+                                                                    title={file.name}
+                                                                >
+                                                                    {file.name}
+                                                                </a>
                                                                 <p className="text-xs text-gray-400">{file.size}</p>
                                                             </div>
                                                         </div>
@@ -266,9 +274,14 @@ export const DocumentBatchList: React.FC<DocumentBatchListProps> = ({
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex justify-end gap-2">
-                                                            <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                                            <a
+                                                                href={`/api/files/${file.id}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center"
+                                                            >
                                                                 <Download size={16} />
-                                                            </button>
+                                                            </a>
                                                             {isClient && (
                                                                 <button
                                                                     className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
