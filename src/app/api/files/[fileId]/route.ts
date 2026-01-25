@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-prod';
+const JWT_SECRET = process.env.JWT_SECRET || 'finume-secret-key-change-me-in-prod';
 
 export async function PATCH(
     req: NextRequest,

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import { uploadFileToDrive, createFolder, findSubfolder } from '@/lib/drive';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-prod';
+const JWT_SECRET = process.env.JWT_SECRET || 'finume-secret-key-change-me-in-prod';
 
 export async function POST(req: NextRequest) {
     try {
