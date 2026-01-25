@@ -8,28 +8,35 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-prod';
 export async function POST(req: NextRequest) {
     try {
         // Authenticate User
+        // Authenticate User
         console.log("Upload API: Received request");
         const authHeader = req.headers.get('Authorization');
-        let token = '';
+        let decodedToken: any = null;
 
+        // 1. Try Header Token
         if (authHeader && authHeader.startsWith('Bearer ')) {
-            token = authHeader.split(' ')[1];
-        } else {
-            // Fallback to Cookie
-            const cookie = req.cookies.get('finume_token');
-            if (cookie) {
-                token = cookie.value;
-                console.log("Upload API: Using cookie token");
+            const token = authHeader.split(' ')[1];
+            try {
+                decodedToken = jwt.verify(token, JWT_SECRET);
+            } catch (err) {
+                console.warn("Upload API: Header token invalid, trying cookie...");
             }
         }
 
-        if (!token) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        // 2. Should we try Cookie? (If no header or header was invalid)
+        if (!decodedToken) {
+            const cookie = req.cookies.get('finume_token');
+            if (cookie) {
+                try {
+                    decodedToken = jwt.verify(cookie.value, JWT_SECRET);
+                    console.log("Upload API: Cookie token verified");
+                } catch (err) {
+                    console.warn("Upload API: Cookie token invalid");
+                }
+            }
         }
-        let decodedToken: any;
-        try {
-            decodedToken = jwt.verify(token, JWT_SECRET);
-        } catch (err) {
+
+        if (!decodedToken) {
             return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
         }
 

@@ -13,25 +13,30 @@ export async function PATCH(
         const { fileId } = params;
 
         // Authenticate User
-        // Authenticate User
         const authHeader = req.headers.get('Authorization');
-        let token = '';
+        let decodedToken: any = null;
 
+        // 1. Try Header Token
         if (authHeader && authHeader.startsWith('Bearer ')) {
-            token = authHeader.split(' ')[1];
-        } else {
-            // Fallback to Cookie
-            const cookie = req.cookies.get('finume_token');
-            if (cookie) token = cookie.value;
+            const token = authHeader.split(' ')[1];
+            try {
+                decodedToken = jwt.verify(token, JWT_SECRET);
+            } catch (err) {
+                console.warn("Files API: Header token invalid, trying cookie...");
+            }
         }
 
-        if (!token) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        // 2. Fallback to Cookie
+        if (!decodedToken) {
+            const cookie = req.cookies.get('finume_token');
+            if (cookie) {
+                try {
+                    decodedToken = jwt.verify(cookie.value, JWT_SECRET);
+                } catch (err) { }
+            }
         }
-        let decodedToken: any;
-        try {
-            decodedToken = jwt.verify(token, JWT_SECRET);
-        } catch (err) {
+
+        if (!decodedToken) {
             return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
         }
 

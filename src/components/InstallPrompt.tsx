@@ -48,7 +48,7 @@ export default function InstallPrompt() {
         <>
             <button
                 onClick={handleInstallClick}
-                className="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-blue-700 transition-all font-medium animate-in fade-in slide-in-from-bottom-4 group"
+                className="fixed bottom-4 left-4 z-50 flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-blue-700 transition-all font-medium animate-in fade-in slide-in-from-bottom-4 group"
             >
                 <Download className="w-5 h-5 group-hover:animate-bounce" />
                 Install App

@@ -6,26 +6,31 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-prod';
 
 // GET: Fetch tasks for the logged-in expert
+// GET: Fetch tasks for the logged-in expert
 export async function GET(req: NextRequest) {
     try {
         const authHeader = req.headers.get('Authorization');
-        let token = '';
+        let decodedToken: any = null;
 
+        // 1. Try Header
         if (authHeader && authHeader.startsWith('Bearer ')) {
-            token = authHeader.split(' ')[1];
-        } else {
+            const token = authHeader.split(' ')[1];
+            try {
+                decodedToken = jwt.verify(token, JWT_SECRET);
+            } catch (err) { }
+        }
+
+        // 2. Cookie Fallback
+        if (!decodedToken) {
             const cookie = req.cookies.get('finume_token');
-            if (cookie) token = cookie.value;
+            if (cookie) {
+                try {
+                    decodedToken = jwt.verify(cookie.value, JWT_SECRET);
+                } catch (err) { }
+            }
         }
 
-        if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-        let decodedToken: any;
-        try {
-            decodedToken = jwt.verify(token, JWT_SECRET);
-        } catch (err) {
-            return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
-        }
+        if (!decodedToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const userId = decodedToken.userId || decodedToken.id;
 
@@ -62,23 +67,27 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
     try {
         const authHeader = req.headers.get('Authorization');
-        let token = '';
+        let decodedToken: any = null;
 
+        // 1. Try Header
         if (authHeader && authHeader.startsWith('Bearer ')) {
-            token = authHeader.split(' ')[1];
-        } else {
+            const token = authHeader.split(' ')[1];
+            try {
+                decodedToken = jwt.verify(token, JWT_SECRET);
+            } catch (err) { }
+        }
+
+        // 2. Cookie Fallback
+        if (!decodedToken) {
             const cookie = req.cookies.get('finume_token');
-            if (cookie) token = cookie.value;
+            if (cookie) {
+                try {
+                    decodedToken = jwt.verify(cookie.value, JWT_SECRET);
+                } catch (err) { }
+            }
         }
 
-        if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-        let decodedToken: any;
-        try {
-            decodedToken = jwt.verify(token, JWT_SECRET);
-        } catch (err) {
-            return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
-        }
+        if (!decodedToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const body = await req.json();
         const { taskId, status } = body;
