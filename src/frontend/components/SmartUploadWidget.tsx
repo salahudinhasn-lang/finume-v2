@@ -150,7 +150,8 @@ export const SmartUploadWidget: React.FC<SmartUploadWidgetProps> = ({
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Upload failed for ${file.name}`);
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Upload failed for ${file.name}`);
                 }
 
                 const data = await response.json();

@@ -183,8 +183,15 @@ export async function POST(req: NextRequest) {
 
         // Upload File
         const uploadedDriveFile = await uploadFileToDrive(buffer, filename, currentFolderId, file.type);
-        if (!uploadedDriveFile || !uploadedDriveFile.webViewLink) {
+        if (!uploadedDriveFile) {
+            // Check if backend has creds
+            if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+                return NextResponse.json({ error: 'Server Config Error: Google Drive Credentials Missing' }, { status: 503 });
+            }
             throw new Error("Drive upload failed");
+        }
+        if (!uploadedDriveFile.webViewLink) {
+            throw new Error("Drive upload returned no link");
         }
 
         // --- Database Logic ---
