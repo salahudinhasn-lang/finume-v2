@@ -718,8 +718,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (res.ok) {
         const updatedRequest = await res.json();
         console.log('[AppContext] Server returned updated request:', updatedRequest);
-        // Update state with actual server data (includes generated timestamps)
-        setRequests(prev => prev.map(r => r.id === id ? updatedRequest : r));
+        // Update state with actual server data (includes generated timestamps), but MERGE to keep expanded props
+        setRequests(prev => prev.map(r => r.id === id ? { ...r, ...updatedRequest } : r));
         return true;
       } else {
         const errText = await res.text();
