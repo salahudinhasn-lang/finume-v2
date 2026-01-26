@@ -11,7 +11,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, title }) => {
-  const { user, logout, language, setLanguage, t, settings } = useAppContext();
+  const { user, logout, language, setLanguage, t, settings, notifications, markNotificationsAsRead } = useAppContext();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -190,10 +190,38 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
             >
               {language === 'en' ? 'Arabic' : 'English'}
             </button>
-            <button className="relative p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-full transition-colors">
-              <Bell size={22} />
-              {unreadCount > 0 && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>}
-            </button>
+            <div className="relative group">
+              <button className="relative p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-full transition-colors">
+                <Bell size={22} />
+                {notifications.filter(n => !n.isRead).length > 0 && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>}
+              </button>
+
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 hidden group-hover:block z-50 overflow-hidden">
+                <div className="p-3 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                  <h3 className="font-bold text-gray-800 text-sm">Notifications</h3>
+                  <button onClick={markNotificationsAsRead} className="text-[10px] text-primary-600 hover:underline">Mark all read</button>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-gray-400 text-xs">No notifications</div>
+                  ) : (
+                    notifications.map(n => (
+                      <Link
+                        key={n.id}
+                        to={n.link}
+                        className={`block p-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${!n.isRead ? 'bg-primary-50/30' : ''}`}
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="font-bold text-xs text-gray-900">{n.senderName}</span>
+                          <span className="text-[10px] text-gray-400">{n.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p className="text-xs text-gray-600 truncate">{n.content}</p>
+                      </Link>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </header>
 

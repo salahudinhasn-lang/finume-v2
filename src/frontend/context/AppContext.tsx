@@ -4,6 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { User, Client, Expert, Admin, Request, Service, Review, PricingPlan, PayoutRequest, PlatformSettings, ClientFeaturePermissions, SitePage } from '../types';
 import { MOCK_CLIENTS, MOCK_EXPERTS, MOCK_REQUESTS, SERVICES, MOCK_ADMINS, MOCK_PLANS } from '../mockData';
 
+export interface NotificationItem {
+  id: string;
+  senderName: string;
+  content: string;
+  timestamp: Date;
+  isRead: boolean;
+  link: string;
+}
+
 interface AppContextType {
   user: User | null;
   login: (email: string, role?: string, newUser?: User, password?: string) => Promise<User | null>; // Updated signature to allow password
@@ -67,6 +76,8 @@ interface AppContextType {
   refreshData: () => Promise<void>;
   fetchRequests: (clientIdFiltered?: string) => Promise<void>;
   setSession: (user: User, token: string) => void;
+  notifications: NotificationItem[];
+  markNotificationsAsRead: () => void;
 }
 
 // Define API Base URL
@@ -121,6 +132,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [services, setServices] = useState<Service[]>([]);
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  // Notification Polling
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchNotifications = async () => {
+      try {
+        // Fetch recent meetings to check for new messages
+        const res = await fetch(`${API_BASE_URL}/api/meetings?role=${user.role}`);
+        if (res.ok) {
+          const meetings = await res.json();
+          const newNotifications: NotificationItem[] = [];
+
+          meetings.forEach((m: any) => {
+            // Get last message not sent by me
+            const incomingMessages = m.messages?.filter((msg: any) => msg.senderId !== user.id) || [];
+            if (incomingMessages.length > 0) {
+              const lastMsg = incomingMessages[incomingMessages.length - 1];
+              const msgTime = new Date(lastMsg.createdAt);
+
+              // Simple Logic: If message is less than 24h old, consider it for notification list
+              // Real "Unread" logic would need DB 'readAt' field. 
+              // For now, we show recent activity.
+              const isRecent = (new Date().getTime() - msgTime.getTime()) < 24 * 60 * 60 * 1000;
+
+              if (isRecent) {
+                const senderName = user.role === 'CLIENT' ? m.expertName : (user.role === 'EXPERT' ? m.clientName : 'System');
+
+                newNotifications.push({
+                  id: lastMsg.id,
+                  senderName: senderName || 'User',
+                  content: lastMsg.content,
+                  timestamp: msgTime,
+                  isRead: false, // We'll manage local read state in a real app, or use timestamps
+                  link: user.role === 'CLIENT' ? '/client/meetings' : '/expert/meetings'
+                });
+              }
+            }
+          });
+
+          // Sort by newest
+          newNotifications.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+          setNotifications(newNotifications);
+        }
+      } catch (e) {
+        // Silent fail for background poll
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000); // Check every 10s
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const markNotificationsAsRead = () => {
+    // In a real app, this would call API. 
+    // For UI demo, we can clear them or mark visually.
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
 
   // useEffect(() => {
   //   document.documentElement.lang = language;
