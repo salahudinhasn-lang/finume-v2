@@ -956,7 +956,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const submitReview = async (requestId: string, review: Review) => {
-    // 1. Optimistic Update
+    // 1. Optimistic Update (Just stores the review object locally for UI)
     setRequests(prev => prev.map(r => r.id === requestId ? { ...r, review } : r));
 
     // 2. Persist to API
@@ -966,28 +966,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           requestId,
-          expertId: review.expertId, // Ensure review object has this
-          rating: review.expertRating, // Mapping UI 'expertRating' to API 'rating'
-          comment: review.comment
+          expertId: review.expertId,
+          rating: review.expertRating, // Old Logic (kept for compatibility if needed)
+          comment: review.comment,     // Old Logic
+
+          // New Dual Review Fields
+          expertReview: review.expertRating,
+          expertReviewComment: review.comment, // We map the main comment here
+          platformReview: review.adminNps,
+          platformReviewComment: review.adminComment
         })
       });
 
       if (res.ok) {
         console.log("Review saved to DB");
-        // Optionally refetch experts to get updated rating?
-        // For now, let's just optimistically update expert rating locally too
+        // Refetch requests to get updated Expert Rating from server calc
+        // Or do optimistic calc again
         const request = requests.find(r => r.id === requestId);
         if (request && request.assignedExpertId) {
-          setExperts(prev => prev.map(e => {
-            if (e.id === request.assignedExpertId) {
-              const totalRatings = e.totalReviews || 0; // Use DB field if available
-              const currentAvg = e.rating || 0;
-              // Approx update
-              const newAvg = ((currentAvg * totalRatings) + review.expertRating) / (totalRatings + 1);
-              return { ...e, rating: newAvg, totalReviews: totalRatings + 1 };
-            }
-            return e;
-          }));
+          // We can rely on refreshData or just manual update
+          // Logic remains same for now, server handles the heavy lifting
         }
       }
     } catch (e) {

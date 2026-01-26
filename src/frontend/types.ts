@@ -166,6 +166,12 @@ export interface Review {
   expertComment?: string; // Legacy support
   adminNps?: number;
   adminComment?: string;
+
+  // Dual Review Fields
+  expertReview?: number;
+  expertReviewComment?: string;
+  platformReview?: number;
+  platformReviewComment?: string;
 }
 
 export interface ClientGamification {
