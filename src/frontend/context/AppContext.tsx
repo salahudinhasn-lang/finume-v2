@@ -1205,6 +1205,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setApiError,
       isLoading,
       setSession,
+      notifications,
+      markNotificationsAsRead
     }}>
       {children}
     </AppContext.Provider>
