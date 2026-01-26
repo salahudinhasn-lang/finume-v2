@@ -61,6 +61,13 @@ const Meetings = () => {
 
     useEffect(() => {
         fetchMeetings();
+
+        // Poll for live chat messages every 5 seconds
+        const interval = setInterval(() => {
+            fetchMeetings();
+        }, 5000);
+
+        return () => clearInterval(interval);
     }, [user]);
 
     const handleSendReply = async (meetingId: string) => {
@@ -367,11 +374,22 @@ const Meetings = () => {
                                             <div className="mt-4 pt-4 border-t border-gray-100/50">
                                                 <div className="bg-white/50 rounded-lg p-3 mb-3 max-h-48 overflow-y-auto space-y-2 border border-gray-100">
                                                     {m.notes && <p className="text-sm text-gray-600 italic bg-yellow-50 p-2 rounded border border-yellow-100">"{m.notes}"</p>}
-                                                    {m.messages.map(msg => (
-                                                        <div key={msg.id} className={`text-sm p-2 rounded-lg ${msg.senderId === user?.id ? 'bg-indigo-100 text-indigo-900 ml-auto w-fit' : 'bg-gray-100 text-gray-800 w-fit'}`}>
-                                                            {msg.content}
-                                                        </div>
-                                                    ))}
+                                                    {m.messages.map(msg => {
+                                                        const isMe = msg.senderId === user?.id;
+                                                        const senderName = isMe ? 'Me' : (msg.senderId === m.clientId ? m.clientName : (msg.senderId === m.expertId ? m.expertName : 'Admin'));
+                                                        const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                                                        return (
+                                                            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                                                <div className={`text-sm p-2 rounded-lg max-w-[80%] ${isMe ? 'bg-indigo-100 text-indigo-900' : 'bg-gray-100 text-gray-800'}`}>
+                                                                    {msg.content}
+                                                                </div>
+                                                                <span className="text-[10px] text-gray-400 mt-1 px-1">
+                                                                    {senderName} • {time}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <input
