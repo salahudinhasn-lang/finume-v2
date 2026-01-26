@@ -12,8 +12,11 @@ const ExpertDashboard = () => {
     const navigate = useNavigate();
     const [isOnline, setIsOnline] = useState(true);
 
-    const currentUser = user as Expert;
-    const isVetting = currentUser?.status === 'VETTING';
+    const currentUser = user as Expert | null;
+    if (!currentUser || currentUser.role !== 'EXPERT') {
+        return <div className="p-8 text-center text-gray-500">Loading Dashboard...</div>;
+    }
+    const isVetting = currentUser.status === 'VETTING';
 
     // My Tasks
     const myTasks = requests.filter(r => r.assignedExpertId === user?.id);
@@ -126,7 +129,7 @@ const ExpertDashboard = () => {
                             {isVetting && <span className="text-orange-300 font-bold tracking-wider text-xs">VETTING PENDING</span>}
                         </div>
                         <h1 className="text-4xl md:text-5xl font-black mb-3 tracking-tight">
-                            {t('expert.goodMorning')}, <span className="text-blue-400">{(user?.name || '').split(' ')[0]}</span>
+                            {t('expert.goodMorning')}, <span className="text-blue-400">{(currentUser?.name || '').split(' ')[0]}</span>
                         </h1>
                         <p className="text-lg text-blue-100/80 max-w-xl leading-relaxed">
                             You have <strong className="text-white border-b-2 border-green-400">{activeTasks.length} active tasks</strong> requiring your attention today. Keep up the momentum!
@@ -177,7 +180,7 @@ const ExpertDashboard = () => {
                     },
                     {
                         title: t('expert.clientRating'),
-                        value: (user as any).rating > 0 ? (user as any).rating.toFixed(1) : '0.0',
+                        value: currentUser.rating > 0 && typeof currentUser.rating === 'number' ? currentUser.rating.toFixed(1) : '0.0',
                         icon: <Star size={24} fill="currentColor" />,
                         color: 'yellow',
                         path: '/expert/profile',

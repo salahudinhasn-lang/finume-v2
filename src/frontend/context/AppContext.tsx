@@ -349,6 +349,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('finume_user');
+    localStorage.removeItem('finume_token');
+    // Clear data to prevent stale state issues on re-login
+    setRequests([]);
+    setNotifications([]);
+    setClients([]);
+    setExperts([]);
   };
 
   const t = (key: string, options?: any): string => {
