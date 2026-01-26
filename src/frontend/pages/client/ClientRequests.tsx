@@ -10,11 +10,22 @@ import { SmartUploadWidget } from '../../components/SmartUploadWidget';
 import { RequestDetailModal } from '../../components/RequestDetailModal';
 
 const ClientRequests = () => {
-    const { user, requests, updateRequestStatus, submitReview, updateRequest, updateClient, clients, refreshData } = useAppContext();
+    const { user, requests, updateRequestStatus, submitReview, updateRequest, updateClient, clients, refreshData, fetchRequests } = useAppContext();
     const navigate = useNavigate();
     const location = useLocation();
     const [filter, setFilter] = useState('All');
     const [search, setSearch] = useState('');
+
+    // Auto-refresh requests every 5 seconds to keep status in sync (e.g. after payment)
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            if (user?.id) {
+                fetchRequests(user.id);
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [fetchRequests, user?.id]);
 
     // Detail Modal State
     const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
