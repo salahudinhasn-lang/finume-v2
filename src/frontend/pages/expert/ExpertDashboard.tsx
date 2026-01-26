@@ -12,10 +12,34 @@ const ExpertDashboard = () => {
     const navigate = useNavigate();
     const [isOnline, setIsOnline] = useState(true);
 
+    const [expertTasks, setExpertTasks] = useState<any[]>([]); // Use appropriate type if imported
+
+    React.useEffect(() => {
+        if (user?.id) {
+            fetch('/api/expert-tasks', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('finume_token')}` }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        setExpertTasks(data.filter(t => t.status === 'PENDING'));
+                    }
+                })
+                .catch(err => console.error("Failed to fetch expert tasks", err));
+        }
+    }, [user?.id]);
+
     const currentUser = user as Expert | null;
+
+    // Safety check: Early return ONLY if critical data is missing, but hooks ABOVE are fine now.
+    // However, hooks cannot depend on the early return being executed.
+    // Best practice: Render loading state in JSX, not via early return if hooks follow.
+    // But since we moved hooks up, we can now keep the early return HERE, as long as no other hooks follow it down.
+
     if (!currentUser || currentUser.role !== 'EXPERT') {
         return <div className="p-8 text-center text-gray-500">Loading Dashboard...</div>;
     }
+
     const isVetting = currentUser.status === 'VETTING';
 
     // My Tasks
@@ -41,24 +65,6 @@ const ExpertDashboard = () => {
         { name: 'Completed', value: completedTasks.length, color: '#10b981' },
         { name: 'In Progress', value: activeTasks.length, color: '#3b82f6' },
     ];
-
-    // EXPERT TASKS LOGIC
-    const [expertTasks, setExpertTasks] = useState<any[]>([]); // Use appropriate type if imported
-
-    React.useEffect(() => {
-        if (user?.id) {
-            fetch('/api/expert-tasks', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('finume_token')}` }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (Array.isArray(data)) {
-                        setExpertTasks(data.filter(t => t.status === 'PENDING'));
-                    }
-                })
-                .catch(err => console.error("Failed to fetch expert tasks", err));
-        }
-    }, [user?.id]);
 
     const handleCompleteTask = async (taskId: string) => {
         try {
