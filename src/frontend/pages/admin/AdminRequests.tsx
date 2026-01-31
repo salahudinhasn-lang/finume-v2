@@ -40,7 +40,7 @@ const ReviewDetailsModal = ({ request, isOpen, onClose }: { request: Request | n
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <div>
                         <h3 className="text-xl font-bold text-gray-900">Review & Complete</h3>
-                        <p className="text-sm text-gray-500 mt-1">{request.serviceName} • {request.displayId || request.id}</p>
+                        <p className="text-sm text-gray-500 mt-1">{request.pricingPlan?.name || request.service?.nameEn || request.serviceName} • {request.displayId || request.id}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
                         <X size={20} />
@@ -294,7 +294,7 @@ const AdminRequests = () => {
                                     return (
                                         <tr key={req.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4 font-mono text-gray-500 text-xs">{req.displayId || req.id}</td>
-                                            <td className="px-6 py-4 font-medium text-gray-900">{req.serviceName}</td>
+                                            <td className="px-6 py-4 font-medium text-gray-900">{req.pricingPlan?.name || req.service?.nameEn || req.serviceName}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
@@ -420,7 +420,7 @@ const AdminRequests = () => {
                                                         <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{req.id}</span>
                                                         <span className="font-bold text-gray-900 text-xs">{req.amount.toLocaleString()} SAR</span>
                                                     </div>
-                                                    <h4 className="font-bold text-gray-800 text-sm mb-1 leading-tight">{req.serviceName || 'Unnamed Service'}</h4>
+                                                    <h4 className="font-bold text-gray-800 text-sm mb-1 leading-tight">{req.pricingPlan?.name || req.service?.nameEn || req.serviceName || 'Unnamed Service'}</h4>
                                                     <p className="text-xs text-gray-500 mb-3 truncate">{req.clientName || 'Unknown Client'}</p>
 
                                                     <div className="flex justify-between items-center pt-2 border-t border-gray-50">
@@ -467,7 +467,7 @@ const AdminRequests = () => {
                                     <p className="text-gray-400 text-sm font-mono flex items-center gap-2">
                                         {editingRequest.displayId || editingRequest.id}
                                         <span className="w-1 h-1 bg-gray-500 rounded-full"></span>
-                                        {editingRequest.serviceName}
+                                        {editingRequest.pricingPlan?.name || editingRequest.service?.nameEn || editingRequest.serviceName}
                                     </p>
                                 </div>
                                 <button onClick={handleClose} className="hover:bg-gray-700 p-1 rounded"><X size={20} /></button>

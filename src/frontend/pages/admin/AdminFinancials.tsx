@@ -294,7 +294,7 @@ const AdminFinancials = () => {
                                                     <div key={req.id} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
                                                         <div>
                                                             <span className="font-mono text-xs text-gray-500">{req.id}</span>
-                                                            <p className="font-medium text-gray-900">{req.serviceName}</p>
+                                                            <p className="font-medium text-gray-900">{req.pricingPlan?.name || req.service?.nameEn || req.serviceName}</p>
                                                         </div>
                                                         <span className="font-bold text-green-700">{(req.amount * 0.8).toLocaleString()} SAR</span>
                                                     </div>
@@ -476,7 +476,7 @@ const AdminFinancials = () => {
                                         </td>
                                         <td className="px-6 py-4 text-gray-500 text-xs">{req.id.split('-')[1]}</td>
                                         <td className="px-6 py-4 text-gray-600">{req.dateCreated}</td>
-                                        <td className="px-6 py-4 font-medium text-gray-900">{req.serviceName}</td>
+                                        <td className="px-6 py-4 font-medium text-gray-900">{req.pricingPlan?.name || req.service?.nameEn || req.serviceName}</td>
                                         <td className="px-6 py-4 text-gray-700">{req.expertName || 'N/A'}</td>
                                         <td className="px-6 py-4">
                                             {req.payoutId ? (
@@ -594,7 +594,7 @@ const AdminFinancials = () => {
                                 <tbody className="text-gray-700">
                                     <tr className="border-b border-gray-50">
                                         <td className="py-4">
-                                            <p className="font-bold text-gray-900">{selectedInvoice.serviceName}</p>
+                                            <p className="font-bold text-gray-900">{selectedInvoice.pricingPlan?.name || selectedInvoice.service?.nameEn || selectedInvoice.serviceName}</p>
                                             <p className="text-xs text-gray-500 mt-1">Provided by Expert: {selectedInvoice.expertName}</p>
                                         </td>
                                         <td className="py-4 text-right">1</td>

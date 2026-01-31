@@ -157,7 +157,7 @@ const AdminDashboard = () => {
     // Service Distribution (Pie Chart)
     const pieData = useMemo(() => {
         const dist = requests.reduce((acc, req) => {
-            const name = req.serviceName || 'Unknown';
+            const name = req.pricingPlan?.name || req.service?.nameEn || req.serviceName || 'Unknown';
             acc[name] = (Number(acc[name]) || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
@@ -579,7 +579,7 @@ const AdminDashboard = () => {
 
                                 <div className="flex-1 min-w-0 pt-1">
                                     <div className="flex justify-between items-start">
-                                        <p className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">{req.serviceName}</p>
+                                        <p className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">{req.pricingPlan?.name || req.service?.nameEn || req.serviceName}</p>
                                         <p className="font-black text-slate-800 text-sm">{req.amount.toLocaleString()} SAR</p>
                                     </div>
                                     <div className="flex justify-between items-center mt-1">

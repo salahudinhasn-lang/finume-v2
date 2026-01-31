@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Users, DollarSign, Settings, LogOut, Menu, X, Bell, Search, Shield, Tag, HelpCircle, ChevronRight, LayoutTemplate, Calendar } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, DollarSign, Settings, LogOut, Menu, X, Bell, Search, Shield, Tag, HelpCircle, ChevronRight, LayoutTemplate, Calendar, Download } from 'lucide-react';
 import { Logo } from './Logo';
 
 interface LayoutProps {
@@ -138,7 +138,16 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
             )
           })}
 
-          <div className="mt-8 px-4 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="px-4 mb-2">
+            <button
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-primary-600 text-white shadow-lg shadow-primary-900/20 hover:bg-primary-500 transition-all"
+            >
+              <Download size={20} />
+              Install App
+            </button>
+          </div>
+
+          <div className="mt-4 px-4 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Support
           </div>
           <Link

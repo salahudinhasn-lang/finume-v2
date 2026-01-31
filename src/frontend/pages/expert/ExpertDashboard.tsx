@@ -259,7 +259,7 @@ const ExpertDashboard = () => {
                                                         <Clock size={12} /> Due in 2 days
                                                     </span>
                                                 </div>
-                                                <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors">{task.serviceName}</h3>
+                                                <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors">{task.pricingPlan?.name || task.service?.nameEn || task.serviceName}</h3>
                                                 <p className="text-sm text-gray-600 flex items-center gap-2">
                                                     <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">{(task.clientName || '?').charAt(0)}</span>
                                                     {task.clientName || 'Unknown Client'}
@@ -367,7 +367,7 @@ const ExpertDashboard = () => {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-2">
                                                     <span className="text-[10px] bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-bold uppercase tracking-wide">New</span>
-                                                    <h3 className="font-bold text-gray-900 text-lg group-hover:text-indigo-700 transition-colors">{req.serviceName}</h3>
+                                                    <h3 className="font-bold text-gray-900 text-lg group-hover:text-indigo-700 transition-colors">{req.pricingPlan?.name || req.service?.nameEn || req.serviceName}</h3>
                                                 </div>
                                                 <p className="text-sm text-gray-600 line-clamp-2 mb-3 leading-relaxed">{req.description}</p>
                                                 <div className="flex items-center gap-4 text-xs font-medium text-gray-400">

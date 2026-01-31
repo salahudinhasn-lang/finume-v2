@@ -232,7 +232,7 @@ const AdminClients = () => {
                                         {clientRequests.map(req => (
                                             <tr key={req.id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 font-mono text-gray-500">{req.displayId || req.id}</td>
-                                                <td className="px-6 py-4 font-bold text-gray-800">{req.serviceName}</td>
+                                                <td className="px-6 py-4 font-bold text-gray-800">{req.pricingPlan?.name || req.service?.nameEn || req.serviceName}</td>
                                                 <td className="px-6 py-4">
                                                     {req.assignedExpertId ? (
                                                         <span className="text-primary-700 font-medium flex items-center gap-2">

@@ -467,7 +467,7 @@ const AdminExperts = () => {
                             {expertTasks.map((t: any) => (
                               <tr key={t.id} className="hover:bg-gray-50">
                                 <td className="px-4 py-2 font-mono text-gray-500">{t.displayId || t.id}</td>
-                                <td className="px-4 py-2 font-medium">{t.serviceName}</td>
+                                <td className="px-4 py-2 font-medium">{t.pricingPlan?.name || t.service?.nameEn || t.serviceName}</td>
                                 <td className="px-4 py-2"><Badge status={t.status} /></td>
                                 <td className="px-4 py-2 text-right">{t.amount} SAR</td>
                               </tr>
