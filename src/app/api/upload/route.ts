@@ -126,16 +126,27 @@ export async function POST(req: NextRequest) {
             } else {
                 identityName = userRecord.expertProfile?.name || userRecord.name;
             }
-            identityName = identityName.replace(/[\/\\]/g, '-'); // Sanitize
+            // Safer sanitize: Alphanumeric, spaces, dashes only
+            identityName = identityName.replace(/[^a-zA-Z0-9 \-_]/g, '').trim() || `User_${userId.slice(0, 6)}`;
+
+            console.log(`[Upload] Processing Identity Folder: '${identityName}' under '${categoryFolderId}'`);
 
             // 3. Find/Create Identity Folder
             const identityFolder = await findSubfolder(categoryFolderId, identityName);
             if (identityFolder && identityFolder.id) {
                 currentFolderId = identityFolder.id;
             } else {
-                const newFolder = await createFolder(identityName, categoryFolderId);
-                if (!newFolder?.id) throw new Error("Failed to create Identity folder");
-                currentFolderId = newFolder.id;
+                try {
+                    const newFolder = await createFolder(identityName, categoryFolderId);
+                    if (newFolder?.id) {
+                        currentFolderId = newFolder.id;
+                    } else {
+                        throw new Error("Created folder has no ID");
+                    }
+                } catch (createErr: any) {
+                    console.error(`[Upload] Failed to create identity folder '${identityName}':`, createErr);
+                    throw new Error(`Failed to create Identity folder '${identityName}': ${createErr.message}`);
+                }
             }
 
             // 4. Save for next time

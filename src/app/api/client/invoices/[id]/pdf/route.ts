@@ -153,8 +153,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             if (invoicesFolder && invoicesFolder.id) {
                 invoicesFolderId = invoicesFolder.id;
             } else {
-                const newFolder = await createFolder("Invoices", process.env.GOOGLE_DRIVE_MASTER_FOLDER_ID);
-                invoicesFolderId = newFolder?.id || null;
+                try {
+                    const newFolder = await createFolder("Invoices", process.env.GOOGLE_DRIVE_MASTER_FOLDER_ID);
+                    invoicesFolderId = newFolder?.id || null;
+                } catch (e) {
+                    console.warn("Failed to create Invoices folder:", e);
+                }
             }
         }
 

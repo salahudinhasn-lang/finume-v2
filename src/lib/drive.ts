@@ -78,9 +78,10 @@ export async function createFolder(folderName: string, parentId?: string) {
         }
 
         return file.data;
+        return file.data;
     } catch (err) {
         console.error('Error creating folder:', err);
-        return null;
+        throw err; // Re-throw to let caller handle/see the error
     }
 }
 
