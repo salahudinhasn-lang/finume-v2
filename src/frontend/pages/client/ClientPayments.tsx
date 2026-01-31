@@ -261,9 +261,17 @@ const ClientPayments = () => {
                                         <td className="px-6 py-4 font-bold text-gray-900">{(inv.amount || 0).toLocaleString()}</td>
                                         <td className="px-6 py-4"><Badge status={inv.status} /></td>
                                         <td className="px-6 py-4 text-right">
-                                            <Button size="sm" variant="outline" onClick={() => setSelectedInvoice(inv)} className="h-8 w-8 p-0 text-gray-400 hover:text-primary-600 border-none shadow-none">
-                                                <Eye size={16} />
-                                            </Button>
+                                            <td className="px-6 py-4 text-right">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => window.open(`/api/client/invoices/${inv.rawId}/pdf`, '_blank')}
+                                                    className="h-8 w-8 p-0 text-gray-400 hover:text-primary-600 border-none shadow-none"
+                                                    title="View PDF Invoice"
+                                                >
+                                                    <Eye size={16} />
+                                                </Button>
+                                            </td>
                                         </td>
                                     </tr>
                                 ))

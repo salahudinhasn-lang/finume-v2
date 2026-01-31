@@ -185,6 +185,12 @@ export async function POST(req: Request) {
 
                 console.log(`[REQ_CREATE] Generated Invoice ${invDisplayId} for Request ${newRequest.displayId}`);
 
+                // Update Request with Invoice Display ID
+                await prisma.request.update({
+                    where: { id: newRequest.id },
+                    data: { invoiceDisplayId: invDisplayId }
+                });
+
             } catch (invError) {
                 console.error("[REQ_CREATE] Failed to generate invoice:", invError);
                 // Do not fail the request creation, but log critical error

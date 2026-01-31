@@ -121,6 +121,12 @@ export async function PATCH(
 
                     console.log(`[REQ_UPDATE] Generated Invoice ${invDisplayId} for Request ${updatedRequest.displayId}`);
 
+                    // Update Request with Invoice Display ID
+                    await prisma.request.update({
+                        where: { id: updatedRequest.id },
+                        data: { invoiceDisplayId: invDisplayId }
+                    });
+
                 } catch (invError) {
                     console.error("[REQ_UPDATE] Failed to generate invoice:", invError);
                 }

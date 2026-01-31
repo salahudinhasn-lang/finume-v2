@@ -261,6 +261,7 @@ model Request {
   messages         RequestMessage[]
   poolInvites      ProviderPool[]
   invoices         Invoice[]
+  invoiceDisplayId String?       // Denormalized for display "INV-XXXX"
   disputes         Dispute[]
   review           Review?
   transactions     Transaction[]
@@ -350,6 +351,8 @@ model Invoice {
   amount           Decimal
   status           InvoiceStatus @default(UNPAID)
   paymentGatewayRef String?
+  driveId          String?       // Google Drive File ID
+  pdfUrl           String?       // Direct link or Preview link
   createdAt        DateTime      @default(now())
 }
 
