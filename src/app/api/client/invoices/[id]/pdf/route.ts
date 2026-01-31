@@ -63,7 +63,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             fetch(fontUrlBold).then(res => res.arrayBuffer())
         ]);
 
-        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        // CRITICAL FIX: autoFirstPage: false prevents pdfkit from loading Helvetica immediately
+        const doc = new PDFDocument({ margin: 50, size: 'A4', autoFirstPage: false });
         const buffers: Buffer[] = [];
 
         // Register Fonts
@@ -71,6 +72,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         doc.registerFont('Roboto-Bold', fontBufferBold);
 
         doc.on('data', buffers.push.bind(buffers));
+
+        // Manually add the first page now that fonts are registered
+        doc.addPage();
 
         // --- CONTENT GENERATION ---
 
