@@ -194,6 +194,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             }, { status: 503 });
         }
 
-        return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Failed to generate PDF',
+            details: error.message || String(error)
+        }, { status: 500 });
     }
 }

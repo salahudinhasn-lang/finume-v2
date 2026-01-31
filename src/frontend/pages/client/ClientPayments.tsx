@@ -266,10 +266,10 @@ const ClientPayments = () => {
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() => window.open(`/api/client/invoices/${inv.rawId}/pdf`, '_blank')}
-                                                    className="h-8 w-8 p-0 text-gray-400 hover:text-primary-600 border-none shadow-none"
+                                                    className="h-10 w-10 p-0 text-gray-500 hover:text-primary-600 border border-gray-200 hover:bg-gray-50 shadow-sm"
                                                     title="View PDF Invoice"
                                                 >
-                                                    <Eye size={16} />
+                                                    <Eye size={20} />
                                                 </Button>
                                             </td>
                                         </td>
