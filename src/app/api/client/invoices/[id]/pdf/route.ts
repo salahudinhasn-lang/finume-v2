@@ -52,25 +52,39 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         }
 
         // 3. Generate PDF
+        // Note: In serverless environments (like Vercel), standard fonts (Helvetica) may strictly fail to load.
+        // We will fetch a Google Font buffer at runtime to ensure availability.
+        const fontUrlRegular = "https://github.com/google/fonts/raw/main/ofl/roboto/Roboto-Regular.ttf";
+        const fontUrlBold = "https://github.com/google/fonts/raw/main/ofl/roboto/Roboto-Bold.ttf";
+
+        // Parallel fetch for speed
+        const [fontBufferRegular, fontBufferBold] = await Promise.all([
+            fetch(fontUrlRegular).then(res => res.arrayBuffer()),
+            fetch(fontUrlBold).then(res => res.arrayBuffer())
+        ]);
+
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
         const buffers: Buffer[] = [];
+
+        // Register Fonts
+        doc.registerFont('Roboto-Regular', fontBufferRegular);
+        doc.registerFont('Roboto-Bold', fontBufferBold);
 
         doc.on('data', buffers.push.bind(buffers));
 
         // --- CONTENT GENERATION ---
 
         // ZATCA / Company Info
+        doc.font('Roboto-Bold');
         doc.fontSize(20).text('TAX INVOICE', { align: 'center' });
         doc.moveDown();
 
         doc.fontSize(10);
+        doc.font('Roboto-Regular');
         doc.text('Finume Marketplace', 50, 80)
             .text('Riyadh, Saudi Arabia')
             .text('VAT ID: 310123456700003')
             .moveDown();
-
-        // Check RTL support in pdfkit? Standard pdfkit doesn't support Arabic well without font modification/reshaping.
-        // For now, we will use English as primary.
 
         // Invoice Details
         doc.text(`Invoice Number: ${invoice.displayId}`, 400, 80)
@@ -83,8 +97,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         // Client Info
         doc.text('Bill To:', 50, 150)
-            .font('Helvetica-Bold').text(invoice.client.companyName)
-            .font('Helvetica').text(invoice.client.nationalAddress || 'Address not provided')
+            .font('Roboto-Bold').text(invoice.client.companyName)
+            .font('Roboto-Regular').text(invoice.client.nationalAddress || 'Address not provided')
             .text(`VAT ID: ${invoice.client.vatNumber || 'N/A'}`);
 
         doc.moveDown();
@@ -92,7 +106,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         // Table Header
         const tableTop = 250;
-        doc.font('Helvetica-Bold');
+        doc.font('Roboto-Bold');
         doc.text('Description', 50, tableTop);
         doc.text('Rate', 280, tableTop, { width: 90, align: 'right' });
         doc.text('Tax (15%)', 370, tableTop, { width: 90, align: 'right' });
@@ -101,7 +115,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
 
         // Line Item
-        doc.font('Helvetica');
+        doc.font('Roboto-Regular');
         const description = invoice.request?.pricingPlan?.name || invoice.request?.service?.nameEn || 'Service Request';
         const totalAmount = Number(invoice.amount);
         const vatAmount = totalAmount - (totalAmount / 1.15);
@@ -117,7 +131,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         // Totals
         const totalY = itemY + 40;
-        doc.font('Helvetica-Bold');
+        doc.font('Roboto-Bold');
         doc.text('Subtotal:', 350, totalY);
         doc.text(baseAmount.toFixed(2), 460, totalY, { width: 90, align: 'right' });
 
@@ -128,9 +142,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         doc.text(`${totalAmount.toFixed(2)} SAR`, 460, totalY + 35, { width: 90, align: 'right' });
 
         // QR Code
-        // TLV encoding is required for ZATCA, but for this demo, we'll use a simple URL or text.
-        // Or we can try to construct a simple TLV buffer if we have time, but standard QR is likely acceptable for "preview".
-        // Let's create a QR with invoice details.
         const qrData = `Finume|${invoice.createdAt.toISOString()}|${totalAmount.toFixed(2)}|${vatAmount.toFixed(2)}`;
         const qrCodeDataUrl = await QRCode.toDataURL(qrData);
 
