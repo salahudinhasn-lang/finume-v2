@@ -7,6 +7,7 @@ import { getDriveService, findSubfolder, createFolder, uploadFileToDrive, getFil
 
 // Use the standalone build of PDFKit which includes a virtual filesystem for standard fonts.
 // This prevents 'ENOENT: no such file' errors in Vercel.
+/* eslint-disable @typescript-eslint/no-require-imports */
 const PDFDocument = require("pdfkit/js/pdfkit.standalone");
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
