@@ -67,13 +67,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         const doc = new PDFDocument({ margin: 50, size: 'A4', autoFirstPage: false });
         const buffers: Buffer[] = [];
 
-        // Register Fonts
+        // Register Fonts - MOCK HELVETICA to prevent filesystem lookup
+        // We register Roboto AS 'Helvetica' so pdfkit uses these buffers instead of looking for .afm files
+        doc.registerFont('Helvetica', fontBufferRegular);
+        doc.registerFont('Helvetica-Bold', fontBufferBold);
         doc.registerFont('Roboto-Regular', fontBufferRegular);
         doc.registerFont('Roboto-Bold', fontBufferBold);
 
         doc.on('data', buffers.push.bind(buffers));
 
-        // Manually add the first page now that fonts are registered
+        // Manually add the first page
         doc.addPage();
 
         // --- CONTENT GENERATION ---
