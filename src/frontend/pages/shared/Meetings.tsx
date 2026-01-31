@@ -1,33 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Button, Badge } from '../../components/UI';
-import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, MessageSquare, Send, ChevronDown, ChevronUp, User, Edit2, Save, X } from 'lucide-react';
-
-interface Meeting {
-    id: string;
-    clientId: string;
-    expertId: string;
-    requestId: string;
-    request?: {
-        displayId: string;
-        serviceId: string;
-    };
-    date: string;
-    startTime: string;
-    endTime: string;
-    status: string;
-    notes: string;
-    clientName: string;
-    expertName: string;
-    clientAvatar?: string;
-    messages: {
-        id: string;
-        senderId: string;
-        content: string;
-        createdAt: string;
-    }[];
-}
-
+import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, Edit2, Save, X } from 'lucide-react';
+import { Meeting } from '../../types';
+import MeetingChat from '../../components/MeetingChat';
 const Meetings = () => {
     const { user } = useAppContext();
     const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -35,7 +11,6 @@ const Meetings = () => {
     const [view, setView] = useState<'day' | 'week' | 'month'>('week');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [expandedMeetingId, setExpandedMeetingId] = useState<string | null>(null);
-    const [replyText, setReplyText] = useState('');
 
     // Reschedule State
     const [editingMeetingId, setEditingMeetingId] = useState<string | null>(null);
@@ -70,23 +45,23 @@ const Meetings = () => {
         return () => clearInterval(interval);
     }, [user]);
 
-    const handleSendReply = async (meetingId: string) => {
-        if (!replyText.trim()) return;
+    const handleSendReply = async (meetingId: string, content: string): Promise<boolean> => {
         try {
             const res = await fetch('/api/meetings/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ meetingId, content: replyText })
+                body: JSON.stringify({ meetingId, content })
             });
 
             if (res.ok) {
                 const newMessage = await res.json();
                 setMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, messages: [...m.messages, newMessage] } : m));
-                setReplyText('');
+                return true;
             }
         } catch (error) {
             console.error("Failed to send message", error);
         }
+        return false;
     };
 
     const handleStartReschedule = (m: Meeting) => {
@@ -371,38 +346,11 @@ const Meetings = () => {
                                         </button>
 
                                         {expandedMeetingId === m.id && (
-                                            <div className="mt-4 pt-4 border-t border-gray-100/50">
-                                                <div className="bg-white/50 rounded-lg p-3 mb-3 max-h-48 overflow-y-auto space-y-2 border border-gray-100">
-                                                    {m.notes && <p className="text-sm text-gray-600 italic bg-yellow-50 p-2 rounded border border-yellow-100">"{m.notes}"</p>}
-                                                    {m.messages.map(msg => {
-                                                        const isMe = msg.senderId === user?.id;
-                                                        const senderName = isMe ? 'Me' : (msg.senderId === m.clientId ? m.clientName : (msg.senderId === m.expertId ? m.expertName : 'Admin'));
-                                                        const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                                                        return (
-                                                            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                                                                <div className={`text-sm p-2 rounded-lg max-w-[80%] ${isMe ? 'bg-indigo-100 text-indigo-900' : 'bg-gray-100 text-gray-800'}`}>
-                                                                    {msg.content}
-                                                                </div>
-                                                                <span className="text-[10px] text-gray-400 mt-1 px-1">
-                                                                    {senderName} • {time}
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={replyText}
-                                                        onChange={(e) => setReplyText(e.target.value)}
-                                                        placeholder="Send a message..."
-                                                        className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleSendReply(m.id)}
-                                                    />
-                                                    <Button size="sm" onClick={() => handleSendReply(m.id)}><Send size={14} /></Button>
-                                                </div>
-                                            </div>
+                                            <MeetingChat
+                                                meeting={m}
+                                                user={user}
+                                                onSendMessage={handleSendReply}
+                                            />
                                         )}
                                     </div>
                                 </div>

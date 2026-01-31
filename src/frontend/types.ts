@@ -286,3 +286,30 @@ export interface ExpertTask {
   completedAt?: string;
   request?: Request; // Included relations
 }
+
+export interface MeetingMessage {
+  id: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface Meeting {
+  id: string;
+  clientId: string;
+  expertId: string;
+  requestId: string;
+  request?: {
+    displayId: string;
+    serviceId: string;
+  };
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  notes: string;
+  clientName: string;
+  expertName: string;
+  clientAvatar?: string;
+  messages: MeetingMessage[];
+}
