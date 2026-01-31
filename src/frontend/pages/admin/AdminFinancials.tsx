@@ -25,7 +25,7 @@ const AdminFinancials = () => {
     const paidRequests = requests.filter(r =>
         r.status !== 'PENDING_PAYMENT' && r.status !== 'CANCELLED'
     );
-    const totalVolume = paidRequests.reduce((acc, r) => acc + r.amount, 0);
+    const totalVolume = paidRequests.reduce((acc, r) => acc + Number(r.amount), 0);
 
     // Helper: Dynamic Expert Share Calculation
     const calculateExpertShare = (r: any) => {
@@ -103,13 +103,23 @@ const AdminFinancials = () => {
     };
 
     const openInvoice = (req: any) => {
-        const subtotal = req.amount;
+        // 1. If an actual Invoice record exists (from Backend), open its PDF directly
+        // The backend `GET /api/requests` now includes `invoices`.
+        if (req.invoices && req.invoices.length > 0) {
+            const inv = req.invoices[0];
+            // Use the standard client invoice PDF endpoint
+            window.open(`/api/client/invoices/${inv.id}/pdf`, '_blank');
+            return;
+        }
+
+        // 2. Fallback: Open Modal Preview (if no invoice record generated yet)
+        const subtotal = Number(req.amount);
         const vat = subtotal * 0.15;
         const total = subtotal + vat;
 
         setSelectedInvoice({
             ...req,
-            invoiceId: `INV-${req.id.split('-')[1] || '001'}`,
+            invoiceId: req.invoiceDisplayId || `PREVIEW-${req.id.split('-')[1] || '001'}`,
             date: new Date(req.dateCreated).toLocaleDateString(),
             subtotal,
             vat,

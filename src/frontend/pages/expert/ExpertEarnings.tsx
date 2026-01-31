@@ -297,7 +297,9 @@ const ExpertEarnings = () => {
                                                         {isSelected ? <CheckSquare size={16} /> : <Square size={16} />}
                                                     </div>
                                                 )}
-                                                <span className="font-bold text-gray-800 text-sm">{req.serviceName}</span>
+                                                <span className="font-bold text-gray-800 text-sm">
+                                                    {req.pricingPlan?.name || req.service?.nameEn || req.serviceName}
+                                                </span>
                                             </div>
                                             <span className={`font-bold text-sm ${isSelected ? 'text-blue-700' : 'text-green-600'}`}>+{amount.toLocaleString()}</span>
                                         </div>

@@ -174,7 +174,9 @@ const ExpertTasks = () => {
                                             <WorkTimer startTime={req.workStartedAt} />
                                         )}
                                     </div>
-                                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{req.serviceName}</h3>
+                                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
+                                        {req.pricingPlan?.name || req.service?.nameEn || req.serviceName}
+                                    </h3>
                                     <div className="flex items-center gap-4 text-sm text-gray-500">
                                         <span className="flex items-center gap-1"><User size={14} /> {req.clientName || 'Unknown'}</span>
                                         <span className="flex items-center gap-1"><Calendar size={14} /> {req.dateCreated}</span>
@@ -265,7 +267,9 @@ const ExpertTasks = () => {
                                                         {/* Context Menu Mock */}
                                                         {(!req.status || req.status !== 'IN_PROGRESS') && <button className="text-gray-300 hover:text-gray-500"><MoreVertical size={14} /></button>}
                                                     </div>
-                                                    <h4 className="font-bold text-gray-800 text-sm mb-1 leading-snug">{req.serviceName}</h4>
+                                                    <h4 className="font-bold text-gray-800 text-sm mb-1 leading-snug">
+                                                        {req.pricingPlan?.name || req.service?.nameEn || req.serviceName}
+                                                    </h4>
                                                     <p className="text-xs text-gray-500 mb-3 truncate">{req.clientName}</p>
                                                     {isSubTaskAssignee && (
                                                         <span className="block mb-2 w-fit text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">Sub-task Assigned</span>
@@ -313,7 +317,9 @@ const ExpertTasks = () => {
                         <div className="bg-white p-6 border-b border-gray-100 flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-3 mb-1">
-                                    <h2 className="text-xl font-bold text-gray-900">{selectedTask.serviceName}</h2>
+                                    <h2 className="text-xl font-bold text-gray-900">
+                                        {selectedTask.pricingPlan?.name || selectedTask.service?.nameEn || selectedTask.serviceName}
+                                    </h2>
                                     <Badge status={selectedTask.status} />
                                     {/* Timer in Modal */}
                                     {selectedTask.status === 'IN_PROGRESS' && selectedTask.workStartedAt && (

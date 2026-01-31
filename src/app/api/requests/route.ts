@@ -177,7 +177,7 @@ export async function POST(req: Request) {
                 });
 
                 // Update Display ID (INV-00000001)
-                const invDisplayId = `INV-${String(invoice.seqId).padStart(8, '0')}`;
+                const invDisplayId = `INV-${String((invoice as any).seqId).padStart(8, '0')}`;
                 await prisma.invoice.update({
                     where: { id: invoice.id },
                     data: { displayId: invDisplayId }
@@ -231,7 +231,8 @@ export async function GET(req: Request) {
                 },
                 assignedExpert: true,
                 poolInvites: true, // Include pool invites so frontend can see them
-                review: true // Include review data for Admin & Expert visibility
+                review: true, // Include review data for Admin & Expert visibility
+                invoices: true // Include invoices for Financials
             },
             orderBy: { createdAt: 'desc' }
         });
