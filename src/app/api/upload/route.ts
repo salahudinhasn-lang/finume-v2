@@ -269,6 +269,14 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error('Upload Error', error);
+
+        // Handle Google Auth Errors
+        if (error.message && error.message.includes('invalid_grant')) {
+            return NextResponse.json({
+                error: 'Server Storage Auth Error: The Google Drive connection has expired. Please contact support to refresh credentials.'
+            }, { status: 503 });
+        }
+
         return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }

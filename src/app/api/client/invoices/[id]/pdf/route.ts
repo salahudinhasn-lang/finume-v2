@@ -185,8 +185,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         return new NextResponse(pdfBuffer, { status: 200, headers });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("PDF Generation Error:", error);
+
+        if (error.message && error.message.includes('invalid_grant')) {
+            return NextResponse.json({
+                error: 'Server Storage Auth Error: The Google Drive connection has expired. Please refresh credentials.'
+            }, { status: 503 });
+        }
+
         return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
     }
 }
