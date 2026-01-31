@@ -57,37 +57,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         }
 
         // 3. Generate PDF
-        // We still fetch Roboto for a nicer look, but the standalone build ensures that any 
-        // fallback to standard fonts (Helvetica) won't crash the server.
-        const fontUrlRegular = "https://github.com/google/fonts/raw/main/ofl/roboto/Roboto-Regular.ttf";
-        const fontUrlBold = "https://github.com/google/fonts/raw/main/ofl/roboto/Roboto-Bold.ttf";
-
-        // Parallel fetch for speed
-        const [fontBufferRegular, fontBufferBold] = await Promise.all([
-            fetch(fontUrlRegular).then(res => res.arrayBuffer()),
-            fetch(fontUrlBold).then(res => res.arrayBuffer())
-        ]);
-
-        const doc = new PDFDocument({ margin: 50, size: 'A4', autoFirstPage: false });
+        // User requested to switch to Times New Roman due to font errors.
+        // Using standard fonts is safer with the standalone build.
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
         const buffers: Buffer[] = [];
 
-        // Register Fonts
-        doc.registerFont('Roboto-Regular', fontBufferRegular);
-        doc.registerFont('Roboto-Bold', fontBufferBold);
-
         doc.on('data', buffers.push.bind(buffers));
-
-        doc.addPage();
 
         // --- CONTENT GENERATION ---
 
         // ZATCA / Company Info
-        doc.font('Roboto-Bold');
+        doc.font('Times-Bold');
         doc.fontSize(20).text('TAX INVOICE', { align: 'center' });
         doc.moveDown();
 
         doc.fontSize(10);
-        doc.font('Roboto-Regular');
+        doc.font('Times-Roman');
         doc.text('Finume Marketplace', 50, 80)
             .text('Riyadh, Saudi Arabia')
             .text('VAT ID: 310123456700003')
@@ -104,8 +89,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         // Client Info
         doc.text('Bill To:', 50, 150)
-            .font('Roboto-Bold').text(invoice.client.companyName)
-            .font('Roboto-Regular').text(invoice.client.nationalAddress || 'Address not provided')
+            .font('Times-Bold').text(invoice.client.companyName)
+            .font('Times-Roman').text(invoice.client.nationalAddress || 'Address not provided')
             .text(`VAT ID: ${invoice.client.vatNumber || 'N/A'}`);
 
         doc.moveDown();
@@ -113,7 +98,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         // Table Header
         const tableTop = 250;
-        doc.font('Roboto-Bold');
+        doc.font('Times-Bold');
         doc.text('Description', 50, tableTop);
         doc.text('Rate', 280, tableTop, { width: 90, align: 'right' });
         doc.text('Tax (15%)', 370, tableTop, { width: 90, align: 'right' });
@@ -122,7 +107,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
 
         // Line Item
-        doc.font('Roboto-Regular');
+        doc.font('Times-Roman');
         const description = invoice.request?.pricingPlan?.name || invoice.request?.service?.nameEn || 'Service Request';
         const totalAmount = Number(invoice.amount);
         const vatAmount = totalAmount - (totalAmount / 1.15);
@@ -138,7 +123,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         // Totals
         const totalY = itemY + 40;
-        doc.font('Roboto-Bold');
+        doc.font('Times-Bold');
         doc.text('Subtotal:', 350, totalY);
         doc.text(baseAmount.toFixed(2), 460, totalY, { width: 90, align: 'right' });
 
