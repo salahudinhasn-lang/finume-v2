@@ -21,16 +21,44 @@ const AdminFinancials = () => {
     const [expandedPayouts, setExpandedPayouts] = useState<Set<string>>(new Set());
 
     // --- Calculations ---
-    const completedRequests = requests.filter(r => r.status === 'COMPLETED');
+    // 1. Total Volume: All requests that are PAID (not Pending Payment or Cancelled)
+    const paidRequests = requests.filter(r =>
+        r.status !== 'PENDING_PAYMENT' && r.status !== 'CANCELLED'
+    );
+    const totalVolume = paidRequests.reduce((acc, r) => acc + r.amount, 0);
 
-    // 1. Total Volume
-    const totalVolume = completedRequests.reduce((acc, r) => acc + r.amount, 0);
+    // Helper: Dynamic Expert Share Calculation
+    const calculateExpertShare = (r: any) => {
+        // 1. Check Pricing Plan
+        if (r.pricingPlan) {
+            if (r.pricingPlan.expertShareType === 'FIXED') {
+                return Number(r.pricingPlan.expertShareValue) || 0;
+            }
+            if (r.pricingPlan.expertShareType === 'PERCENTAGE') {
+                const pct = Number(r.pricingPlan.expertShareValue) || 0;
+                return r.amount * (pct / 100);
+            }
+        }
+        // 2. Check Service
+        if (r.service) {
+            if (r.service.expertShareType === 'FIXED') {
+                return Number(r.service.expertShareValue) || 0;
+            }
+            if (r.service.expertShareType === 'PERCENTAGE') {
+                const pct = Number(r.service.expertShareValue) || 0;
+                return r.amount * (pct / 100);
+            }
+        }
+        // 3. Fallback (Legacy Default: 80%)
+        return r.amount * 0.8;
+    };
 
-    // 2. Expert Share (80% of Total)
-    const totalExpertShare = totalVolume * 0.8;
+    // 2. Expert Share: Sum of shares for ALL paid requests
+    const totalExpertShare = paidRequests.reduce((acc, r) => acc + calculateExpertShare(r), 0);
 
-    // 3. Net Revenue (20% of Total)
-    const netRevenue = totalVolume * 0.2;
+    // 3. Net Revenue: Total Volume - Expert Shares
+    const netRevenue = totalVolume - totalExpertShare;
+
 
     // Helper to determine status
     const getSettlementStatus = (req: any) => {
@@ -43,17 +71,21 @@ const AdminFinancials = () => {
     };
 
     // 4. Disbursed to Experts (Settled/Approved Payouts)
-    // We look at requests that have a payoutId that links to an APPROVED payout
-    const disbursedAmount = completedRequests
+    // We look at all PAID requests (previously was just completed, but safely can be paid ones that are settled)
+    // Actually, usually only COMPLETED requests can be settled, but let's stick to actual settlement status.
+    const disbursedAmount = paidRequests
         .filter(r => getSettlementStatus(r) === 'SETTLED')
-        .reduce((acc, r) => acc + (r.amount * 0.8), 0);
+        .reduce((acc, r) => acc + calculateExpertShare(r), 0);
 
     // 5. Available for Payout (Unsettled)
+    // "sum the expert share only for COMPLETED requests and not paid to the expert yet"
+    const completedRequests = requests.filter(r => r.status === 'COMPLETED');
     const unsettledRequests = completedRequests.filter(r => getSettlementStatus(r) === 'UNSETTLED');
-    const availableForPayout = unsettledRequests.reduce((acc, r) => acc + (r.amount * 0.8), 0);
+    const availableForPayout = unsettledRequests.reduce((acc, r) => acc + calculateExpertShare(r), 0);
 
-    // Filter Logic for Table
-    const filteredLedger = completedRequests.filter(req => {
+    // Filter Logic for Table (Show all paid requests by default or just completed? Usually financials show all transactions)
+    // Let's use paidRequests for the ledger to be consistent with Total Volume
+    const filteredLedger = paidRequests.filter(req => {
         const status = getSettlementStatus(req);
         const matchesType = filterType === 'ALL' || (filterType === 'UNSETTLED' && status === 'UNSETTLED');
         const matchesExpert = expertSearch === '' || (req.expertName && req.expertName.toLowerCase().includes(expertSearch.toLowerCase()));
@@ -62,7 +94,8 @@ const AdminFinancials = () => {
 
     // Calculate Selected Totals
     const selectedRequests = requests.filter(r => selectedTxIds.has(r.id));
-    const selectedPayoutTotal = selectedRequests.reduce((sum, r) => sum + (r.amount * 0.8), 0);
+    const selectedPayoutTotal = selectedRequests.reduce((sum, r) => sum + calculateExpertShare(r), 0);
+
 
     // Actions
     const handlePrint = () => {
@@ -281,7 +314,6 @@ const AdminFinancials = () => {
                 <Card className="relative overflow-hidden border border-gray-200 hover:border-purple-300 transition-colors p-5">
                     <div className="flex justify-between items-start mb-2">
                         <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><Users size={20} /></div>
-                        <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">80%</span>
                     </div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Expert Shares</p>
                     <p className="text-xl font-extrabold text-gray-900 mt-1">{totalExpertShare.toLocaleString()} <span className="text-xs font-normal text-gray-400">SAR</span></p>
@@ -291,7 +323,6 @@ const AdminFinancials = () => {
                 <Card className="relative overflow-hidden border border-gray-200 hover:border-green-300 transition-colors p-5">
                     <div className="flex justify-between items-start mb-2">
                         <div className="p-2 bg-green-50 text-green-600 rounded-lg"><DollarSign size={20} /></div>
-                        <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded">20%</span>
                     </div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Net Revenue</p>
                     <p className="text-xl font-extrabold text-gray-900 mt-1">{netRevenue.toLocaleString()} <span className="text-xs font-normal text-gray-400">SAR</span></p>
@@ -418,7 +449,7 @@ const AdminFinancials = () => {
                         <tbody className="divide-y divide-gray-100">
                             {filteredLedger.map(req => {
                                 const total = req.amount;
-                                const expert = total * 0.8;
+                                const expert = calculateExpertShare(req);
                                 const status = getSettlementStatus(req);
                                 const isSelected = selectedTxIds.has(req.id);
 
