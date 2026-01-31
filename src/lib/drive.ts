@@ -10,12 +10,39 @@ import { Readable } from 'stream';
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
 
 export async function getDriveService() {
+    // 1. Priority: Service Account (Permanent, no refresh needed)
+    // Check for Service Account credentials in .env
+    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+    // Handle escaped newlines in private key which often happens in .env files
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+    if (clientEmail && privateKey) {
+        try {
+            const auth = new google.auth.GoogleAuth({
+                credentials: {
+                    client_email: clientEmail,
+                    private_key: privateKey,
+                },
+                scopes: SCOPES,
+            });
+            return google.drive({ version: 'v3', auth });
+        } catch (saErr) {
+            console.error("Service Account Auth failed:", saErr);
+            // Fallthrough to try OAuth if this fails
+        }
+    }
+
+    // 2. Fallback: OAuth 2.0 (User Credentials)
+    // Requires refreshing and valid GOOGLE_REFRESH_TOKEN
     const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
     const refreshToken = process.env.GOOGLE_REFRESH_TOKEN?.trim();
 
     if (!clientId || !clientSecret || !refreshToken) {
-        console.error("Missing Google Drive OAuth Credentials (ID, Secret, or Refresh Token)");
+        // Only log if NEITHER method is available
+        if (!clientEmail) {
+            console.error("Missing Google Drive Credentials. Need Service Account (EMAIL/KEY) OR OAuth (ID/SECRET/TOKEN).");
+        }
         return null;
     }
 
@@ -23,17 +50,15 @@ export async function getDriveService() {
         const auth = new google.auth.OAuth2(
             clientId,
             clientSecret,
-            'https://developers.google.com/oauthplayground' // Redirect URI used to get token
+            'https://developers.google.com/oauthplayground'
         );
 
         auth.setCredentials({
             refresh_token: refreshToken
         });
-
-        // No need to manually refresh; googleapis handles it if refresh_token is present
         return google.drive({ version: 'v3', auth });
     } catch (err) {
-        console.error("Google Auth initialization error", err);
+        console.error("OAuth Initialization Error:", err);
         return null;
     }
 }
