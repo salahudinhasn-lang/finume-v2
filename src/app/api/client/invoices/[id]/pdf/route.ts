@@ -5,7 +5,7 @@ import QRCode from 'qrcode';
 import { Readable } from 'stream';
 import { getDriveService, findSubfolder, createFolder, uploadFileToDrive, getFileStream } from '@/lib/drive';
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params; // invoice id (displayId or cuid)
 
