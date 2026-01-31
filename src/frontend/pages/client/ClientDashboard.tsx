@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Button, Badge } from '../../components/UI';
 import { Plus, Clock, CheckCircle, Search, Eye, X, Check, UploadCloud, ShieldAlert, ShieldCheck, Zap, FileText, ChevronRight, AlertTriangle, Sparkles, Loader2, ArrowRight, File, Wallet, Coins, Calendar } from 'lucide-react';
@@ -21,6 +21,7 @@ const ClientDashboard = () => {
     const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
     const [isBookMeetingOpen, setIsBookMeetingOpen] = useState(false);
     const [reviewModalOpen, setReviewModalOpen] = useState(false); // For review part if needed, or we just navigate
+    const [serverTotalSpend, setServerTotalSpend] = useState<number | null>(null);
     // Ideally, we might want to share Review Modal logic too, but for "Approve & Close" we might need it. 
     // For now, let's keep it simple: if they click approve in modal, we can just navigate to Requests page with that ID selected or handle it here?
     // The user request is "preview... like *MyRequests > Preview*". 
@@ -102,6 +103,20 @@ const ClientDashboard = () => {
         }
     }, [user, location, plans, addRequest, navigate, settings]);
 
+    // Fetch Total Spend from Server
+    useEffect(() => {
+        if (user?.id) {
+            fetch(`/api/client/financials?clientId=${user.id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.totalSpend !== undefined) {
+                        setServerTotalSpend(data.totalSpend);
+                    }
+                })
+                .catch(err => console.error('Failed to fetch financials', err));
+        }
+    }, [user?.id]);
+
     // Get updated gamification stats
     const currentClient = clients.find(c => c.id === user?.id);
     const clientGamification = currentClient?.gamification;
@@ -159,10 +174,11 @@ const ClientDashboard = () => {
     // Calculate exact count of items needing client review
     const needsReviewCount = activeRequests.filter(r => r.status === 'REVIEW_CLIENT').length;
 
-    // Calculate Total Spend dynamically from requests
-    const calculatedTotalSpend = myRequests
-        .filter(r => !['PENDING_PAYMENT', 'CANCELLED'].includes(r.status))
-        .reduce((sum, r) => sum + Number(r.amount), 0);
+    const calculatedTotalSpend = serverTotalSpend !== null
+        ? serverTotalSpend
+        : myRequests
+            .filter(r => !['PENDING_PAYMENT', 'CANCELLED'].includes(r.status))
+            .reduce((sum, r) => sum + Number(r.amount), 0);
 
     const canBookMeeting = myRequests.some(r => r.assignedExpertId);
 
