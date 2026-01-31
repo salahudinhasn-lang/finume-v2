@@ -33,7 +33,7 @@ const AdminServices = () => {
 
     const handleAddService = () => {
         setEditingServiceId(null);
-        setServiceForm({ nameEn: '', nameAr: '', description: '', price: 0 });
+        setServiceForm({ nameEn: '', nameAr: '', description: '', price: 0, expertShareType: 'PERCENTAGE', expertShareValue: 0 });
         setShowServiceModal(true);
     };
 
@@ -47,7 +47,9 @@ const AdminServices = () => {
                 nameEn: serviceForm.nameEn || 'New Service',
                 nameAr: serviceForm.nameAr || '',
                 description: serviceForm.description || '',
-                price: Number(serviceForm.price) || 0
+                price: Number(serviceForm.price) || 0,
+                expertShareType: serviceForm.expertShareType || 'PERCENTAGE',
+                expertShareValue: Number(serviceForm.expertShareValue) || 0
             };
             addService(newService);
         }
@@ -155,6 +157,7 @@ const AdminServices = () => {
                                     <th className="px-6 py-4">Service Name</th>
                                     <th className="px-6 py-4">Description</th>
                                     <th className="px-6 py-4">Price (SAR)</th>
+                                    <th className="px-6 py-4">Expert Share</th>
                                     <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -167,6 +170,12 @@ const AdminServices = () => {
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{service.description}</td>
                                         <td className="px-6 py-4 font-mono font-medium text-gray-900">{service.price.toLocaleString()}</td>
+                                        <td className="px-6 py-4 font-mono text-gray-700">
+                                            {service.expertShareType === 'FIXED'
+                                                ? `${service.expertShareValue?.toLocaleString()} SAR`
+                                                : `${service.expertShareValue}%`
+                                            }
+                                        </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                                 <button onClick={() => handleEditService(service)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit size={16} /></button>
@@ -495,6 +504,28 @@ const AdminServices = () => {
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Price (SAR)</label>
                                 <input required type="number" value={serviceForm.price} onChange={e => setServiceForm({ ...serviceForm, price: Number(e.target.value) })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500" />
                             </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Expert Share Type</label>
+                                    <select
+                                        value={serviceForm.expertShareType || 'PERCENTAGE'}
+                                        onChange={e => setServiceForm({ ...serviceForm, expertShareType: e.target.value as any })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
+                                    >
+                                        <option value="PERCENTAGE">Percentage (%)</option>
+                                        <option value="FIXED">Fixed Amount (SAR)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Expert Share Value</label>
+                                    <input
+                                        type="number"
+                                        value={serviceForm.expertShareValue || 0}
+                                        onChange={e => setServiceForm({ ...serviceForm, expertShareValue: Number(e.target.value) })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
+                                    />
+                                </div>
+                            </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Description</label>
                                 <textarea rows={3} value={serviceForm.description} onChange={e => setServiceForm({ ...serviceForm, description: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500" />
@@ -525,6 +556,28 @@ const AdminServices = () => {
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-1">Price (SAR/mo)</label>
                                     <input type="number" value={planForm.price} onChange={e => setPlanForm({ ...planForm, price: Number(e.target.value) })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Expert Share Type</label>
+                                    <select
+                                        value={planForm.expertShareType || 'PERCENTAGE'}
+                                        onChange={e => setPlanForm({ ...planForm, expertShareType: e.target.value as any })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
+                                    >
+                                        <option value="PERCENTAGE">Percentage (%)</option>
+                                        <option value="FIXED">Fixed Amount (SAR)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Expert Share Value</label>
+                                    <input
+                                        type="number"
+                                        value={planForm.expertShareValue || 0}
+                                        onChange={e => setPlanForm({ ...planForm, expertShareValue: Number(e.target.value) })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500"
+                                    />
                                 </div>
                             </div>
                             <div>

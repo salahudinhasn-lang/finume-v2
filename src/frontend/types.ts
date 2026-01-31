@@ -74,6 +74,8 @@ export interface Service {
   nameAr: string;
   price: number;
   description: string;
+  expertShareType?: 'PERCENTAGE' | 'FIXED';
+  expertShareValue?: number;
 }
 
 export interface PricingPlan {
@@ -87,6 +89,8 @@ export interface PricingPlan {
   guarantee: string;
   isPopular?: boolean;
   color?: string;
+  expertShareType?: 'PERCENTAGE' | 'FIXED';
+  expertShareValue?: number;
   limits?: {
     revenue: { label: string; value: number };
     transactions: { label: string; value: number };

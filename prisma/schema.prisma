@@ -70,6 +70,11 @@ enum PayoutStatus {
   PAID
 }
 
+enum ExpertShareType {
+  PERCENTAGE
+  FIXED
+}
+
 // Models
 
 model User {
@@ -219,6 +224,9 @@ model Service {
   commissionRule   CommissionRule? @relation(fields: [commissionRuleId], references: [id])
   isActive         Boolean         @default(true)
   requests         Request[]
+
+  expertShareType  ExpertShareType @default(PERCENTAGE)
+  expertShareValue Decimal         @default(0)
 }
 
 model CommissionRule {
@@ -441,6 +449,8 @@ model ChatMessage {
   timestamp DateTime @default(now())
 }
 
+
+
 model PricingPlan {
   id          String   @id
   name        String
@@ -454,6 +464,9 @@ model PricingPlan {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   requests    Request[]
+
+  expertShareType  ExpertShareType @default(PERCENTAGE)
+  expertShareValue Decimal         @default(0)
 }
 
 model ExpertTask {

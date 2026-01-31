@@ -33,7 +33,9 @@ export async function POST(request: Request) {
                     // attributes: JSON.stringify(body.attributes || {}), // Removed as not in schema
                     guarantee: body.guarantee,
                     isPopular: body.isPopular || false,
-                    color: body.color
+                    color: body.color,
+                    expertShareType: body.expertShareType || 'PERCENTAGE',
+                    expertShareValue: parseFloat(body.expertShareValue || 0)
                 },
                 create: {
                     id: body.id || body.name.toLowerCase().replace(/\s+/g, '-'), // Ensure ID exists
@@ -45,7 +47,9 @@ export async function POST(request: Request) {
                     // attributes: JSON.stringify(body.attributes || {}), // Removed as not in schema
                     guarantee: body.guarantee,
                     isPopular: body.isPopular || false,
-                    color: body.color
+                    color: body.color,
+                    expertShareType: body.expertShareType || 'PERCENTAGE',
+                    expertShareValue: parseFloat(body.expertShareValue || 0)
                 }
             });
             return NextResponse.json(plan);
@@ -62,7 +66,9 @@ export async function POST(request: Request) {
                     // attributes: JSON.stringify(body.attributes || {}), // Removed as not in schema
                     guarantee: body.guarantee,
                     isPopular: body.isPopular || false,
-                    color: body.color
+                    color: body.color,
+                    expertShareType: body.expertShareType || 'PERCENTAGE',
+                    expertShareValue: parseFloat(body.expertShareValue || 0)
                 }
             });
             return NextResponse.json(plan);

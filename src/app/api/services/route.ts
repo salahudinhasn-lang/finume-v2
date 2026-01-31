@@ -30,7 +30,9 @@ export async function POST(request: Request) {
                     description: body.description,
                     basePrice: parseFloat(body.price || 0),
                     // status: body.status, // Not in schema, relying on isActive
-                    isActive: body.isActive !== undefined ? body.isActive : true
+                    isActive: body.isActive !== undefined ? body.isActive : true,
+                    expertShareType: body.expertShareType || 'PERCENTAGE',
+                    expertShareValue: parseFloat(body.expertShareValue || 0)
                 }
             });
             return NextResponse.json(service);
@@ -44,7 +46,9 @@ export async function POST(request: Request) {
                     basePrice: parseFloat(body.price || 0),
                     slug: body.slug || `service-${Date.now()}`,
                     type: body.type || 'ONE_TIME', // Default
-                    isActive: true
+                    isActive: true,
+                    expertShareType: body.expertShareType || 'PERCENTAGE',
+                    expertShareValue: parseFloat(body.expertShareValue || 0)
                 }
             });
             return NextResponse.json(service);
