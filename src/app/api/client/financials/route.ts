@@ -39,7 +39,9 @@ export async function GET(req: Request) {
             }
         });
 
-        const totalSpend = aggregations._sum.amount ? Number(aggregations._sum.amount) : 0;
+        // Apply 15% VAT
+        const rawTotal = aggregations._sum.amount ? Number(aggregations._sum.amount) : 0;
+        const totalSpend = rawTotal * 1.15;
 
         return NextResponse.json({
             totalSpend,

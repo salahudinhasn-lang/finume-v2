@@ -231,7 +231,10 @@ const ClientRequests = () => {
                                             </span>
                                         ) : <span className="text-gray-400 italic">Unassigned</span>}
                                     </td>
-                                    <td className="px-6 py-4 font-medium">{req.amount.toLocaleString()} SAR</td>
+                                    <td className="px-6 py-4 font-medium">
+                                        {(Number(req.amount) * 1.15).toLocaleString()} SAR
+                                        <span className="text-[10px] text-gray-400 block">Inc. VAT</span>
+                                    </td>
                                     <td className="px-6 py-4"><Badge status={req.status} /></td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2">

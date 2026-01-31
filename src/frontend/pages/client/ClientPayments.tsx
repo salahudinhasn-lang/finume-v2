@@ -8,6 +8,21 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 const ClientPayments = () => {
     const { user, requests, t, language } = useAppContext();
     const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
+    const [serverTotalSpend, setServerTotalSpend] = useState<number | null>(null);
+
+    // Fetch Total Spend from Server to match Dashboard
+    React.useEffect(() => {
+        if (user?.id) {
+            fetch(`/api/client/financials?clientId=${user.id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.totalSpend !== undefined) {
+                        setServerTotalSpend(data.totalSpend);
+                    }
+                })
+                .catch(err => console.error('Failed to fetch financials', err));
+        }
+    }, [user?.id]);
 
     const VAT_RATE = 0.15;
 
@@ -34,7 +49,13 @@ const ClientPayments = () => {
             };
         });
 
-    const totalSpent = payments.reduce((acc, curr) => acc + curr.total, 0);
+
+
+    // Use server value if available, otherwise fall back to local calculation (though local calculation in this file was: sum of paid/refunded)
+    // The server logic is: sum of all non-pending/non-cancelled * 1.15.
+    // The local logic above constructs 'payments' from requests, but the 'totalSpent' line below was just summing those mock payments.
+    // We should prefer the server value for the 'YTD Spend' card.
+    const totalSpent = serverTotalSpend !== null ? serverTotalSpend : payments.reduce((acc, curr) => acc + curr.total, 0);
 
     // --- Financial Insights Data ---
     // 1. Top Category
