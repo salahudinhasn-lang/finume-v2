@@ -197,8 +197,8 @@ export async function POST(request: Request) {
             if (role === 'CLIENT' && companyName) {
                 folderName = companyName;
             }
-            // Sanitize folder name
-            folderName = folderName.replace(/[\/\\\\]/g, '-');
+            // Sanitize folder name (Sync with upload/route.ts)
+            folderName = folderName.replace(/[^a-zA-Z0-9 \-_]/g, '').trim() || `User_${newUser.id}`;
 
             // 3. Create Identity Folder inside Category Folder
             const driveFolder = await createFolder(folderName, categoryFolderId);
@@ -219,9 +219,12 @@ export async function POST(request: Request) {
                     console.log(`Created 'Documents' subfolder for Expert ${newUser.email}`);
                 }
             }
-        } catch (driveError) {
+        } catch (driveError: any) {
             // Non-blocking error: don't fail registration if Drive fails
             console.error("Failed to create Google Drive folder during registration:", driveError);
+            if (driveError.message && driveError.message.includes('invalid_grant')) {
+                console.error("CRITICAL: Google Drive Token is invalid. Please refresh GOOGLE_REFRESH_TOKEN.");
+            }
         }
         // --------------------------------
 
