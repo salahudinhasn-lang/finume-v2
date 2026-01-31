@@ -214,7 +214,10 @@ const ClientRequests = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {filteredRequests.map(req => (
-                                <tr key={req.id} className="hover:bg-gray-50 transition-colors">
+                                <tr key={req.id}
+                                    onClick={() => setSelectedRequest(req)}
+                                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                >
                                     <td className="px-6 py-4 font-mono font-medium text-gray-500">{req.displayId || req.id}</td>
                                     <td className="px-6 py-4">
                                         <p className="font-bold text-gray-900">{req.serviceName || (req as any).service?.nameEn || 'Unknown Service'}</p>
@@ -232,7 +235,7 @@ const ClientRequests = () => {
                                     <td className="px-6 py-4"><Badge status={req.status} /></td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button size="sm" variant="secondary" onClick={() => setSelectedRequest(req)} className="h-10 w-10 p-0"><Eye size={20} /></Button>
+                                            <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); setSelectedRequest(req); }} className="h-10 w-10 p-0"><Eye size={20} /></Button>
                                             {req.status === 'PENDING_PAYMENT' && (
                                                 <Button size="sm" onClick={() => navigate('/client/checkout', { state: { pendingRequest: req } })} className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs text-white shadow-md">
                                                     Pay Now

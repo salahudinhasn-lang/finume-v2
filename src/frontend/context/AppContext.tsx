@@ -161,13 +161,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               if (isRecent) {
                 const senderName = user.role === 'CLIENT' ? m.expertName : (user.role === 'EXPERT' ? m.clientName : 'System');
 
+                const baseLink = user.role === 'CLIENT' ? '/client/meetings' : (user.role === 'EXPERT' ? '/expert/meetings' : '/admin/calendar');
+
                 newNotifications.push({
                   id: lastMsg.id,
                   senderName: senderName || 'User',
                   content: lastMsg.content,
                   timestamp: msgTime,
-                  isRead: false, // We'll manage local read state in a real app, or use timestamps
-                  link: user.role === 'CLIENT' ? '/client/meetings' : '/expert/meetings'
+                  isRead: false,
+                  link: `${baseLink}?meetingId=${m.id}`
                 });
               }
             }

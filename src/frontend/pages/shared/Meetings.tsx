@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { Card, Button, Badge } from '../../components/UI';
 import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, Edit2, Save, X } from 'lucide-react';
@@ -6,6 +7,7 @@ import { Meeting } from '../../types';
 import MeetingChat from '../../components/MeetingChat';
 const Meetings = () => {
     const { user } = useAppContext();
+    const location = useLocation();
     const [meetings, setMeetings] = useState<Meeting[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [view, setView] = useState<'day' | 'week' | 'month'>('week');
@@ -26,6 +28,22 @@ const Meetings = () => {
             if (res.ok) {
                 const data = await res.json();
                 setMeetings(data);
+
+                // Deep Link Logic
+                const params = new URLSearchParams(location.search);
+                const linkedMeetingId = params.get('meetingId');
+
+                if (linkedMeetingId) {
+                    const linkedMeeting = data.find((m: Meeting) => m.id === linkedMeetingId);
+                    if (linkedMeeting) {
+                        setCurrentDate(new Date(linkedMeeting.date));
+                        setView('day');
+                        setExpandedMeetingId(linkedMeetingId);
+
+                        // Clear param after handling to avoid re-opening on refresh/nav (optional but good UX)
+                        // window.history.replaceState({}, '', location.pathname); 
+                    }
+                }
             }
         } catch (error) {
             console.error("Failed to fetch meetings", error);
@@ -39,11 +57,23 @@ const Meetings = () => {
 
         // Poll for live chat messages every 5 seconds
         const interval = setInterval(() => {
-            fetchMeetings();
+            // We reuse fetchMeetings but maybe avoid refetching deep link logic every time?
+            // Actually fetchMeetings handles it, checking location.search. 
+            // If we clear params it won't re-trigger. If we don't, it stays open.
+            // For polling, we might just want to update data, not reset view...
+            // Refactoring to separate initial fetch vs poll would be cleaner but for now let's just re-fetch data 
+            // and relying on state preservation.
+
+            // Simplified poll:
+            if (!user) return;
+            fetch(`/api/meetings?role=${user.role}`).then(res => {
+                if (res.ok) res.json().then(data => setMeetings(data));
+            });
+
         }, 5000);
 
         return () => clearInterval(interval);
-    }, [user]);
+    }, [user, location.search]); // Depend on location.search to re-run if URL changes
 
     const handleSendReply = async (meetingId: string, content: string): Promise<boolean> => {
         try {
