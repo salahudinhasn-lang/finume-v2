@@ -35,7 +35,6 @@ import AdminServices from './pages/admin/AdminServices';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import WhatsAppButton from './components/WhatsAppButton';
-import InstallAppButton from './components/InstallAppButton';
 import UnifiedChat from './components/UnifiedChat';
 import {
   ServicesPage, PricingPage, QAPage, AboutPage, CareersPage,
@@ -349,7 +348,6 @@ const AppContent = () => {
       </Routes>
 
       {/* Floating Action Buttons */}
-      <InstallAppButton />
       <UnifiedChat />
       <WhatsAppButton />
     </>
