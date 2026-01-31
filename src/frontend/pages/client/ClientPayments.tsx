@@ -9,6 +9,8 @@ const ClientPayments = () => {
     const { user, requests, t, language } = useAppContext();
     const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
     const [serverTotalSpend, setServerTotalSpend] = useState<number | null>(null);
+    const [invoices, setInvoices] = useState<any[]>([]);
+    const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
 
     // Fetch Total Spend from Server to match Dashboard
     React.useEffect(() => {
@@ -20,7 +22,19 @@ const ClientPayments = () => {
                         setServerTotalSpend(data.totalSpend);
                     }
                 })
-                .catch(err => console.error('Failed to fetch financials', err));
+                .catch(err => console.error("Failed to fetch financials:", err));
+
+            // Fetch Invoices
+            setIsLoadingInvoices(true);
+            fetch(`/api/client/invoices?clientId=${user.id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        setInvoices(data);
+                    }
+                })
+                .catch(err => console.error("Failed to fetch invoices:", err))
+                .finally(() => setIsLoadingInvoices(false));
         }
     }, [user?.id]);
 
@@ -226,157 +240,153 @@ const ClientPayments = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {payments.map(pay => (
-                                <tr key={pay.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 font-mono text-gray-600 font-medium text-xs">
-                                        {pay.id}
-                                        {pay.type === 'CREDIT_NOTE' && <span className="block text-[10px] text-red-500">{t('financials.creditNote')}</span>}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="font-medium text-gray-800 block">{pay.description}</span>
-                                        <span className="text-xs text-gray-400">{t('financials.proofPayment')} #{pay.requestId}</span>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-500">{pay.date}</td>
-                                    <td className={`px-6 py-4 text-right ${pay.vat < 0 ? 'text-red-500' : 'text-gray-500'}`}>{pay.vat.toLocaleString()}</td>
-                                    <td className={`px-6 py-4 text-right font-bold ${pay.total < 0 ? 'text-red-600' : 'text-gray-900'}`}>{pay.total.toLocaleString()}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${pay.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                            {pay.status === 'PAID' ? t('financials.paid') : t('financials.refunded')}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={() => setSelectedInvoice(pay)}
-                                            className="p-2 text-gray-400 hover:text-primary-600 transition-colors rounded-full hover:bg-primary-50"
-                                            title="View Invoice"
-                                        >
-                                            <Eye size={18} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {payments.length === 0 && (
+                            {isLoadingInvoices ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">No payment history available.</td>
+                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-400">Loading invoices...</td>
                                 </tr>
+                            ) : invoices.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-400">No invoices found.</td>
+                                </tr>
+                            ) : (
+                                invoices.map((inv) => (
+                                    <tr key={inv.rawId || inv.id} className="group hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 font-mono text-gray-500 text-xs">{inv.id}</td>
+                                        <td className="px-6 py-4">
+                                            <p className="font-bold text-gray-900">{inv.description}</p>
+                                            <p className="text-xs text-gray-400">{inv.details}</p>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 text-xs font-mono">{inv.date}</td>
+                                        <td className="px-6 py-4 text-xs font-mono text-gray-500">{(inv.vat || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                        <td className="px-6 py-4 font-bold text-gray-900">{(inv.amount || 0).toLocaleString()}</td>
+                                        <td className="px-6 py-4"><Badge status={inv.status} /></td>
+                                        <td className="px-6 py-4 text-right">
+                                            <Button size="sm" variant="outline" onClick={() => setSelectedInvoice(inv)} className="h-8 w-8 p-0 text-gray-400 hover:text-primary-600 border-none shadow-none">
+                                                <Eye size={16} />
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))
                             )}
                         </tbody>
                     </table>
-                </div>
-            </Card>
+                </div >
+            </Card >
 
             {/* Invoice Modal (Same as before, ensures consistency) */}
-            {selectedInvoice && (
-                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 print:p-0 print:bg-white print:fixed print:inset-0">
-                    <div className="bg-white rounded-xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] print:max-h-full print:shadow-none print:rounded-none">
-                        <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center print:hidden">
-                            <h3 className="font-bold text-gray-800">Document Preview</h3>
-                            <div className="flex gap-2">
-                                <Button onClick={handlePrint} variant="primary">
-                                    <Printer size={18} /> {t('common.print')}
-                                </Button>
-                                <button onClick={() => setSelectedInvoice(null)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500">
-                                    <X size={20} />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="p-8 md:p-12 overflow-y-auto bg-white flex-1" id="invoice-content">
-                            {/* Header */}
-                            <div className="flex justify-between items-start border-b border-gray-200 pb-8 mb-8">
-                                <div>
-                                    <div className="text-3xl font-bold text-primary-600 mb-2">FINUME</div>
-                                    <p className="text-gray-500 text-sm">Financial Marketplace Platform</p>
-                                    <p className="text-gray-500 text-sm">Riyadh, Saudi Arabia</p>
-                                    <p className="text-gray-500 text-sm">VAT: 310123456700003</p>
-                                </div>
-                                <div className="text-right">
-                                    <h2 className={`text-2xl font-bold mb-1 ${selectedInvoice.type === 'CREDIT_NOTE' ? 'text-red-600' : 'text-gray-900'}`}>
-                                        {selectedInvoice.type === 'CREDIT_NOTE' ? t('financials.creditNote') : t('financials.invoice')}
-                                    </h2>
-                                    <p className="text-gray-500 font-mono mb-4">{selectedInvoice.id}</p>
-                                    <div className={`inline-block px-3 py-1 rounded font-bold text-sm border ${selectedInvoice.status === 'REFUNDED'
-                                        ? 'bg-orange-100 text-orange-700 border-orange-200'
-                                        : 'bg-green-100 text-green-700 border-green-200'
-                                        }`}>
-                                        {selectedInvoice.status === 'PAID' ? t('financials.paid') : t('financials.refunded')}
-                                    </div>
+            {
+                selectedInvoice && (
+                    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 print:p-0 print:bg-white print:fixed print:inset-0">
+                        <div className="bg-white rounded-xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] print:max-h-full print:shadow-none print:rounded-none">
+                            <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center print:hidden">
+                                <h3 className="font-bold text-gray-800">Document Preview</h3>
+                                <div className="flex gap-2">
+                                    <Button onClick={handlePrint} variant="primary">
+                                        <Printer size={18} /> {t('common.print')}
+                                    </Button>
+                                    <button onClick={() => setSelectedInvoice(null)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500">
+                                        <X size={20} />
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Info Grid */}
-                            <div className="grid grid-cols-2 gap-8 mb-8">
-                                <div>
-                                    <p className="text-sm font-bold text-gray-400 uppercase mb-2">
-                                        {selectedInvoice.type === 'CREDIT_NOTE' ? t('financials.creditTo') : t('financials.billTo')}
-                                    </p>
-                                    <p className="font-bold text-gray-900">{selectedInvoice.client.name}</p>
-                                    <p className="text-gray-600 text-sm">{selectedInvoice.client.address}</p>
-                                    <p className="text-gray-600 text-sm mt-1">VAT ID: <span className="font-mono">{selectedInvoice.client.vatId}</span></p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-sm font-bold text-gray-400 uppercase mb-2">{t('common.details')}</p>
-                                    <p className="text-sm text-gray-600">Date: <span className="font-bold text-gray-900">{selectedInvoice.date}</span></p>
-                                    <p className="text-sm text-gray-600">Reference: <span className="font-bold text-gray-900">{selectedInvoice.requestId}</span></p>
-                                </div>
-                            </div>
-
-                            {/* Line Items */}
-                            <table className="w-full text-left mb-8">
-                                <thead>
-                                    <tr className="border-b border-gray-200">
-                                        <th className="py-3 font-bold text-gray-700">{t('common.description')}</th>
-                                        <th className="py-3 font-bold text-gray-700 text-right">{t('common.amount')} (SAR)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr className="border-b border-gray-100">
-                                        <td className="py-4 text-gray-800">
-                                            {selectedInvoice.description}
-                                            <div className="text-xs text-gray-500 mt-1">
-                                                {selectedInvoice.type === 'CREDIT_NOTE'
-                                                    ? t('financials.refundDesc')
-                                                    : t('financials.serviceDesc')
-                                                }
-                                            </div>
-                                        </td>
-                                        <td className={`py-4 text-right font-medium ${selectedInvoice.subtotal < 0 ? 'text-red-600' : ''}`}>
-                                            {selectedInvoice.subtotal.toLocaleString()}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                            {/* Totals */}
-                            <div className="flex justify-end mb-12">
-                                <div className="w-64 space-y-3">
-                                    <div className="flex justify-between text-gray-600">
-                                        <span>{t('financials.subtotal')}</span>
-                                        <span>{selectedInvoice.subtotal.toLocaleString()} SAR</span>
+                            <div className="p-8 md:p-12 overflow-y-auto bg-white flex-1" id="invoice-content">
+                                {/* Header */}
+                                <div className="flex justify-between items-start border-b border-gray-200 pb-8 mb-8">
+                                    <div>
+                                        <div className="text-3xl font-bold text-primary-600 mb-2">FINUME</div>
+                                        <p className="text-gray-500 text-sm">Financial Marketplace Platform</p>
+                                        <p className="text-gray-500 text-sm">Riyadh, Saudi Arabia</p>
+                                        <p className="text-gray-500 text-sm">VAT: 310123456700003</p>
                                     </div>
-                                    <div className="flex justify-between text-gray-600">
-                                        <span>{t('financials.vat')}</span>
-                                        <span>{selectedInvoice.vat.toLocaleString()} SAR</span>
-                                    </div>
-                                    <div className="flex justify-between font-bold text-lg text-gray-900 pt-3 border-t border-gray-200">
-                                        <span>{t('financials.grandTotal')}</span>
-                                        <span className={selectedInvoice.total < 0 ? 'text-red-600' : 'text-gray-900'}>
-                                            {selectedInvoice.total.toLocaleString()} SAR
-                                        </span>
+                                    <div className="text-right">
+                                        <h2 className={`text-2xl font-bold mb-1 ${selectedInvoice.type === 'CREDIT_NOTE' ? 'text-red-600' : 'text-gray-900'}`}>
+                                            {selectedInvoice.type === 'CREDIT_NOTE' ? t('financials.creditNote') : t('financials.invoice')}
+                                        </h2>
+                                        <p className="text-gray-500 font-mono mb-4">{selectedInvoice.id}</p>
+                                        <div className={`inline-block px-3 py-1 rounded font-bold text-sm border ${selectedInvoice.status === 'REFUNDED'
+                                            ? 'bg-orange-100 text-orange-700 border-orange-200'
+                                            : 'bg-green-100 text-green-700 border-green-200'
+                                            }`}>
+                                            {selectedInvoice.status === 'PAID' ? t('financials.paid') : t('financials.refunded')}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Footer */}
-                            <div className="border-t border-gray-200 pt-8 text-center text-sm text-gray-500">
-                                <p className="mb-2">{t('financials.thankYou')}</p>
-                                <p className="text-xs text-gray-400">{t('financials.generatedDoc')}</p>
+                                {/* Info Grid */}
+                                <div className="grid grid-cols-2 gap-8 mb-8">
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-400 uppercase mb-2">
+                                            {selectedInvoice.type === 'CREDIT_NOTE' ? t('financials.creditTo') : t('financials.billTo')}
+                                        </p>
+                                        <p className="font-bold text-gray-900">{selectedInvoice.client.name}</p>
+                                        <p className="text-gray-600 text-sm">{selectedInvoice.client.address}</p>
+                                        <p className="text-gray-600 text-sm mt-1">VAT ID: <span className="font-mono">{selectedInvoice.client.vatId}</span></p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-bold text-gray-400 uppercase mb-2">{t('common.details')}</p>
+                                        <p className="text-sm text-gray-600">Date: <span className="font-bold text-gray-900">{selectedInvoice.date}</span></p>
+                                        <p className="text-sm text-gray-600">Reference: <span className="font-bold text-gray-900">{selectedInvoice.requestId}</span></p>
+                                    </div>
+                                </div>
+
+                                {/* Line Items */}
+                                <table className="w-full text-left mb-8">
+                                    <thead>
+                                        <tr className="border-b border-gray-200">
+                                            <th className="py-3 font-bold text-gray-700">{t('common.description')}</th>
+                                            <th className="py-3 font-bold text-gray-700 text-right">{t('common.amount')} (SAR)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr className="border-b border-gray-100">
+                                            <td className="py-4 text-gray-800">
+                                                {selectedInvoice.description}
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    {selectedInvoice.type === 'CREDIT_NOTE'
+                                                        ? t('financials.refundDesc')
+                                                        : t('financials.serviceDesc')
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td className={`py-4 text-right font-medium ${selectedInvoice.subtotal < 0 ? 'text-red-600' : ''}`}>
+                                                {selectedInvoice.subtotal.toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                {/* Totals */}
+                                <div className="flex justify-end mb-12">
+                                    <div className="w-64 space-y-3">
+                                        <div className="flex justify-between text-gray-600">
+                                            <span>{t('financials.subtotal')}</span>
+                                            <span>{selectedInvoice.subtotal.toLocaleString()} SAR</span>
+                                        </div>
+                                        <div className="flex justify-between text-gray-600">
+                                            <span>{t('financials.vat')}</span>
+                                            <span>{selectedInvoice.vat.toLocaleString()} SAR</span>
+                                        </div>
+                                        <div className="flex justify-between font-bold text-lg text-gray-900 pt-3 border-t border-gray-200">
+                                            <span>{t('financials.grandTotal')}</span>
+                                            <span className={selectedInvoice.total < 0 ? 'text-red-600' : 'text-gray-900'}>
+                                                {selectedInvoice.total.toLocaleString()} SAR
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Footer */}
+                                <div className="border-t border-gray-200 pt-8 text-center text-sm text-gray-500">
+                                    <p className="mb-2">{t('financials.thankYou')}</p>
+                                    <p className="text-xs text-gray-400">{t('financials.generatedDoc')}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

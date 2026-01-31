@@ -155,6 +155,42 @@ export async function POST(req: Request) {
             throw new Error(`Failed to generate unique Display ID after ${maxAttempts} attempts.`);
         }
 
+        // --- INVOICE GENERATION LOGIC ---
+        // If status is NEW, it means payment was successful (or manual creation as paid).
+        if (newRequest.status === 'NEW') {
+            try {
+                // Determine invoice amount (inclusive of 15% VAT)
+                // Request Amount is typically Base Price.
+                const subtotal = Number(amount);
+                const vat = subtotal * 0.15;
+                const totalAmount = subtotal + vat;
+
+                // Create Invoice
+                const invoice = await prisma.invoice.create({
+                    data: {
+                        clientId,
+                        requestId: newRequest.id, // Use the real DB ID
+                        amount: totalAmount,
+                        status: 'PAID',
+                        // seqId auto-increments
+                    }
+                });
+
+                // Update Display ID (INV-00000001)
+                const invDisplayId = `INV-${String(invoice.seqId).padStart(8, '0')}`;
+                await prisma.invoice.update({
+                    where: { id: invoice.id },
+                    data: { displayId: invDisplayId }
+                });
+
+                console.log(`[REQ_CREATE] Generated Invoice ${invDisplayId} for Request ${newRequest.displayId}`);
+
+            } catch (invError) {
+                console.error("[REQ_CREATE] Failed to generate invoice:", invError);
+                // Do not fail the request creation, but log critical error
+            }
+        }
+
         return NextResponse.json(newRequest, { headers: corsHeaders });
     } catch (error) {
         console.error('Error creating request:', error);

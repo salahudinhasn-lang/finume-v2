@@ -80,6 +80,55 @@ export async function PATCH(
             data: dataToUpdate
         });
 
+        // --- INVOICE GENERATION LOGIC ---
+        // Verify if we should generate an invoice
+        // Trigger: status changing to 'NEW' (implies payment)
+        if (status === 'NEW') {
+            // Check if invoice already exists to prevent duplicates
+            const existingInvoice = await prisma.invoice.findFirst({
+                where: { requestId: id }
+            });
+
+            if (!existingInvoice) {
+                try {
+                    // Fetch request to get amount if not in body
+                    // (Actually, 'updatedRequest' has the data? update returns the new object)
+                    // But 'amount' might not be in 'updatedRequest' if it wasn't updated, 
+                    // unless we selected it or rely on prisma return.
+                    // Prisma update returns all scalar fields by default.
+
+                    const subtotal = Number(updatedRequest.amount);
+                    const vat = subtotal * 0.15;
+                    const totalAmount = subtotal + vat;
+
+                    // Create Invoice
+                    const invoice = await prisma.invoice.create({
+                        data: {
+                            clientId: updatedRequest.clientId,
+                            requestId: updatedRequest.id,
+                            amount: totalAmount,
+                            status: 'PAID',
+                            // seqId auto-increments
+                        }
+                    });
+
+                    // Update Display ID
+                    const invDisplayId = `INV-${String(invoice.seqId).padStart(8, '0')}`;
+                    await prisma.invoice.update({
+                        where: { id: invoice.id },
+                        data: { displayId: invDisplayId }
+                    });
+
+                    console.log(`[REQ_UPDATE] Generated Invoice ${invDisplayId} for Request ${updatedRequest.displayId}`);
+
+                } catch (invError) {
+                    console.error("[REQ_UPDATE] Failed to generate invoice:", invError);
+                }
+            } else {
+                console.log(`[REQ_UPDATE] Invoice already exists for Request ${id}, skipping.`);
+            }
+        }
+
         return NextResponse.json(updatedRequest);
     } catch (error) {
         console.error("Failed to update request:", error);
