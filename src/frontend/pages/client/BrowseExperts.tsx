@@ -160,7 +160,7 @@ const BrowseExperts = () => {
         const isPremium = expert.isPremium;
 
         return (
-            <Card className={`flex flex-col h-full transition-all duration-300 relative group overflow-hidden ${isPremium ? 'border-amber-200 hover:shadow-xl' : 'border-gray-100 opacity-80'}`}>
+            <Card className={`flex flex-col h-full transition-all duration-300 relative group overflow-hidden ${isPremium ? 'border-amber-200 hover:shadow-xl' : 'border-gray-100 hover:shadow-lg'}`}>
                 {isPremium && (
                     <div className="absolute top-0 right-0 p-3 z-10">
                         <div className="bg-gradient-to-r from-amber-400 to-amber-500 text-white p-1.5 rounded-full shadow-lg" title="Premium Expert">
@@ -177,12 +177,13 @@ const BrowseExperts = () => {
                         <div className="relative">
                             <img
                                 src={expert.avatarUrl}
-                                alt={isPremium ? expert.name : "Hidden"}
-                                className={`w-20 h-20 rounded-full bg-white object-cover border-4 ${isPremium ? 'border-amber-100' : 'border-white blur-sm'} shadow-md`}
+                                alt={expert.name}
+                                className={`w-20 h-20 rounded-full bg-white object-cover border-4 ${isPremium ? 'border-amber-100' : 'border-white'} shadow-md`}
                             />
                             {isPremium && <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" title="Online"></div>}
                         </div>
                         <div className="flex flex-col items-end">
+
                             {isPremium ? (
                                 <>
                                     <div className="flex items-center gap-1 text-yellow-500 font-bold text-lg">
@@ -191,8 +192,8 @@ const BrowseExperts = () => {
                                     <span className="text-xs text-gray-400">(24 reviews)</span>
                                 </>
                             ) : (
-                                <div className="flex items-center gap-1 text-gray-300 font-bold text-lg blur-[2px]">
-                                    <Star size={18} /> 4.0
+                                <div className="flex items-center gap-1 text-gray-400 font-bold text-lg">
+                                    <Star size={18} /> {expert.rating.toFixed(1)}
                                 </div>
                             )}
                         </div>
@@ -200,8 +201,8 @@ const BrowseExperts = () => {
 
                     <div className="mb-4">
                         <div className="flex items-center gap-2">
-                            <h3 className={`text-lg font-bold text-gray-900 truncate ${!isPremium && 'blur-sm select-none'}`}>
-                                {isPremium ? expert.name : 'Expert Hidden'}
+                            <h3 className="text-lg font-bold text-gray-900 truncate">
+                                {expert.name}
                             </h3>
                             {expert.isFeatured && isPremium && <Award size={16} className="text-blue-500" />}
                         </div>
@@ -221,24 +222,16 @@ const BrowseExperts = () => {
                         ))}
                     </div>
 
-                    <p className={`text-sm text-gray-600 line-clamp-2 mb-6 flex-1 ${!isPremium && 'blur-sm select-none'}`}>
+                    <p className="text-sm text-gray-600 line-clamp-2 mb-6 flex-1">
                         {expert.bio}
                     </p>
 
                     <div className="pt-4 border-t border-gray-100 flex items-center justify-between mt-auto mb-6">
-                        {isPremium ? (
-                            <>
-                                <div>
-                                    <span className="text-lg font-bold text-gray-900">{expert.hourlyRate} SAR</span>
-                                    <span className="text-xs text-gray-500">/hr</span>
-                                </div>
-                                <Button onClick={() => handleHire(expert.id)} size="sm" className="bg-amber-500 hover:bg-amber-600 border-none shadow-lg shadow-amber-200">Hire Now</Button>
-                            </>
-                        ) : (
-                            <div className="w-full text-center">
-                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest border border-gray-200 rounded px-2 py-1">Premium Only</span>
-                            </div>
-                        )}
+                        <div>
+                            <span className="text-lg font-bold text-gray-900">{expert.hourlyRate} SAR</span>
+                            <span className="text-xs text-gray-500">/hr</span>
+                        </div>
+                        <Button onClick={() => handleHire(expert.id)} size="sm" className={isPremium ? "bg-amber-500 hover:bg-amber-600 border-none shadow-lg shadow-amber-200" : "bg-gray-900 hover:bg-gray-800"}>Hire Now</Button>
                     </div>
                 </div>
             </Card>
