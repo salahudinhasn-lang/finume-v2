@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Users, DollarSign, Settings, LogOut, Menu, X, Bell, Search, Shield, Tag, HelpCircle, ChevronRight, LayoutTemplate, Calendar, Download } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, DollarSign, Settings, LogOut, Menu, X, Bell, Search, Shield, Tag, HelpCircle, ChevronRight, LayoutTemplate, Calendar } from 'lucide-react';
 import { Logo } from './Logo';
 
 interface LayoutProps {
