@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import PDFDocument from 'pdfkit';
+// import PDFDocument from 'pdfkit'; // Standard build fails in serverless due to fs dependency
 import QRCode from 'qrcode';
 import { Readable } from 'stream';
 import { getDriveService, findSubfolder, createFolder, uploadFileToDrive, getFileStream } from '@/lib/drive';
+
+// Use the standalone build of PDFKit which includes a virtual filesystem for standard fonts.
+// This prevents 'ENOENT: no such file' errors in Vercel.
+const PDFDocument = require("pdfkit/js/pdfkit.standalone");
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -52,8 +56,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         }
 
         // 3. Generate PDF
-        // Note: In serverless environments (like Vercel), standard fonts (Helvetica) may strictly fail to load.
-        // We will fetch a Google Font buffer at runtime to ensure availability.
+        // We still fetch Roboto for a nicer look, but the standalone build ensures that any 
+        // fallback to standard fonts (Helvetica) won't crash the server.
         const fontUrlRegular = "https://github.com/google/fonts/raw/main/ofl/roboto/Roboto-Regular.ttf";
         const fontUrlBold = "https://github.com/google/fonts/raw/main/ofl/roboto/Roboto-Bold.ttf";
 
@@ -63,20 +67,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             fetch(fontUrlBold).then(res => res.arrayBuffer())
         ]);
 
-        // CRITICAL FIX: autoFirstPage: false prevents pdfkit from loading Helvetica immediately
         const doc = new PDFDocument({ margin: 50, size: 'A4', autoFirstPage: false });
         const buffers: Buffer[] = [];
 
-        // Register Fonts - MOCK HELVETICA to prevent filesystem lookup
-        // We register Roboto AS 'Helvetica' so pdfkit uses these buffers instead of looking for .afm files
-        doc.registerFont('Helvetica', fontBufferRegular);
-        doc.registerFont('Helvetica-Bold', fontBufferBold);
+        // Register Fonts
         doc.registerFont('Roboto-Regular', fontBufferRegular);
         doc.registerFont('Roboto-Bold', fontBufferBold);
 
         doc.on('data', buffers.push.bind(buffers));
 
-        // Manually add the first page
         doc.addPage();
 
         // --- CONTENT GENERATION ---
