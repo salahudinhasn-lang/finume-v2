@@ -401,6 +401,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
             // Format Date (DB is ISO DateTime, UI expects YYYY-MM-DD or similar string)
             dateCreated: d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-CA') : (d.dateCreated || new Date().toISOString().split('T')[0]),
+            amount: Number(d.amount) || 0,
 
             // Parse requiredSkills JSON string to array if needed
             requiredSkills: typeof d.requiredSkills === 'string' ? JSON.parse(d.requiredSkills) : (d.requiredSkills || [])
@@ -439,6 +440,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             clientName: d.client ? (d.client.companyName || d.client.user?.name || d.client.name) : 'Unknown Client',
             expertName: d.assignedExpert ? d.assignedExpert.name : (d.expertName || ''),
             dateCreated: d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-CA') : (d.dateCreated || new Date().toISOString().split('T')[0]),
+            amount: Number(d.amount) || 0,
             requiredSkills: typeof d.requiredSkills === 'string' ? JSON.parse(d.requiredSkills) : (d.requiredSkills || [])
           }));
 

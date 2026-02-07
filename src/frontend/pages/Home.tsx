@@ -184,7 +184,7 @@ const HomePage = () => {
                   <Briefcase className="w-7 h-7" />
                 </div>
                 <h3 className="text-5xl font-black text-white mb-2">
-                  {experts.filter(e => e.status === 'ACTIVE').length}
+                  {experts.length}
                 </h3>
                 <p className="text-slate-500 font-bold text-sm tracking-widest uppercase">{t('features.experts') || 'Qualified Experts'}</p>
               </div>
@@ -214,10 +214,11 @@ const HomePage = () => {
                 <h3 className="text-5xl font-black text-white mb-2">
                   {/* Format: $25M+ or actual value if smaller. Using dynamic formatting. */}
                   {(() => {
-                    const total = requests.filter(r => r.status === 'COMPLETED').reduce((sum, r) => sum + r.amount, 0);
+                    // Sum ALL requests to show platform volume (as numbers)
+                    const total = requests.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
                     if (total >= 1000000) return `$${(total / 1000000).toFixed(1)}M+`;
                     if (total >= 1000) return `$${(total / 1000).toFixed(0)}k+`;
-                    return `$${total}`;
+                    return `$${total.toLocaleString()}`;
                   })()}
                 </h3>
                 <p className="text-slate-500 font-bold text-sm tracking-widest uppercase">{t('features.value') || 'Project Value'}</p>
