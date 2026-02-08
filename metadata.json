@@ -1,0 +1,7 @@
+{
+  "name": "Easy UX - FINUME Platform",
+  "description": "A comprehensive three-sided marketplace connecting Financial Services Clients, Experts, and Administrators with AI-powered insights.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

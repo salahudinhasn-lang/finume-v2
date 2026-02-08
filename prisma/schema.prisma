@@ -1,0 +1,524 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EXPERT
+  CLIENT
+}
+
+enum AdminLevel {
+  FINANCE
+  COMPLIANCE
+  OPS
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ServiceType {
+  ONE_TIME
+  RECURRING
+}
+
+enum CommissionType {
+  FIXED
+  PERCENTAGE
+  HYBRID
+}
+
+enum RequestStatus {
+  CREATED
+  PENDING_PAYMENT
+  NEW
+  PENDING_ASSIGNMENT
+  MATCHED
+  IN_PROGRESS
+  REVIEW
+  REVIEW_CLIENT
+  REVIEW_ADMIN
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum PoolStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PAID
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PAID
+}
+
+enum ExpertShareType {
+  PERCENTAGE
+  FIXED
+}
+
+// Models
+
+model User {
+  id            String    @id
+  email         String    @unique
+  googleId      String?   @unique
+  linkedinId    String?   @unique
+  passwordHash  String
+  name          String
+  role          Role
+  mobileNumber  String?
+  avatarUrl     String?
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  googleDriveFolderId String?
+  
+  resetToken          String?  @unique
+  resetTokenExpiry    DateTime?
+
+  clientProfile Client?
+  expertProfile Expert?
+  adminProfile  Admin?
+}
+
+model Client {
+  id              String   @id // Same as User.id (CUS-XXXXXX)
+  user            User     @relation(fields: [id], references: [id], onDelete: Cascade)
+  
+  // Specific Client Fields (Company Info)
+  companyName     String
+  industry        String
+  website         String?
+  foundedYear     String?
+  jobTitle        String?
+  
+  // Legal & KYC
+  crNumber        String?
+  vatNumber       String?
+  nationalAddress String?
+  legalStructure  String?
+  crDocumentUrl   String?
+  vatDocumentUrl  String?
+  formationContractUrl String?
+  nationalAddressDocumentUrl String?
+  otherDocuments  Json?
+  
+  notifications   Notification[]
+  teamMembers     TeamMember[]
+  requests        Request[]
+  invoices        Invoice[]
+  
+  // Stats
+  totalSpent      Decimal  @default(0)
+  zatcaStatus     String   @default("GREEN")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Permissions
+  permissions     ClientFeaturePermissions?
+  gamification    GamificationProfile?
+  meetings        Meeting[]
+}
+
+model Expert {
+  id              String   @id // Same as User.id (EXP-XXXXXX)
+  user            User     @relation(fields: [id], references: [id], onDelete: Cascade)
+  
+  // Specific Expert Fields
+  bio             String?
+  hourlyRate      Decimal  @default(0)
+  specializations String[] 
+  rating          Decimal  @default(0)
+  totalReviews    Int      @default(0)
+  totalEarned     Decimal  @default(0)
+  linkedinUrl     String?
+  
+  iban            String?
+  kycStatus       String   @default("PENDING")
+  cvUrl           String?
+  name            String? // Added as per requirement to sync with User.name
+  
+  isPremium       Boolean  @default(false)
+  isFeatured      Boolean  @default(false)
+  status          String   @default("VETTING")
+  
+  yearsExperience Int      @default(0)
+  
+  assignedRequests Request[] @relation("AssignedExpert")
+  notifications   Notification[]
+  reviews         Review[]
+  poolInvites     ProviderPool[]
+  payouts         PayoutRequest[]
+  documents       Json?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  tasks           ExpertTask[]
+  meetings        Meeting[]
+}
+
+model Review {
+  id        String        @id @default(cuid())
+  requestId String        @unique
+  request   Request       @relation(fields: [requestId], references: [id])
+  expertId  String
+  expert    Expert        @relation(fields: [expertId], references: [id])
+  rating    Int
+  comment   String?
+  createdAt DateTime      @default(now())
+}
+
+model Admin {
+  id           String     @id // Same as User.id (ADM-XXXXXX)
+  user         User       @relation(fields: [id], references: [id], onDelete: Cascade)
+  
+  adminLevel   AdminLevel @default(OPS)
+  notifications Notification[]
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  name      String
+  email     String
+  role      String   @default("VIEWER") // VIEWER, EDITOR, ADMIN
+  status    String   @default("INVITED") // INVITED, ACTIVE
+  createdAt DateTime @default(now())
+}
+
+model Service {
+  id               String          @id @default(cuid())
+  nameEn           String
+  nameAr           String
+  slug             String          @unique
+  type             ServiceType
+  basePrice        Decimal
+  description      String?
+  commissionRuleId String?
+  commissionRule   CommissionRule? @relation(fields: [commissionRuleId], references: [id])
+  isActive         Boolean         @default(true)
+  requests         Request[]
+
+  expertShareType  ExpertShareType @default(PERCENTAGE)
+  expertShareValue Decimal         @default(0)
+}
+
+model CommissionRule {
+  id            String         @id @default(cuid())
+  type          CommissionType
+  valueProvider Decimal
+  valuePlatform Decimal
+  services      Service[]
+}
+
+model Request {
+  id               String        @id @default(cuid())
+  displayId        String?       @unique // Optional for migration safety, but logic will populate it
+  clientId         String
+  client           Client @relation(fields: [clientId], references: [id]) 
+  
+  serviceId        String?  // Made optional because a request might be for a Plan instead
+  service          Service? @relation(fields: [serviceId], references: [id])
+  pricingPlanId    String?
+  pricingPlan      PricingPlan? @relation(fields: [pricingPlanId], references: [id])
+  description      String?
+  
+  assignedExpertId String?
+  assignedExpert   Expert? @relation("AssignedExpert", fields: [assignedExpertId], references: [id])
+
+  status           RequestStatus @default(CREATED)
+  dueDate          DateTime?
+  
+  // Finance
+  payoutId         String?
+  payout           PayoutRequest? @relation(fields: [payoutId], references: [id])
+
+  batches          FileBatch[]
+  files            UploadedFile[]
+  amount           Decimal       @default(0)
+  
+  visibility       String        @default("ADMIN") // ADMIN, ASSIGNED, OPEN
+  requiredSkills   String[]
+  
+  messages         RequestMessage[]
+  poolInvites      ProviderPool[]
+  invoices         Invoice[]
+  invoiceDisplayId String?       // Denormalized for display "INV-XXXX"
+  disputes         Dispute[]
+  review           Review?
+  transactions     Transaction[]
+  
+  workStartedAt    DateTime?
+  completedAt      DateTime?
+
+  // Dual Review System (Added as per user request)
+  expertReview          Int?     // 1-5 Stars
+  expertReviewComment   String?
+  platformReview        Int?     // 0-10 NPS
+  platformReviewComment String?
+
+  expertTasks      ExpertTask[]
+  meetings         Meeting[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  requestId String
+  request   Request  @relation(fields: [requestId], references: [id])
+  amount    Decimal
+  date      DateTime @default(now())
+  status    String   // PAID, PENDING, REFUNDED
+  type      String   // PAYMENT, PAYOUT
+}
+
+model FileBatch {
+  id        String   @id @default(cuid())
+  requestId String
+  request   Request  @relation(fields: [requestId], references: [id])
+  status    String   // e.g. PENDING, COMPLETED
+  files     UploadedFile[]
+  expertTasks ExpertTask[]
+  createdAt DateTime @default(now())
+}
+
+model UploadedFile {
+  id           String   @id @default(cuid())
+  category     String?
+  name         String
+  size         String
+  type         String
+  url          String
+  uploadedById String
+  
+  fileBatchId  String?
+  fileBatch    FileBatch? @relation(fields: [fileBatchId], references: [id])
+  
+  // Optional direct link to Request if needed
+  requestId    String?
+  request      Request? @relation(fields: [requestId], references: [id])
+
+  createdAt    DateTime @default(now())
+}
+
+model RequestMessage {
+  id          String   @id @default(cuid())
+  requestId   String
+  request     Request  @relation(fields: [requestId], references: [id])
+  senderId    String
+  messageBody String
+  createdAt   DateTime @default(now())
+}
+
+model ProviderPool {
+  requestId String
+  request   Request       @relation(fields: [requestId], references: [id])
+  expertId  String
+  expert    Expert        @relation(fields: [expertId], references: [id])
+  status    PoolStatus    @default(INVITED)
+
+  @@id([requestId, expertId])
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  seqId            Int           @default(autoincrement())
+  displayId        String?       @unique // INV-00000001 (Made optional for creating first, then updating)
+  clientId         String
+  client           Client        @relation(fields: [clientId], references: [id])
+  requestId        String?
+  request          Request?      @relation(fields: [requestId], references: [id])
+  amount           Decimal
+  status           InvoiceStatus @default(UNPAID)
+  paymentGatewayRef String?
+  driveId          String?       // Google Drive File ID
+  pdfUrl           String?       // Direct link or Preview link
+  createdAt        DateTime      @default(now())
+}
+
+model PayoutRequest {
+  id            String        @id @default(cuid())
+  expertId      String
+  expert    Expert        @relation(fields: [expertId], references: [id])
+  amount        Decimal
+  status        PayoutStatus  @default(PENDING)
+  requestDate   DateTime      @default(now())
+  processedDate DateTime?
+  requests      Request[]     // Requests paid out in this batch
+}
+
+model Dispute {
+  id              String   @id @default(cuid())
+  requestId       String
+  request         Request  @relation(fields: [requestId], references: [id])
+  openedBy        String
+  reason          String
+  status          String // e.g., OPEN, RESOLVED
+  resolutionNotes String?
+  createdAt       DateTime @default(now())
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorId      String // User ID (Client, Expert, or Admin)
+  action       String
+  resourceType String?
+  resourceId   String?
+  ipAddress    String?
+  meta         Json?
+  createdAt    DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String // Generic ID
+  client    Client?  @relation(fields: [clientId], references: [id])
+  clientId  String?
+  expert    Expert?  @relation(fields: [expertId], references: [id])
+  expertId  String?
+  admin     Admin?   @relation(fields: [adminId], references: [id])
+  adminId   String?
+  type      String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ClientFeaturePermissions {
+  id                  String  @id @default(cuid())
+  clientId            String  @unique
+  client              Client @relation(fields: [clientId], references: [id])
+  canViewReports      Boolean @default(true)
+  canUploadDocs       Boolean @default(true)
+  canDownloadInvoices Boolean @default(true)
+  canRequestCalls     Boolean @default(true)
+  canSubmitTickets    Boolean @default(true)
+  canViewMarketplace  Boolean @default(true)
+}
+
+model GamificationProfile {
+  id            String  @id @default(cuid())
+  clientId      String  @unique
+  client        Client @relation(fields: [clientId], references: [id])
+  totalPoints   Int     @default(0)
+  totalStars    Int     @default(0)
+  currentStreak Int     @default(0)
+  level         String  @default("Bronze")
+}
+
+model ComplianceLog {
+  id           String   @id @default(cuid())
+  action       String
+  details      String?
+  createdAt    DateTime @default(now())
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  role      String
+  text      String
+  timestamp DateTime @default(now())
+}
+
+
+
+model PricingPlan {
+  id          String   @id
+  name        String
+  price       Decimal 
+  description String
+  tagline     String?
+  features    Json?
+  guarantee   String?
+  isPopular   Boolean  @default(false)
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  requests    Request[]
+
+  expertShareType  ExpertShareType @default(PERCENTAGE)
+  expertShareValue Decimal         @default(0)
+}
+
+model ExpertTask {
+  id          String   @id @default(cuid())
+  description String
+  status      String   // PENDING, COMPLETED, IGNORED
+  
+  requestId   String
+  request     Request  @relation(fields: [requestId], references: [id])
+  
+  expertId    String
+  expert      Expert   @relation(fields: [expertId], references: [id])
+  
+  relatedBatchId String?
+  fileBatch      FileBatch? @relation(fields: [relatedBatchId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+}
+
+model Meeting {
+  id        String   @id @default(cuid())
+  
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  
+  expertId  String
+  expert    Expert   @relation(fields: [expertId], references: [id])
+  
+  requestId String?
+  request   Request? @relation(fields: [requestId], references: [id])
+
+  date      DateTime // YYYY-MM-DD
+  startTime String   // HH:mm
+  endTime   String   // HH:mm
+  notes     String?
+
+  status    String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
+  
+  messages  MeetingMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MeetingMessage {
+  id        String   @id @default(cuid())
+  meetingId String
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  senderId  String   // User ID
+  content   String
+  
+  createdAt DateTime @default(now())
+}
