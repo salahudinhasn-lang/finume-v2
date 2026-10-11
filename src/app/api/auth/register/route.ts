@@ -5,15 +5,14 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { createFolder, findSubfolder } from '@/lib/drive';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'finume-secret-key-change-me-in-prod';
+import { getJwtSecretString } from '@/lib/api-auth';
 
 // Validation Schema
 const RegisterSchema = z.object({
     name: z.string().min(2),
     email: z.string().email(),
     password: z.string().min(8),
-    role: z.enum(['CLIENT', 'EXPERT', 'ADMIN']).default('CLIENT'),
+    role: z.enum(['CLIENT', 'EXPERT']).default('CLIENT'),
     companyName: z.string().optional(), // For Client
     industry: z.string().optional(),    // For Client
     mobileNumber: z.string().min(9),    // Required
@@ -231,7 +230,7 @@ export async function POST(request: Request) {
         // 4. Generate Token
         const token = jwt.sign(
             { id: newUser.id, email: newUser.email, role: newUser.role },
-            JWT_SECRET,
+            getJwtSecretString(),
             { expiresIn: '7d' }
         );
 

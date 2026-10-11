@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireRole } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const _auth = await requireRole(request, ['ADMIN', 'SUPER_ADMIN']);
+        if (_auth instanceof NextResponse) return _auth;
         const [totalExperts, activeExpertsCount, totalClients] = await Promise.all([
             prisma.expert.count(),
             prisma.expert.count({

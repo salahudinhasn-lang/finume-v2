@@ -1,13 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma'; // Ensure correct path to prisma instance
+import { requireUser } from '@/lib/api-auth';
 
 export async function GET(req: Request) {
     try {
+        const _auth = await requireUser(req);
+        if (_auth instanceof NextResponse) return _auth;
+
         const url = new URL(req.url);
         const clientId = url.searchParams.get('clientId');
 
         if (!clientId) {
             return NextResponse.json({ error: 'Client ID required' }, { status: 400 });
+        }
+        if (_auth.role !== 'ADMIN' && _auth.id !== clientId) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         const invoices = await prisma.invoice.findMany({

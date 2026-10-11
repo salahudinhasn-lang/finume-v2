@@ -2,11 +2,17 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { createFolder, renameFileOrFolder } from '@/lib/drive';
+import { requireUser } from '@/lib/api-auth';
 
 // GET /api/users/[id]
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     try {
+        const _auth = await requireUser(request);
+        if (_auth instanceof NextResponse) return _auth;
+        if (_auth.role !== 'ADMIN' && _auth.id !== params.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
         const id = params.id;
         const user = await prisma.user.findUnique({
             where: { id },
@@ -44,9 +50,18 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     try {
+        const _auth = await requireUser(request);
+        if (_auth instanceof NextResponse) return _auth;
+        if (_auth.role !== 'ADMIN' && _auth.id !== params.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         const id = params.id;
         const body = await request.json();
         const { password, ...updates } = body;
+        if (_auth.role !== 'ADMIN') {
+            delete (updates as any).permissions;
+        }
 
         // Split data into User (Auth/Common) and Profile (Client/Expert/Admin)
         // Common User fields that can be updated

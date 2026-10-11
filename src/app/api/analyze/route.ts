@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeDocument } from '@/lib/gemini';
+import { requireUser } from '@/lib/api-auth';
 
 export async function POST(req: NextRequest) {
     try {
+        const _auth = await requireUser(req);
+        if (_auth instanceof NextResponse) return _auth;
         const formData = await req.formData();
         const file = formData.get('file') as File | null;
 

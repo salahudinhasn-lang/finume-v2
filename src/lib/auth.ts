@@ -2,9 +2,7 @@ import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
-
-const SECRET_KEY = process.env.JWT_SECRET || 'finume-secret-key-change-me-in-prod';
-const key = new TextEncoder().encode(SECRET_KEY);
+import { getJwtSecret } from './api-auth';
 
 export async function hashPassword(password: string): Promise<string> {
     return await bcrypt.hash(password, 10);
@@ -19,12 +17,12 @@ export async function signToken(payload: any): Promise<string> {
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
         .setExpirationTime('24h') // Set token expiration
-        .sign(key);
+        .sign(getJwtSecret());
 }
 
 export async function verifyToken(token: string): Promise<any> {
     try {
-        const { payload } = await jwtVerify(token, key, {
+        const { payload } = await jwtVerify(token, getJwtSecret(), {
             algorithms: ['HS256'],
         });
         return payload;

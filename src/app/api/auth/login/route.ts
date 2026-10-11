@@ -3,8 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'finume-secret-key-change-me-in-prod';
+import { getJwtSecretString } from '@/lib/api-auth';
 
 export async function POST(request: Request) {
     try {
@@ -32,11 +31,7 @@ export async function POST(request: Request) {
             isValid = false;
         }
 
-        // Fallback for seed data (plain text) CHECK
-        if (!isValid && user.passwordHash === password) {
-            console.warn(`User ${email} logged in with plain text password.`);
-            isValid = true;
-        }
+        // (plain-text password fallback removed during security hardening)
 
         if (!isValid) {
             return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
@@ -45,7 +40,7 @@ export async function POST(request: Request) {
         // 3. Generate Token
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
-            JWT_SECRET,
+            getJwtSecretString(),
             { expiresIn: '7d' }
         );
 

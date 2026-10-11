@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'finume-secret-key-change-me-in-prod';
+import { getAuthUser, getJwtSecretString } from '@/lib/api-auth';
 
 export async function PATCH(
     req: NextRequest,
@@ -20,7 +19,7 @@ export async function PATCH(
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
             try {
-                decodedToken = jwt.verify(token, JWT_SECRET);
+                decodedToken = jwt.verify(token, getJwtSecretString());
             } catch (err) {
                 console.warn("Files API: Header token invalid, trying cookie...");
             }
@@ -31,7 +30,7 @@ export async function PATCH(
             const cookie = req.cookies.get('finume_token');
             if (cookie) {
                 try {
-                    decodedToken = jwt.verify(cookie.value, JWT_SECRET);
+                    decodedToken = jwt.verify(cookie.value, getJwtSecretString());
                 } catch (err) { }
             }
         }
@@ -94,7 +93,11 @@ export async function GET(
         const params = await props.params;
         const { fileId } = params;
 
-        // Authenticate User - DISABLED FOR PUBLIC ACCESS
+        // Security hardening: authenticated users only (this endpoint previously served files publicly)
+        const _auth = await getAuthUser(req);
+        if (!_auth) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
         // const authHeader = req.headers.get('Authorization');
         // let decodedToken: any = null;
 

@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { requireRole } from '@/lib/api-auth';
 
 const prisma = new PrismaClient();
 
@@ -12,6 +13,21 @@ export async function PATCH(
         const { id } = await params;
         const body = await request.json();
         console.log(`[PATCH Request] ID: ${id}`, body);
+        const _auth = await requireRole(request, ['ADMIN', 'SUPER_ADMIN', 'EXPERT']);
+        if (_auth instanceof NextResponse) return _auth;
+        if (_auth.role === 'EXPERT') {
+            const _existingRequest = await prisma.request.findUnique({ where: { id }, select: { assignedExpertId: true } });
+            if (!_existingRequest) {
+                return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+            }
+            if (_existingRequest.assignedExpertId !== _auth.id) {
+                return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+            }
+            const _blockedFields = ['assignedExpertId', 'visibility', 'requiredSkills'].filter((k) => k in (body as any));
+            if (_blockedFields.length > 0) {
+                return NextResponse.json({ error: 'Forbidden: field not allowed for expert role' }, { status: 403 });
+            }
+        }
 
         // Extract allowed fields to update
         const { assignedExpertId, status, visibility, requiredSkills } = body;
@@ -147,6 +163,8 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const _authD = await requireRole(request, ['ADMIN', 'SUPER_ADMIN']);
+        if (_authD instanceof NextResponse) return _authD;
         const { id } = await params;
         await prisma.request.delete({
             where: { id }

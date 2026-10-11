@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { headers } from 'next/headers';
+import { requireRole } from '@/lib/api-auth';
 
 const prisma = new PrismaClient();
 
@@ -12,7 +13,10 @@ export async function POST(
     try {
         const { id } = await params;
         const body = await request.json();
-        const { expertId } = body;
+        void body;
+        const _auth = await requireRole(request, ['EXPERT']);
+        if (_auth instanceof NextResponse) return _auth;
+        const expertId = _auth.id; // ownership enforced from the session
 
         if (!expertId) {
             return NextResponse.json({ error: 'Expert ID is required' }, { status: 400 });

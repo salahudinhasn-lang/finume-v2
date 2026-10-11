@@ -1,25 +1,22 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireUser } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
-export async function OPTIONS() {
-    return NextResponse.json({}, { headers: corsHeaders });
-}
-
 export async function GET(req: Request) {
     try {
+        const _auth = await requireUser(req);
+        if (_auth instanceof NextResponse) return _auth;
+
         const url = new URL(req.url);
         const clientId = url.searchParams.get('clientId');
 
         if (!clientId) {
-            return NextResponse.json({ error: 'Client ID is required' }, { status: 400, headers: corsHeaders });
+            return NextResponse.json({ error: 'Client ID is required' }, { status: 400 });
+        }
+        if (_auth.role !== 'ADMIN' && _auth.id !== clientId) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         // Calculate total spend
@@ -46,10 +43,10 @@ export async function GET(req: Request) {
         return NextResponse.json({
             totalSpend,
             currency: 'SAR'
-        }, { headers: corsHeaders });
+        });
 
     } catch (error) {
         console.error('Error fetching client financials:', error);
-        return NextResponse.json({ error: 'Internal Server Error', details: String(error) }, { status: 500, headers: corsHeaders });
+        return NextResponse.json({ error: 'Internal Server Error', details: String(error) }, { status: 500 });
     }
 }

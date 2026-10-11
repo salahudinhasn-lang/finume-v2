@@ -2,8 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'finume-secret-key-change-me-in-prod';
+import { getJwtSecretString } from '@/lib/api-auth';
 
 // GET: Fetch tasks for the logged-in expert
 // GET: Fetch tasks for the logged-in expert
@@ -16,7 +15,7 @@ export async function GET(req: NextRequest) {
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
             try {
-                decodedToken = jwt.verify(token, JWT_SECRET);
+                decodedToken = jwt.verify(token, getJwtSecretString());
             } catch (err) { }
         }
 
@@ -25,7 +24,7 @@ export async function GET(req: NextRequest) {
             const cookie = req.cookies.get('finume_token');
             if (cookie) {
                 try {
-                    decodedToken = jwt.verify(cookie.value, JWT_SECRET);
+                    decodedToken = jwt.verify(cookie.value, getJwtSecretString());
                 } catch (err) { }
             }
         }
@@ -73,7 +72,7 @@ export async function PATCH(req: NextRequest) {
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
             try {
-                decodedToken = jwt.verify(token, JWT_SECRET);
+                decodedToken = jwt.verify(token, getJwtSecretString());
             } catch (err) { }
         }
 
@@ -82,7 +81,7 @@ export async function PATCH(req: NextRequest) {
             const cookie = req.cookies.get('finume_token');
             if (cookie) {
                 try {
-                    decodedToken = jwt.verify(cookie.value, JWT_SECRET);
+                    decodedToken = jwt.verify(cookie.value, getJwtSecretString());
                 } catch (err) { }
             }
         }

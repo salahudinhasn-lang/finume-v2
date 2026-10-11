@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import QRCode from 'qrcode';
 import { Readable } from 'stream';
 import { getDriveService, findSubfolder, createFolder, uploadFileToDrive, getFileStream } from '@/lib/drive';
+import { requireUser } from '@/lib/api-auth';
 
 // Use the standalone build of PDFKit which includes a virtual filesystem for standard fonts.
 // This prevents 'ENOENT: no such file' errors in Vercel.
@@ -13,6 +14,8 @@ const PDFDocument = require("pdfkit/js/pdfkit.standalone");
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params; // invoice id (displayId or cuid)
+        const _auth = await requireUser(req);
+        if (_auth instanceof NextResponse) return _auth;
 
         // 1. Fetch Invoice Data
         const invoice = await prisma.invoice.findFirst({
@@ -35,6 +38,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         if (!invoice) {
             return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+        }
+        if (_auth.role !== 'ADMIN' && invoice.clientId !== _auth.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         // 2. Check if already on Drive

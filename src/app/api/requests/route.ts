@@ -1,21 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireRole, requireUser } from '@/lib/api-auth';
 
-
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
-export async function OPTIONS() {
-    return NextResponse.json({}, { headers: corsHeaders });
-}
 
 export async function POST(req: Request) {
     try {
+        const _auth = await requireRole(req, ['CLIENT']);
+        if (_auth instanceof NextResponse) return _auth;
         const body = await req.json();
         let { clientId, serviceId, pricingPlanId, amount, description, batches } = body;
+        clientId = _auth.id; // ownership enforced from the session
 
         // Legacy/Frontend Cache Compatibility Layer
         if (pricingPlanId && pricingPlanId.startsWith('PLAN-0000')) {
@@ -33,7 +27,7 @@ export async function POST(req: Request) {
 
         // If client doesn't exist, we should probably error out rather than auto-create in a requests endpoint
         if (!clientExists) {
-            return NextResponse.json({ error: 'Client not found' }, { status: 404, headers: corsHeaders });
+            return NextResponse.json({ error: 'Client not found' }, { status: 404 });
         }
 
         // Validate Services or Plans
@@ -55,14 +49,14 @@ export async function POST(req: Request) {
         } else if (pricingPlanId) {
             const planExists = await prisma.pricingPlan.findUnique({ where: { id: pricingPlanId } });
             if (!planExists) {
-                return NextResponse.json({ error: 'Invalid Pricing Plan ID', details: `Received ID: ${pricingPlanId}` }, { status: 400, headers: corsHeaders });
+                return NextResponse.json({ error: 'Invalid Pricing Plan ID', details: `Received ID: ${pricingPlanId}` }, { status: 400 });
             }
         }
 
 
         // Validate simple required fields
         if (!clientId || (!serviceId && !pricingPlanId) || !amount) {
-            return NextResponse.json({ error: 'Missing Required Fields (Service or Plan)' }, { status: 400, headers: corsHeaders });
+            return NextResponse.json({ error: 'Missing Required Fields (Service or Plan)' }, { status: 400 });
         }
 
         // Deduplication Check
@@ -81,7 +75,7 @@ export async function POST(req: Request) {
 
         if (duplicateCheck) {
             console.log('Duplicate request detected, returning existing one.');
-            return NextResponse.json(duplicateCheck, { headers: corsHeaders });
+            return NextResponse.json(duplicateCheck);
         }
 
         // Generate Custom Sequential DISPLAY ID with Retry Logic
@@ -197,21 +191,32 @@ export async function POST(req: Request) {
             }
         }
 
-        return NextResponse.json(newRequest, { headers: corsHeaders });
+        return NextResponse.json(newRequest);
     } catch (error) {
         console.error('Error creating request:', error);
-        return NextResponse.json({ error: 'Internal Server Error', details: String(error) }, { status: 500, headers: corsHeaders });
+        return NextResponse.json({ error: 'Internal Server Error', details: String(error) }, { status: 500 });
     }
 }
 
 export async function GET(req: Request) {
     try {
+        const _auth = await requireUser(req);
+        if (_auth instanceof NextResponse) return _auth;
+
         const url = new URL(req.url);
-        const clientId = url.searchParams.get('clientId');
+        const clientIdParam = url.searchParams.get('clientId');
 
         const where: any = {};
-        if (clientId) {
-            where.clientId = clientId;
+        if (_auth.role === 'CLIENT') {
+            where.clientId = _auth.id;
+        } else if (_auth.role === 'EXPERT') {
+            where.OR = [
+                { assignedExpertId: _auth.id },
+                { poolInvites: { some: { expertId: _auth.id } } },
+                { visibility: 'OPEN' }
+            ];
+        } else if (clientIdParam) {
+            where.clientId = clientIdParam;
         }
 
         // Placeholder to allow tool to run. I will not actually replace content here until I verify Schema strategy.
@@ -237,9 +242,9 @@ export async function GET(req: Request) {
             orderBy: { createdAt: 'desc' }
         });
 
-        return NextResponse.json(requests, { headers: corsHeaders });
+        return NextResponse.json(requests);
     } catch (error) {
         console.error('Error fetching requests:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers: corsHeaders });
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

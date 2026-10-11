@@ -2,8 +2,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'finume-secret-key-change-me-in-prod';
+import { getJwtSecretString } from '@/lib/api-auth';
 
 export async function POST(request: Request) {
     try {
@@ -102,7 +101,7 @@ export async function POST(request: Request) {
         // Generate App Token
         const jwtToken = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
-            JWT_SECRET,
+            getJwtSecretString(),
             { expiresIn: '7d' }
         );
 

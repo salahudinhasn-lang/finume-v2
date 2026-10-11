@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireRole } from '@/lib/api-auth';
 
 
 
@@ -7,6 +8,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
     try {
+        const _auth = await requireRole(request, ['ADMIN', 'SUPER_ADMIN']);
+        if (_auth instanceof NextResponse) return _auth;
         const users = await prisma.user.findMany({
             include: {
                 clientProfile: { include: { permissions: true } },
