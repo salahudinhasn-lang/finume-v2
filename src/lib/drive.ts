@@ -133,36 +133,9 @@ export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, fo
 
         if (!file.data.id) return file.data;
 
-        // Try to make Public (primary goal)
-        try {
-            await drive.permissions.create({
-                fileId: file.data.id,
-                requestBody: {
-                    role: 'reader',
-                    type: 'anyone',
-                },
-            });
-        } catch (pubErr) {
-            console.warn(`[Drive] Public sharing failed for ${fileName}, trying specific user sharing...`);
-
-            // Fallback: Share with uploader explicitly
-            if (shareWithEmail) {
-                try {
-                    await drive.permissions.create({
-                        fileId: file.data.id,
-                        requestBody: {
-                            role: 'reader',
-                            type: 'user',
-                            emailAddress: shareWithEmail
-                        },
-                        fields: 'id',
-                    });
-                    console.log(`[Drive] Shared ${fileName} with ${shareWithEmail}`);
-                } catch (userErr) {
-                    console.warn(`[Drive] User sharing also failed for ${shareWithEmail}`, userErr);
-                }
-            }
-        }
+        // Privacy by design: uploaded files stay PRIVATE to the platform's Drive account.
+        // The app streams them through the authenticated /api/files proxy, so clients, experts
+        // and admins never receive direct Drive access. (Previously files were shared as "anyone with link" - removed for privacy.)
 
         return file.data;
     } catch (err) {
