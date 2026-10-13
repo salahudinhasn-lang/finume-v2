@@ -201,7 +201,16 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
     try {
         const _auth = await requireUser(req);
-        if (_auth instanceof NextResponse) return _auth;
+        if (_auth instanceof NextResponse) {
+            // Public visitors: slim, read-only projection for the marketing counters
+            // (no descriptions, relations, client or expert details).
+            const pub = await prisma.request.findMany({
+                select: { id: true, status: true, amount: true, createdAt: true },
+                orderBy: { createdAt: 'desc' },
+                take: 300
+            });
+            return NextResponse.json(pub);
+        }
 
         const url = new URL(req.url);
         const clientIdParam = url.searchParams.get('clientId');
