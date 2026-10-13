@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
             include: {
                 request: {
                     include: {
-                        client: { include: { user: true } },
+                        client: { include: { user: { select: { id: true, email: true, name: true, role: true, mobileNumber: true, avatarUrl: true, isVerified: true, isActive: true, createdAt: true, updatedAt: true } } } },
                         files: true // Include attached files
                     }
                 }

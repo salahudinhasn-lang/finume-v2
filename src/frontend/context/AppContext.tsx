@@ -379,7 +379,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         url += `?clientId=${user.id}`;
       }
 
-      const res = await fetch(url, { cache: 'no-store' });
+      const storedToken = typeof window !== 'undefined' ? localStorage.getItem('finume_token') : null;
+      const res = await fetch(url, { cache: 'no-store', headers: storedToken ? { Authorization: `Bearer ${storedToken}` } : undefined });
       if (res.ok) {
         const ct = res.headers.get('content-type');
         if (ct && ct.includes('json')) {
@@ -427,7 +428,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Fetch Pool (for Experts)
   const fetchPool = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/pool`);
+              const storedToken = typeof window !== 'undefined' ? localStorage.getItem('finume_token') : null;
+        const res = await fetch(`${API_BASE_URL}/api/pool`, { headers: storedToken ? { Authorization: `Bearer ${storedToken}` } : undefined });
       if (res.ok) {
         const ct = res.headers.get('content-type');
         if (ct && ct.includes('json')) {
@@ -474,8 +476,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // We use a timestamp to bust cache, and fetchWithRetry for robustness
       let usersRes: Response | null = null;
       try {
+                const storedToken = typeof window !== 'undefined' ? localStorage.getItem('finume_token') : null;
         usersRes = await fetchWithRetry(`${API_BASE_URL}/api/users?t=${Date.now()}`, {
-          headers: { 'Cache-Control': 'no-store' }
+          headers: { 'Cache-Control': 'no-store', ...(storedToken ? { Authorization: `Bearer ${storedToken}` } : {}) }
         });
       } catch (err) {
         console.error("Critical API Fetch Failed after retries:", err);

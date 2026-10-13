@@ -240,10 +240,22 @@ export async function GET(req: Request) {
                 pricingPlan: true,
                 client: {
                     include: {
-                        user: true
+                        // Public-safe user projection: never expose passwordHash / reset tokens.
+                        user: {
+                            select: {
+                                id: true, email: true, name: true, role: true, mobileNumber: true,
+                                avatarUrl: true, isVerified: true, isActive: true, createdAt: true, updatedAt: true
+                            }
+                        }
                     }
                 },
-                assignedExpert: true,
+                assignedExpert: {
+                    select: {
+                        id: true, name: true, bio: true, hourlyRate: true, specializations: true,
+                        rating: true, totalReviews: true, linkedinUrl: true, isPremium: true, isFeatured: true,
+                        status: true, yearsExperience: true, createdAt: true, updatedAt: true
+                    }
+                },
                 poolInvites: true, // Include pool invites so frontend can see them
                 review: true, // Include review data for Admin & Expert visibility
                 invoices: true // Include invoices for Financials
